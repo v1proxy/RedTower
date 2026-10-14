@@ -61,6 +61,23 @@ input_boolean:
     name: Claude autonomy
     icon: mdi:sprout-outline
     initial: false        # turn on once you have watched a few cycles run in dry-run mode
+  gh_kill:
+    name: Greenhouse agent kill switch
+    icon: mdi:hand-back-left
+    initial: false        # on means every agent is stopped, deterministic services keep running
+
+input_select:
+  gh_authority:
+    # Global ceiling from the software baseline. A module may sit below this, never above it.
+    name: Greenhouse authority ceiling
+    icon: mdi:shield-account
+    options:
+      - "Off"
+      - Manual
+      - Auto
+      - Agent proposes
+      - Agent autonomous
+    initial: Auto
 
 input_text:
   gh_proposal_plant:
