@@ -1,0 +1,18 @@
+# Secrets: only the .example files are tracked
+secrets.yaml
+gardener.json
+robot.json
+*.local.json
+
+# Runtime state written on the Jetson
+journal.jsonl
+tender_journal.jsonl
+escalations.jsonl
+plant_records.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Superseded by git history
+*.revD-backup

@@ -1,0 +1,5 @@
+# Vittorio works on Windows; the Jetson, the ESP32 nodes and Home Assistant all want LF.
+* text=auto eol=lf
+*.png binary
+*.dxf binary
+*.xlsx binary

@@ -1,0 +1,105 @@
+# Top-tier extras (Tier C node only): roof exhaust fans with a local thermostat, and CO2.
+#   GPIO14  Exhaust fan PWM (2x Noctua NF-F12 PWM, 12 V from Mean Well DDR-15G-12, wired in parallel)
+#   GPIO39  Exhaust fan tach (input only, 10k pull-up to 3V3; one fan's tach wire)
+
+sensor:
+  - platform: scd4x
+    address: 0x62
+    update_interval: 60s
+    co2:
+      id: co2
+      name: CO2
+    temperature:
+      name: SCD41 temperature
+      entity_category: diagnostic
+    humidity:
+      name: SCD41 humidity
+      entity_category: diagnostic
+
+  - platform: pulse_counter
+    pin:
+      number: GPIO39
+      mode: INPUT
+    name: Exhaust fan speed
+    unit_of_measurement: RPM
+    update_interval: 30s
+    filters:
+      - multiply: 0.5
+
+output:
+  - platform: ledc
+    id: exhaust_pwm
+    pin: GPIO14
+    frequency: 25000Hz
+
+fan:
+  - platform: speed
+    id: exhaust_fan
+    name: Exhaust fans
+    output: exhaust_pwm
+    restore_mode: ALWAYS_ON
+
+number:
+  - platform: template
+    id: temp_setpoint
+    name: Temperature setpoint
+    entity_category: config
+    unit_of_measurement: "°C"
+    min_value: 18
+    max_value: 32
+    step: 0.5
+    optimistic: true
+    restore_value: true
+    initial_value: 26
+
+  - platform: template
+    id: rh_limit
+    name: Humidity limit
+    entity_category: config
+    unit_of_measurement: "%"
+    min_value: 50
+    max_value: 90
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 75
+
+  - platform: template
+    id: exhaust_min
+    name: Exhaust minimum duty
+    entity_category: config
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 5
+    optimistic: true
+    restore_value: true
+    initial_value: 25
+
+switch:
+  - platform: template
+    id: exhaust_auto
+    name: Exhaust auto
+    icon: mdi:thermostat-auto
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+interval:
+  # Local thermostat: minimum air exchange, +25 % duty per °C above setpoint, humidity override.
+  - interval: 30s
+    then:
+      - lambda: |-
+          if (!id(exhaust_auto).state) return;
+          float duty = id(exhaust_min).state / 100.0f;
+          float t = id(tier_temp).state;
+          float rh = id(tier_rh).state;
+          if (isnan(t)) {
+            duty = 1.0f;                                   // sensor lost: fail safe to full ventilation
+          } else {
+            duty = std::max(duty, duty + (t - id(temp_setpoint).state) * 0.25f);
+          }
+          if (!isnan(rh) && rh > id(rh_limit).state) duty = std::max(duty, 0.8f);
+          duty = std::max(0.0f, std::min(1.0f, duty));
+          auto call = id(exhaust_fan).turn_on();
+          call.set_speed((int) roundf(duty * 100.0f));
+          call.perform();

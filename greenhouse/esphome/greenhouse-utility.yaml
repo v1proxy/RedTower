@@ -1,0 +1,401 @@
+# Greenhouse Utility node (base bay): reservoir, pump, 3 zone valves, leak / door / safety inputs.
+# All water-safety interlocks run here, locally. Home Assistant can only *request* watering
+# through the water_zone action; it can never switch the pump directly.
+#
+# Pin map (Olimex ESP32-POE-ISO)
+#   GPIO13 SDA / GPIO16 SCL  I2C: MCP23017 (0x20) inputs, VL53L0X (0x29) reservoir level
+#   GPIO14                   1-Wire: DS18B20 water temperature (4k7 pull-up)
+#   GPIO32                   Pump MOSFET        (SEAFLO 21 series 24 V diaphragm pump)
+#   GPIO33 / GPIO4 / GPIO2   Zone A / B / C solenoids (U.S. Solid 1/4 in NC 24 V), HiLetgo 4-ch MOSFET board
+#   GPIO5 TX / GPIO36 RX     UART to PZEM-004T v3 energy meter (whole-cabinet AC)
+#   GPIO15                   Humidifier relay (ultrasonic unit ducted into the lane)
+#   MCP23017 A0..A7          leak base, leak A, leak B, leak C, doors chain, reservoir-low float,
+#                            safety relay status, spare
+
+substitutions:
+  node_name: greenhouse-utility
+  friendly_name: Greenhouse Utility
+  reservoir_litres: "30"      # Class A Customs 8 gal RV tank, 30 x 10 x 7 in
+  dist_empty_mm: "260"        # ToF to float puck when reservoir is empty (measure after install)
+  dist_full_mm: "40"          # ToF to float puck when full
+  flow_a_ml_min: "441"        # 14 emitters x 0.5 GPH (31.5 mL/min each)
+  flow_b_ml_min: "315"        # 10 emitters
+  flow_c_ml_min: "315"        # 10 emitters
+
+packages:
+  base: !include common/base.yaml
+
+i2c:
+  sda: GPIO13
+  scl: GPIO16
+  frequency: 100kHz
+  scan: true
+
+mcp23017:
+  - id: mcp
+    address: 0x20
+
+uart:
+  id: pzem_uart
+  tx_pin: GPIO5
+  rx_pin: GPIO36
+  baud_rate: 9600
+
+modbus:
+  uart_id: pzem_uart
+
+one_wire:
+  - platform: gpio
+    pin: GPIO14
+
+globals:
+  - id: leak_lockout
+    type: bool
+    restore_value: true
+    initial_value: "false"
+  - id: active_zone
+    type: int
+    initial_value: "0"
+  - id: sec_a
+    type: float
+    restore_value: true
+    initial_value: "0"
+  - id: sec_b
+    type: float
+    restore_value: true
+    initial_value: "0"
+  - id: sec_c
+    type: float
+    restore_value: true
+    initial_value: "0"
+
+api:
+  actions:
+    # Called from HA: esphome.greenhouse_utility_water_zone  {zone: 1..3, seconds: N}
+    - action: water_zone
+      variables:
+        zone: int
+        seconds: int
+      then:
+        - script.execute:
+            id: water_zone
+            zone: !lambda "return zone;"
+            seconds: !lambda "return seconds;"
+    - action: stop_watering
+      then:
+        - script.execute: stop_watering
+
+switch:
+  - platform: gpio
+    id: pump
+    pin: GPIO32
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute: pump_watchdog
+    on_turn_off:
+      - script.stop: pump_watchdog
+  - platform: gpio
+    id: valve_a
+    pin: GPIO33
+    internal: true
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    id: valve_b
+    pin: GPIO4
+    internal: true
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    id: valve_c
+    pin: GPIO2
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: humidifier
+    name: Humidifier
+    pin: GPIO15
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute: humidifier_watchdog
+    on_turn_off:
+      - script.stop: humidifier_watchdog
+
+number:
+  - platform: template
+    id: max_run_s
+    name: Max watering run
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 10
+    max_value: 240
+    step: 5
+    optimistic: true
+    restore_value: true
+    initial_value: 180
+  - platform: template
+    id: default_run_s
+    name: Default watering run
+    entity_category: config
+    unit_of_measurement: s
+    min_value: 5
+    max_value: 240
+    step: 5
+    optimistic: true
+    restore_value: true
+    initial_value: 60
+
+script:
+  - id: water_zone
+    mode: queued
+    max_runs: 3
+    parameters:
+      zone: int
+      seconds: int
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(leak_lockout) || id(any_leak).state || id(reservoir_low).state
+                     || id(safety_tripped).state || zone < 1 || zone > 3 || seconds <= 0;
+          then:
+            - logger.log:
+                level: WARN
+                format: "Watering zone %d refused by interlock"
+                args: [zone]
+          else:
+            - lambda: |-
+                id(valve_a).turn_off(); id(valve_b).turn_off(); id(valve_c).turn_off();
+                if (zone == 1) id(valve_a).turn_on();
+                else if (zone == 2) id(valve_b).turn_on();
+                else id(valve_c).turn_on();
+                id(active_zone) = zone;
+                id(watering_zone_sensor).publish_state(zone);
+            - delay: 500ms                       # valve opens before the pump starts
+            - switch.turn_on: pump
+            - delay: !lambda "return (uint32_t) std::min(seconds, (int) id(max_run_s).state) * 1000;"
+            - switch.turn_off: pump
+            - delay: 2s                          # bleed pressure through the emitters
+            - lambda: |-
+                float s = std::min(seconds, (int) id(max_run_s).state);
+                if (zone == 1) id(sec_a) += s; else if (zone == 2) id(sec_b) += s; else id(sec_c) += s;
+                id(valve_a).turn_off(); id(valve_b).turn_off(); id(valve_c).turn_off();
+                id(active_zone) = 0;
+                id(watering_zone_sensor).publish_state(0);
+
+  - id: stop_watering
+    then:
+      - script.stop: water_zone
+      - switch.turn_off: pump
+      - switch.turn_off: valve_a
+      - switch.turn_off: valve_b
+      - switch.turn_off: valve_c
+      - lambda: |-
+          id(active_zone) = 0;
+          id(watering_zone_sensor).publish_state(0);
+
+  - id: humidifier_watchdog
+    mode: restart
+    then:
+      - delay: 30min                             # hard cap so a stuck call cannot fog the cabinet
+      - switch.turn_off: humidifier
+      - logger.log:
+          level: WARN
+          format: "Humidifier watchdog tripped"
+
+  - id: pump_watchdog
+    mode: restart
+    then:
+      - delay: 300s                              # hard cap, independent of the script logic
+      - logger.log:
+          level: ERROR
+          format: "Pump watchdog tripped"
+      - script.execute: stop_watering
+
+binary_sensor:
+  - platform: gpio
+    id: leak_base
+    name: Leak base tray
+    device_class: moisture
+    pin: {mcp23xxx: mcp, number: 0, mode: {input: true, pullup: true}, inverted: true}
+    filters: [delayed_on: 2s]
+  - platform: gpio
+    id: leak_a
+    name: Leak Tier A tray
+    device_class: moisture
+    pin: {mcp23xxx: mcp, number: 1, mode: {input: true, pullup: true}, inverted: true}
+    filters: [delayed_on: 2s]
+  - platform: gpio
+    id: leak_b
+    name: Leak Tier B tray
+    device_class: moisture
+    pin: {mcp23xxx: mcp, number: 2, mode: {input: true, pullup: true}, inverted: true}
+    filters: [delayed_on: 2s]
+  - platform: gpio
+    id: leak_c
+    name: Leak Tier C tray
+    device_class: moisture
+    pin: {mcp23xxx: mcp, number: 3, mode: {input: true, pullup: true}, inverted: true}
+    filters: [delayed_on: 2s]
+  - platform: gpio
+    id: doors_open
+    name: Doors
+    device_class: door                           # 4 reed switches in series: any door open = on
+    pin: {mcp23xxx: mcp, number: 4, mode: {input: true, pullup: true}}
+    filters: [delayed_on_off: 100ms]
+  - platform: gpio
+    id: reservoir_low
+    name: Reservoir low (float)
+    device_class: problem
+    pin: {mcp23xxx: mcp, number: 5, mode: {input: true, pullup: true}, inverted: true}
+    filters: [delayed_on_off: 3s]
+    on_press:
+      - script.execute: stop_watering
+  - platform: gpio
+    id: safety_tripped
+    name: Safety circuit tripped
+    device_class: safety                         # safety relay aux contact closes when healthy
+    pin: {mcp23xxx: mcp, number: 6, mode: {input: true, pullup: true}}
+    on_press:
+      - script.execute: stop_watering
+
+  - platform: template
+    id: any_leak
+    name: Leak detected
+    device_class: moisture
+    lambda: |-
+      return id(leak_base).state || id(leak_a).state || id(leak_b).state || id(leak_c).state;
+    on_press:
+      - lambda: "id(leak_lockout) = true;"
+      - script.execute: stop_watering
+
+  - platform: template
+    name: Leak lockout
+    device_class: problem
+    lambda: "return id(leak_lockout);"
+
+  - platform: template
+    name: Watering active
+    device_class: running
+    lambda: "return id(pump).state;"
+
+button:
+  - platform: template
+    name: Clear leak lockout
+    icon: mdi:water-check
+    on_press:
+      - if:
+          condition:
+            binary_sensor.is_off: any_leak
+          then:
+            - lambda: "id(leak_lockout) = false;"
+          else:
+            - logger.log:
+                level: WARN
+                format: "Lockout not cleared: a probe is still wet"
+  - platform: template
+    name: Water Tier A
+    icon: mdi:sprinkler
+    on_press:
+      - script.execute: {id: water_zone, zone: 1, seconds: !lambda "return (int) id(default_run_s).state;"}
+  - platform: template
+    name: Water Tier B
+    icon: mdi:sprinkler
+    on_press:
+      - script.execute: {id: water_zone, zone: 2, seconds: !lambda "return (int) id(default_run_s).state;"}
+  - platform: template
+    name: Water Tier C
+    icon: mdi:sprinkler
+    on_press:
+      - script.execute: {id: water_zone, zone: 3, seconds: !lambda "return (int) id(default_run_s).state;"}
+  - platform: template
+    name: Stop watering
+    icon: mdi:water-off
+    on_press:
+      - script.execute: stop_watering
+
+sensor:
+  - platform: vl53l0x
+    id: res_dist
+    name: Reservoir float distance
+    entity_category: diagnostic
+    address: 0x29
+    long_range: false
+    update_interval: 30s
+    unit_of_measurement: mm
+    filters:
+      - multiply: 1000                           # component reports metres
+      - median:
+          window_size: 7
+          send_every: 2
+
+  - platform: template
+    id: res_level
+    name: Reservoir level
+    unit_of_measurement: "%"
+    icon: mdi:water-percent
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      float d = id(res_dist).state;
+      if (isnan(d)) return NAN;
+      float pct = (${dist_empty_mm} - d) / (${dist_empty_mm} - ${dist_full_mm}) * 100.0f;
+      return std::max(0.0f, std::min(100.0f, pct));
+
+  - platform: template
+    name: Reservoir volume
+    unit_of_measurement: L
+    device_class: volume_storage
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: |-
+      if (isnan(id(res_level).state)) return NAN;
+      return id(res_level).state / 100.0f * ${reservoir_litres};
+
+  - platform: pzemac
+    update_interval: 30s
+    voltage:
+      name: Cabinet voltage
+    current:
+      name: Cabinet current
+    power:
+      name: Cabinet power
+    energy:
+      name: Cabinet energy
+      filters:
+        - multiply: 0.001        # Wh -> kWh for the Energy dashboard
+      unit_of_measurement: kWh
+
+  - platform: dallas_temp
+    name: Water temperature
+    update_interval: 60s
+
+  - platform: template
+    id: watering_zone_sensor
+    name: Watering zone
+    icon: mdi:sprinkler-variant
+    accuracy_decimals: 0
+    update_interval: never
+
+  - platform: template
+    name: Water delivered today
+    unit_of_measurement: mL
+    device_class: volume
+    state_class: total_increasing
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      return id(sec_a) / 60.0f * ${flow_a_ml_min}
+           + id(sec_b) / 60.0f * ${flow_b_ml_min}
+           + id(sec_c) / 60.0f * ${flow_c_ml_min};
+
+time:
+  - id: !extend sntp_time
+    on_time:
+      - seconds: 0
+        minutes: 0
+        hours: 0
+        then:
+          - lambda: "id(sec_a) = 0; id(sec_b) = 0; id(sec_c) = 0;"

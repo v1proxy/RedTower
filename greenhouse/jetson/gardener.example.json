@@ -1,0 +1,277 @@
+{
+ "anthropic_api_key": "sk-ant-REPLACE",
+ "model": "claude-haiku-5-5",
+ "period_minutes": 60,
+ "journal": "/opt/greenhouse/journal.jsonl",
+ "journal_hours": 6,
+ "journal_limit": 12,
+ "escalations": "/opt/greenhouse/escalations.jsonl",
+ "rates": {
+  "in": 0.1,
+  "out": 0.5,
+  "cache_read": 0.01,
+  "cache_write": 0.2
+ },
+ "ha": {
+  "url": "http://192.168.10.10:8123",
+  "token": "REPLACE_WITH_LONG_LIVED_TOKEN",
+  "notify": "notify"
+ },
+ "mqtt": {
+  "host": "192.168.10.10",
+  "user": "greenhouse",
+  "password": "CHANGE_ME"
+ },
+ "rule_loop": {
+  "period_minutes": 5,
+  "requiet_minutes": 60,
+  "bands": {
+   "air_temp_c": [
+    15.0,
+    33.0
+   ],
+   "humidity_pct": [
+    30.0,
+    90.0
+   ],
+   "vpd_kpa": [
+    0.4,
+    2.0
+   ],
+   "median_soil_pct": [
+    25.0,
+    75.0
+   ],
+   "leaf_air_delta_c": [
+    -10.0,
+    2.5
+   ]
+  }
+ },
+ "plants": [
+  {
+   "id": "a01",
+   "label": "A01",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "a02",
+   "label": "A02",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "a03",
+   "label": "A03",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "a04",
+   "label": "A04",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "a05",
+   "label": "A05",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "a06",
+   "label": "A06",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "a07",
+   "label": "A07",
+   "tier": "a",
+   "species": "Capsicum annuum (compact)",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b01",
+   "label": "B01",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b02",
+   "label": "B02",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b03",
+   "label": "B03",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b04",
+   "label": "B04",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b05",
+   "label": "B05",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b06",
+   "label": "B06",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b07",
+   "label": "B07",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b08",
+   "label": "B08",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b09",
+   "label": "B09",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "b10",
+   "label": "B10",
+   "tier": "b",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c01",
+   "label": "C01",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c02",
+   "label": "C02",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c03",
+   "label": "C03",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c04",
+   "label": "C04",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c05",
+   "label": "C05",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c06",
+   "label": "C06",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c07",
+   "label": "C07",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c08",
+   "label": "C08",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c09",
+   "label": "C09",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  },
+  {
+   "id": "c10",
+   "label": "C10",
+   "tier": "c",
+   "species": "TBD: set per pot",
+   "stage": "seedling",
+   "planted": "2026-10-01"
+  }
+ ],
+ "tender": {
+  "model": "claude-sonnet-5-5",
+  "allow_cutting": false,
+  "min_cut_confidence": 0.7,
+  "approach_mm": 40,
+  "journal": "/opt/greenhouse/tender_journal.jsonl",
+  "records": "/opt/greenhouse/plant_records.json"
+ }
+}

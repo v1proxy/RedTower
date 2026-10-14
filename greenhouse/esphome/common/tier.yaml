@@ -1,0 +1,251 @@
+# Shared tier hardware: sensors, grow light with local photoperiod schedule, circulation fan.
+# Expects substitutions: tier (A/B/C), light_on_hour, photoperiod_h, light_max_pct
+#
+# Pin map (Olimex ESP32-POE-ISO)
+#   GPIO13 SDA / GPIO16 SCL  I2C bus (UEXT)       -> 3x ADS1115, SHT45, AS7341, MLX90614
+#   GPIO4                    LED dim PWM -> 2N2222A open collector across HLG DIM+/DIM-
+#                            (Tier A: HLG-80H-C1050B; Tiers B/C: HLG-60H-C700B)
+#   GPIO33                   LED driver AC relay module, 3.3 V trigger (cuts the driver off at night)
+#   GPIO32                   Circulation fan PWM (Noctua NF-A8 PWM, 12 V from Mean Well DDR-15G-12)
+#   GPIO36                   Circulation fan tach (input only, 10k pull-up to 3V3 on the board)
+
+i2c:
+  sda: GPIO13
+  scl: GPIO16
+  frequency: 100kHz
+  scan: true
+
+ads1115:
+  - address: 0x48
+    id: ads_1
+  - address: 0x49
+    id: ads_2
+  - address: 0x4A
+    id: ads_3
+
+sensor:
+  # --- Air ---
+  - platform: sht4x
+    address: 0x44
+    update_interval: 30s
+    temperature:
+      id: tier_temp
+      name: Air temperature
+    humidity:
+      id: tier_rh
+      name: Air humidity
+
+  # --- Canopy temperature (leaf-to-air delta = early water-stress signal) ---
+  - platform: mlx90614
+    address: 0x5A
+    update_interval: 30s
+    object:
+      id: canopy_temp
+      name: Canopy temperature
+    ambient:
+      name: IR sensor ambient
+      entity_category: diagnostic
+
+  # --- VPD, the variable the Sol biodome steers on ---
+  - platform: template
+    id: vpd
+    name: VPD
+    unit_of_measurement: kPa
+    device_class: pressure
+    state_class: measurement
+    accuracy_decimals: 2
+    update_interval: 60s
+    lambda: |-
+      float t = id(tier_temp).state, rh = id(tier_rh).state;
+      if (isnan(t) || isnan(rh)) return NAN;
+      float svp = 0.61078f * expf(17.27f * t / (t + 237.3f));   // kPa at air temperature
+      return svp * (1.0f - rh / 100.0f);
+
+  - platform: template
+    id: leaf_vpd
+    name: Leaf VPD
+    unit_of_measurement: kPa
+    device_class: pressure
+    state_class: measurement
+    accuracy_decimals: 2
+    update_interval: 60s
+    lambda: |-
+      float lt = id(canopy_temp).state, t = id(tier_temp).state, rh = id(tier_rh).state;
+      if (isnan(lt) || isnan(t) || isnan(rh)) return NAN;
+      float svp_leaf = 0.61078f * expf(17.27f * lt / (lt + 237.3f));
+      float vp_air = 0.61078f * expf(17.27f * t / (t + 237.3f)) * rh / 100.0f;
+      return svp_leaf - vp_air;                                  // what the leaf actually feels
+
+  - platform: template
+    id: leaf_air_delta
+    name: Leaf to air delta
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 60s
+    lambda: |-
+      if (isnan(id(canopy_temp).state) || isnan(id(tier_temp).state)) return NAN;
+      return id(canopy_temp).state - id(tier_temp).state;
+
+  # --- Light check (relative, used to detect a failed LED bar or driver) ---
+  - platform: as7341
+    address: 0x39
+    update_interval: 60s
+    gain: X8
+    atime: 29
+    astep: 599
+    f4:
+      name: Light 515nm
+      entity_category: diagnostic
+    f8:
+      name: Light 680nm
+      entity_category: diagnostic
+    clear:
+      id: light_clear
+      name: Light level (clear)
+    nir:
+      name: Light NIR
+      entity_category: diagnostic
+
+  # --- Circulation fan tach ---
+  - platform: pulse_counter
+    pin:
+      number: GPIO36
+      mode: INPUT
+    id: circ_rpm
+    name: Circulation fan speed
+    unit_of_measurement: RPM
+    update_interval: 30s
+    filters:
+      - multiply: 0.5      # 2 pulses per revolution
+
+power_supply:
+  - id: led_ac
+    pin: GPIO33
+    enable_time: 200ms
+    keep_on_time: 10s
+
+output:
+  - platform: ledc
+    id: led_pwm
+    pin: GPIO4
+    frequency: 1000Hz
+    inverted: true        # transistor ON shorts DIM+/DIM- = minimum; so 100% light = transistor OFF
+    min_power: 0.10       # HLG B-type bottom of dimming range
+    zero_means_zero: true
+    power_supply: led_ac
+
+  - platform: ledc
+    id: circ_pwm
+    pin: GPIO32
+    frequency: 25000Hz
+    # Direct 3.3 V drive works with most 4-wire fans. If you buffer through an NPN, add: inverted: true
+
+light:
+  - platform: monochromatic
+    id: grow_light
+    name: Grow light
+    output: led_pwm
+    gamma_correct: 1.0    # linear: brightness % maps to PPFD %
+    default_transition_length: 2s
+    restore_mode: ALWAYS_OFF   # the schedule below turns it on within a minute of boot
+
+fan:
+  - platform: speed
+    id: circ_fan
+    name: Circulation fan
+    output: circ_pwm
+    restore_mode: ALWAYS_ON
+
+number:
+  - platform: template
+    id: on_hour
+    name: Lights on hour
+    entity_category: config
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: ${light_on_hour}
+
+  - platform: template
+    id: photoperiod
+    name: Photoperiod
+    entity_category: config
+    unit_of_measurement: h
+    min_value: 0
+    max_value: 20
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: ${photoperiod_h}
+
+  - platform: template
+    id: max_brightness
+    name: Light intensity
+    entity_category: config
+    unit_of_measurement: "%"
+    min_value: 10
+    max_value: 100
+    step: 5
+    optimistic: true
+    restore_value: true
+    initial_value: ${light_max_pct}
+
+  - platform: template
+    id: circ_duty
+    name: Circulation fan duty
+    entity_category: config
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    step: 5
+    optimistic: true
+    restore_value: true
+    initial_value: 40
+    on_value:
+      - fan.turn_on:
+          id: circ_fan
+          speed: !lambda 'return (int) x;'
+
+switch:
+  - platform: template
+    id: schedule_enabled
+    name: Light schedule
+    icon: mdi:calendar-clock
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - fan.turn_on:
+          id: circ_fan
+          speed: !lambda 'return (int) id(circ_duty).state;'
+
+interval:
+  # Local photoperiod: 30-minute sunrise and sunset ramps. Turn "Light schedule" off in HA to override.
+  - interval: 60s
+    then:
+      - lambda: |-
+          auto t = id(sntp_time).now();
+          if (!t.is_valid() || !id(schedule_enabled).state) return;
+          int start = (int) id(on_hour).state * 60;
+          int dur = (int) id(photoperiod).state * 60;
+          int now_m = t.hour * 60 + t.minute;
+          int rel = (now_m - start + 1440) % 1440;
+          bool should_be_on = rel < dur;
+          bool is_on = id(grow_light).remote_values.is_on();
+          if (should_be_on && !is_on) {
+            auto call = id(grow_light).turn_on();
+            call.set_brightness(id(max_brightness).state / 100.0f);
+            call.set_transition_length(rel < 2 ? 1800000 : 10000);  // sunrise at start, quick on after a reboot
+            call.perform();
+          } else if (!should_be_on && is_on) {
+            auto call = id(grow_light).turn_off();
+            call.set_transition_length(1800000);                    // 30 min sunset
+            call.perform();
+          }

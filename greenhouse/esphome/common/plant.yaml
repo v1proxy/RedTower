@@ -1,0 +1,35 @@
+# One capacitive soil-moisture probe on one ADS1115 channel.
+# vars: pid (e.g. a01), label (e.g. "A01"), ads (hub id), mux (A0_GND..A3_GND),
+#       dry_v (probe voltage in dry mix), wet_v (probe voltage in saturated mix)
+# Calibrate dry_v / wet_v per probe: read "<label> probe voltage" in dry potting mix,
+# then again right after a full watering, and paste the two numbers into the node file.
+
+sensor:
+  - platform: ads1115
+    ads1115_id: ${ads}
+    multiplexer: ${mux}
+    gain: 4.096
+    id: ${pid}_v
+    name: "${label} probe voltage"
+    entity_category: diagnostic
+    unit_of_measurement: V
+    accuracy_decimals: 3
+    update_interval: 12s
+    filters:
+      - median:
+          window_size: 5
+          send_every: 5          # one clean value per minute
+
+  - platform: template
+    id: ${pid}_moisture
+    name: "${label} moisture"
+    unit_of_measurement: "%"
+    device_class: moisture
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      float v = id(${pid}_v).state;
+      if (isnan(v)) return NAN;
+      float pct = (${dry_v} - v) / (${dry_v} - ${wet_v}) * 100.0f;
+      return std::max(0.0f, std::min(100.0f, pct));

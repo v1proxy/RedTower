@@ -1,0 +1,135 @@
+# Greenhouse Tier B: 10 herbs (4.5 in pots)
+# Flash once over USB, then OTA over the IoT VLAN.
+
+substitutions:
+  node_name: greenhouse-tier-b
+  friendly_name: Greenhouse Tier B
+  tier: "B"
+  light_on_hour: "6"
+  photoperiod_h: "16"
+  light_max_pct: "100"
+
+packages:
+  base: !include common/base.yaml
+  tier: !include common/tier.yaml
+  plant_b01: !include
+    file: common/plant.yaml
+    vars:
+      pid: b01
+      label: "B01"
+      ads: ads_1
+      mux: A0_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b02: !include
+    file: common/plant.yaml
+    vars:
+      pid: b02
+      label: "B02"
+      ads: ads_1
+      mux: A1_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b03: !include
+    file: common/plant.yaml
+    vars:
+      pid: b03
+      label: "B03"
+      ads: ads_1
+      mux: A2_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b04: !include
+    file: common/plant.yaml
+    vars:
+      pid: b04
+      label: "B04"
+      ads: ads_1
+      mux: A3_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b05: !include
+    file: common/plant.yaml
+    vars:
+      pid: b05
+      label: "B05"
+      ads: ads_2
+      mux: A0_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b06: !include
+    file: common/plant.yaml
+    vars:
+      pid: b06
+      label: "B06"
+      ads: ads_2
+      mux: A1_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b07: !include
+    file: common/plant.yaml
+    vars:
+      pid: b07
+      label: "B07"
+      ads: ads_2
+      mux: A2_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b08: !include
+    file: common/plant.yaml
+    vars:
+      pid: b08
+      label: "B08"
+      ads: ads_2
+      mux: A3_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b09: !include
+    file: common/plant.yaml
+    vars:
+      pid: b09
+      label: "B09"
+      ads: ads_3
+      mux: A0_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+  plant_b10: !include
+    file: common/plant.yaml
+    vars:
+      pid: b10
+      label: "B10"
+      ads: ads_3
+      mux: A1_GND
+      dry_v: "2.20"     # calibrate
+      wet_v: "1.00"     # calibrate
+
+sensor:
+  # Zone watering decisions use the median, so one failed or dry-outlier probe cannot flood the tier.
+  - platform: template
+    id: median_moisture
+    name: Median moisture
+    unit_of_measurement: "%"
+    device_class: moisture
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      std::vector<float> v = {id(b01_moisture).state, id(b02_moisture).state, id(b03_moisture).state, id(b04_moisture).state, id(b05_moisture).state, id(b06_moisture).state, id(b07_moisture).state, id(b08_moisture).state, id(b09_moisture).state, id(b10_moisture).state};
+      v.erase(std::remove_if(v.begin(), v.end(), [](float f) { return std::isnan(f); }), v.end());
+      if (v.size() < 3) return NAN;
+      std::sort(v.begin(), v.end());
+      size_t m = v.size() / 2;
+      return (v.size() % 2) ? v[m] : (v[m - 1] + v[m]) / 2.0f;
+
+  - platform: template
+    name: Driest plant moisture
+    unit_of_measurement: "%"
+    device_class: moisture
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      std::vector<float> v = {id(b01_moisture).state, id(b02_moisture).state, id(b03_moisture).state, id(b04_moisture).state, id(b05_moisture).state, id(b06_moisture).state, id(b07_moisture).state, id(b08_moisture).state, id(b09_moisture).state, id(b10_moisture).state};
+      float lo = NAN;
+      for (float f : v) if (!std::isnan(f) && (std::isnan(lo) || f < lo)) lo = f;
+      return lo;

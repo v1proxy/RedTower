@@ -1,0 +1,317 @@
+{
+ "mqtt": {
+  "host": "192.168.10.10",
+  "user": "greenhouse",
+  "password": "CHANGE_ME"
+ },
+ "snapshot_dir": "/opt/greenhouse/snapshots",
+ "flag_threshold": 40,
+ "overview": {
+  "camera": "/dev/video0",
+  "note": "160 deg camera in the top back-left corner; ROIs are pixel boxes measured once after mounting"
+ },
+ "closeups": {
+  "source": "d405",
+  "dir": "/opt/greenhouse/closeups",
+  "note": "written by robot_supervisor during inspect runs"
+ },
+ "plants": [
+  {
+   "id": "a01",
+   "label": "A01",
+   "tier": "a",
+   "roi": [
+    60,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "a02",
+   "label": "A02",
+   "tier": "a",
+   "roi": [
+    246,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "a03",
+   "label": "A03",
+   "tier": "a",
+   "roi": [
+    432,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "a04",
+   "label": "A04",
+   "tier": "a",
+   "roi": [
+    618,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "a05",
+   "label": "A05",
+   "tier": "a",
+   "roi": [
+    804,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "a06",
+   "label": "A06",
+   "tier": "a",
+   "roi": [
+    990,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "a07",
+   "label": "A07",
+   "tier": "a",
+   "roi": [
+    1176,
+    240,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b01",
+   "label": "B01",
+   "tier": "b",
+   "roi": [
+    1362,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b02",
+   "label": "B02",
+   "tier": "b",
+   "roi": [
+    1548,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b03",
+   "label": "B03",
+   "tier": "b",
+   "roi": [
+    1734,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b04",
+   "label": "B04",
+   "tier": "b",
+   "roi": [
+    60,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b05",
+   "label": "B05",
+   "tier": "b",
+   "roi": [
+    246,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b06",
+   "label": "B06",
+   "tier": "b",
+   "roi": [
+    432,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b07",
+   "label": "B07",
+   "tier": "b",
+   "roi": [
+    618,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b08",
+   "label": "B08",
+   "tier": "b",
+   "roi": [
+    804,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b09",
+   "label": "B09",
+   "tier": "b",
+   "roi": [
+    990,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "b10",
+   "label": "B10",
+   "tier": "b",
+   "roi": [
+    1176,
+    700,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c01",
+   "label": "C01",
+   "tier": "c",
+   "roi": [
+    1362,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c02",
+   "label": "C02",
+   "tier": "c",
+   "roi": [
+    1548,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c03",
+   "label": "C03",
+   "tier": "c",
+   "roi": [
+    1734,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c04",
+   "label": "C04",
+   "tier": "c",
+   "roi": [
+    60,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c05",
+   "label": "C05",
+   "tier": "c",
+   "roi": [
+    246,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c06",
+   "label": "C06",
+   "tier": "c",
+   "roi": [
+    432,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c07",
+   "label": "C07",
+   "tier": "c",
+   "roi": [
+    618,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c08",
+   "label": "C08",
+   "tier": "c",
+   "roi": [
+    804,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c09",
+   "label": "C09",
+   "tier": "c",
+   "roi": [
+    990,
+    1160,
+    180,
+    300
+   ]
+  },
+  {
+   "id": "c10",
+   "label": "C10",
+   "tier": "c",
+   "roi": [
+    1176,
+    1160,
+    180,
+    300
+   ]
+  }
+ ]
+}

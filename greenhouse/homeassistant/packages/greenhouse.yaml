@@ -1,0 +1,419 @@
+# Home Assistant package: greenhouse control and alerts.
+# Enable packages in configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+# Entity IDs assume the ESPHome node names in ../esphome. Replace notify.notify with your phone's
+# notify service (e.g. notify.mobile_app_<phone>).
+
+input_number:
+  gh_threshold_a:
+    name: Tier A water below
+    min: 15
+    max: 70
+    step: 1
+    initial: 35
+    unit_of_measurement: "%"
+    icon: mdi:water-alert
+  gh_threshold_b:
+    name: Tier B water below
+    min: 15
+    max: 70
+    step: 1
+    initial: 40
+    unit_of_measurement: "%"
+    icon: mdi:water-alert
+  gh_threshold_c:
+    name: Tier C water below
+    min: 15
+    max: 70
+    step: 1
+    initial: 40
+    unit_of_measurement: "%"
+    icon: mdi:water-alert
+  gh_run_a:
+    name: Tier A watering run
+    min: 10
+    max: 180
+    step: 5
+    initial: 120
+    unit_of_measurement: s
+  gh_run_b:
+    name: Tier B watering run
+    min: 10
+    max: 180
+    step: 5
+    initial: 60
+    unit_of_measurement: s
+  gh_run_c:
+    name: Tier C watering run
+    min: 10
+    max: 180
+    step: 5
+    initial: 60
+    unit_of_measurement: s
+
+input_boolean:
+  gh_auto_water:
+    name: Greenhouse auto watering
+    icon: mdi:sprinkler-variant
+    initial: true
+  gh_claude_autonomy:
+    name: Claude autonomy
+    icon: mdi:sprout-outline
+    initial: false        # turn on once you have watched a few cycles run in dry-run mode
+
+input_text:
+  gh_proposal_plant:
+    name: Pending tender proposal plant
+    max: 8
+    icon: mdi:sprout
+  gh_proposal_action:
+    name: Pending tender proposal action
+    max: 24
+    icon: mdi:content-cut
+
+input_datetime:
+  gh_last_water_a:
+    name: Tier A last watered
+    has_date: true
+    has_time: true
+  gh_last_water_b:
+    name: Tier B last watered
+    has_date: true
+    has_time: true
+  gh_last_water_c:
+    name: Tier C last watered
+    has_date: true
+    has_time: true
+
+template:
+  - binary_sensor:
+      - name: Greenhouse robot clear to run
+        unique_id: gh_robot_clear
+        icon: mdi:robot-industrial
+        state: >
+          {{ is_state('binary_sensor.greenhouse_utility_doors', 'off')
+             and is_state('binary_sensor.greenhouse_utility_watering_active', 'off')
+             and is_state('binary_sensor.greenhouse_utility_leak_detected', 'off')
+             and is_state('binary_sensor.greenhouse_utility_safety_circuit_tripped', 'off') }}
+
+automation:
+  - id: gh_zone_watering
+    alias: Greenhouse - zone watering
+    description: Water a tier when its median moisture drops below threshold (max once per hour per tier).
+    mode: queued
+    trigger:
+      - platform: time_pattern
+        minutes: "/15"
+    condition:
+      - condition: state
+        entity_id: input_boolean.gh_auto_water
+        state: "on"
+      - condition: time
+        after: "07:00:00"
+        before: "20:00:00"
+      - condition: not            # tolerates the robot entity not existing yet
+        conditions:
+          - condition: state
+            entity_id: binary_sensor.greenhouse_robot_busy
+            state: "on"
+    action:
+      - repeat:
+          for_each:
+            - { zone: 1, tier: a }
+            - { zone: 2, tier: b }
+            - { zone: 3, tier: c }
+          sequence:
+            - variables:
+                median: "{{ states('sensor.greenhouse_tier_' ~ repeat.item.tier ~ '_median_moisture') | float(-1) }}"
+                threshold: "{{ states('input_number.gh_threshold_' ~ repeat.item.tier) | float(0) }}"
+                since: "{{ as_timestamp(now()) - as_timestamp(states('input_datetime.gh_last_water_' ~ repeat.item.tier), 0) }}"
+            - if:
+                - condition: template
+                  value_template: "{{ median >= 0 and median < threshold and since > 3600 }}"
+              then:
+                - action: esphome.greenhouse_utility_water_zone
+                  data:
+                    zone: "{{ repeat.item.zone }}"
+                    seconds: "{{ states('input_number.gh_run_' ~ repeat.item.tier) | int }}"
+                - action: input_datetime.set_datetime
+                  target:
+                    entity_id: "input_datetime.gh_last_water_{{ repeat.item.tier }}"
+                  data:
+                    datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                - wait_template: "{{ is_state('binary_sensor.greenhouse_utility_watering_active', 'off') }}"
+                  timeout: "00:04:00"
+
+  - id: gh_leak_alert
+    alias: Greenhouse - leak alert
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.greenhouse_utility_leak_detected
+        to: "on"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse leak"
+          message: >
+            Leak detected. Pump locked out until you dry the tray and press
+            "Clear leak lockout".
+
+  - id: gh_reservoir_low
+    alias: Greenhouse - reservoir low
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.greenhouse_utility_reservoir_level
+        below: 20
+        for: "00:10:00"
+      - platform: state
+        entity_id: binary_sensor.greenhouse_utility_reservoir_low_float
+        to: "on"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse reservoir"
+          message: >
+            Reservoir at {{ states('sensor.greenhouse_utility_reservoir_level') }} %
+            ({{ states('sensor.greenhouse_utility_reservoir_volume') }} L). Refill soon.
+
+  - id: gh_dry_outlier
+    alias: Greenhouse - dry outlier plant
+    description: One plant far drier than its tier median usually means a blocked emitter or a failing plant.
+    trigger:
+      - platform: time_pattern
+        hours: "/1"
+    action:
+      - variables:
+          outliers: >
+            {% set ns = namespace(out=[]) %}
+            {% for tier in ['a','b','c'] %}
+              {% set med = states('sensor.greenhouse_tier_' ~ tier ~ '_median_moisture') | float(-1) %}
+              {% if med >= 0 %}
+                {% for s in states.sensor
+                     | selectattr('entity_id','match','sensor.greenhouse_tier_' ~ tier ~ '_' ~ tier ~ '\\d\\d_moisture$') %}
+                  {% if s.state | float(100) < med - 15 %}
+                    {% set ns.out = ns.out + [s.name ~ ' ' ~ s.state ~ '% (tier median ' ~ med | int ~ '%)'] %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.out }}
+      - condition: template
+        value_template: "{{ outliers | length > 0 }}"
+      - action: notify.notify
+        data:
+          title: "Greenhouse: check these plants"
+          message: "{{ outliers | join('\n') }}"
+
+  - id: gh_over_temp
+    alias: Greenhouse - over temperature
+    trigger:
+      - platform: numeric_state
+        entity_id:
+          - sensor.greenhouse_tier_a_air_temperature
+          - sensor.greenhouse_tier_b_air_temperature
+          - sensor.greenhouse_tier_c_air_temperature
+        above: 32
+        for: "00:15:00"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse too hot"
+          message: "{{ trigger.to_state.name }} is {{ trigger.to_state.state }} °C."
+
+  - id: gh_node_offline
+    alias: Greenhouse - node offline
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.greenhouse_tier_a_status
+          - binary_sensor.greenhouse_tier_b_status
+          - binary_sensor.greenhouse_tier_c_status
+          - binary_sensor.greenhouse_utility_status
+        to: "off"
+        for: "00:05:00"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse node offline"
+          message: "{{ trigger.to_state.name }} has been offline for 5 minutes. Local failsafes are still running."
+
+  - id: gh_morning_report
+    alias: Greenhouse - morning report
+    trigger:
+      - platform: time
+        at: "08:30:00"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse this morning"
+          message: >
+            Reservoir {{ states('sensor.greenhouse_utility_reservoir_level') }} % ·
+            Water yesterday-to-now {{ states('sensor.greenhouse_utility_water_delivered_today') }} mL ·
+            Median moisture A/B/C {{ states('sensor.greenhouse_tier_a_median_moisture') }} /
+            {{ states('sensor.greenhouse_tier_b_median_moisture') }} /
+            {{ states('sensor.greenhouse_tier_c_median_moisture') }} % ·
+            Plants flagged by vision: {{ states('sensor.greenhouse_vision_flagged_plants') }} ·
+            VPD A/B/C {{ states('sensor.greenhouse_tier_a_vpd') }} /
+            {{ states('sensor.greenhouse_tier_b_vpd') }} /
+            {{ states('sensor.greenhouse_tier_c_vpd') }} kPa ·
+            Claude: {{ states('sensor.greenhouse_claude_last_decision') }}
+
+  - id: gh_tender_proposal
+    alias: Greenhouse - tender wants to cut something
+    description: >
+      The per-plant tender proposes destructive actions rather than taking them, until you
+      set allow_cutting in the tender config. This is how the proposal reaches you.
+    trigger:
+      - platform: mqtt
+        topic: greenhouse/tender/proposal
+    action:
+      - variables:
+          p: "{{ trigger.payload_json }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.gh_proposal_plant
+        data:
+          value: "{{ p.plant_id }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.gh_proposal_action
+        data:
+          value: "{{ p.action }}"
+      - action: notify.notify
+        data:
+          title: "Greenhouse: {{ p.plant_id }} needs a decision"
+          message: >
+            Proposed {{ p.action }} at {{ p.candidate }}. {{ p.reason }}
+            {% if p.blocked %}(held back: {{ p.blocked }}){% endif %}
+            Run "Greenhouse approve tender proposal" to let it go ahead.
+
+  - id: gh_tender_attention
+    alias: Greenhouse - tender flagged a plant
+    trigger:
+      - platform: mqtt
+        topic: greenhouse/tender/attention
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse: look at {{ trigger.payload_json.plant_id }}"
+          message: >
+            {{ trigger.payload_json.reason }}
+            {% if trigger.payload_json.issues %}
+            Seen: {{ trigger.payload_json.issues | join(', ') }}
+            {% endif %}
+
+  - id: gh_tend_round
+    alias: Greenhouse - daily tending round
+    description: One pass over every pot, mid-morning, once the lights have been up a while.
+    trigger:
+      - platform: time
+        at: "09:47:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.gh_claude_autonomy
+        state: "on"
+      - condition: state
+        entity_id: binary_sensor.greenhouse_robot_clear_to_run
+        state: "on"
+    action:
+      - action: script.gh_robot_task
+        data:
+          task: tend
+          target: all
+
+  - id: gh_claude_stalled
+    alias: Greenhouse - Claude loop stalled
+    description: The tending loop publishes every 30 minutes; silence means the agent or the Jetson is down.
+    trigger:
+      - platform: state
+        entity_id: sensor.greenhouse_claude_last_decision
+        to: null
+        for: "02:00:00"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse: Claude is quiet"
+          message: >
+            No tending decision for two hours. The ESPHome nodes are still holding lights,
+            fans and watering on their own schedules.
+
+script:
+  gh_humidifier_off_after:
+    alias: Humidifier off after N minutes
+    mode: restart
+    fields:
+      minutes:
+        description: Minutes to run before switching off
+        example: 10
+    sequence:
+      - delay:
+          minutes: "{{ minutes | int(10) }}"
+      - action: switch.turn_off
+        target:
+          entity_id: switch.greenhouse_utility_humidifier
+
+  gh_robot_task:
+    alias: Greenhouse robot task
+    icon: mdi:robot-industrial
+    mode: single
+    fields:
+      task:
+        description: inspect | tend | harvest | prune | home
+        example: tend
+        selector:
+          select:
+            options: [inspect, tend, harvest, prune, home]
+      target:
+        description: Tier (A/B/C) or plant (e.g. C03)
+        example: B
+        selector:
+          text:
+    sequence:
+      - condition: state
+        entity_id: binary_sensor.greenhouse_robot_clear_to_run
+        state: "on"
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.gh_auto_water
+      - action: mqtt.publish
+        data:
+          topic: greenhouse/robot/cmd
+          payload: >
+            {"task": "{{ task }}", "target": "{{ target }}", "ts": "{{ now().isoformat() }}"}
+      - wait_template: "{{ is_state('binary_sensor.greenhouse_robot_busy', 'off') }}"
+        timeout: "00:30:00"
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.gh_auto_water
+
+  gh_tender_approve:
+    alias: Greenhouse approve tender proposal
+    icon: mdi:check-decagram
+    mode: single
+    description: >
+      Let the last proposed cut go ahead. The robot re-captures the plant and picks the best
+      candidate of that kind at the time it acts, rather than trusting a point measured
+      minutes ago, because a leaf that has moved is a leaf the old coordinate no longer finds.
+    sequence:
+      - condition: template
+        value_template: "{{ states('input_text.gh_proposal_plant') | length >= 3 }}"
+      - condition: state
+        entity_id: binary_sensor.greenhouse_robot_clear_to_run
+        state: "on"
+      - variables:
+          act: "{{ states('input_text.gh_proposal_action') }}"
+      - action: script.gh_robot_task
+        data:
+          task: "{{ 'prune' if act == 'pinch_tip' else 'harvest' }}"
+          target: "{{ states('input_text.gh_proposal_plant') }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.gh_proposal_plant
+        data:
+          value: ""
+
+# The compute node publishes these via MQTT discovery (see jetson/plant_vision.py and the design doc):
+#   binary_sensor.greenhouse_robot_busy
+#   sensor.greenhouse_vision_flagged_plants
+#   sensor.greenhouse_vision_<plant>_canopy_area / _greenness / _stress

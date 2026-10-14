@@ -1,0 +1,16 @@
+[Unit]
+Description=Claude tending loop for the Herb Tower
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=greenhouse
+WorkingDirectory=/opt/greenhouse
+ExecStart=/usr/bin/python3 /opt/greenhouse/claude_gardener.py
+Restart=always
+RestartSec=30
+# The loop is allowed to fail; the ESPHome nodes keep lights, fans and water safe on their own.
+
+[Install]
+WantedBy=multi-user.target

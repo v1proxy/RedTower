@@ -1,0 +1,17 @@
+[Unit]
+Description=Herb Tower rule loop, watches the bands between gardener runs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=greenhouse
+WorkingDirectory=/opt/greenhouse
+ExecStart=/usr/bin/python3 /opt/greenhouse/rule_loop.py
+Restart=always
+RestartSec=30
+# Costs nothing to run and actuates nothing. If it dies the gardener still runs hourly,
+# it just loses the early wake-up, so this is not on the safety path.
+
+[Install]
+WantedBy=multi-user.target
