@@ -14,6 +14,23 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.1.1 – 2026-10-18
+
+No design change. No generated output changes.
+
+### Added
+- `greenhouse/jetson/prototype/d405_fps.py`: separates the D405's real frame
+  rate from Python processing cost. Streams depth and colour at 848x480 @ 30,
+  reads the camera's own frame-rate and exposure metadata, then times
+  `rs.align` on the same frames.
+
+### Found while bringing up the Jetson
+- First run on the Jetson Orin Nano Super (JetPack 7.2.1, Ubuntu 24.04,
+  librealsense 2.59.1 from the RealSense apt repository, `pyrealsense2`
+  2.59.1 wheel in a venv): the D405 enumerates at USB 3.2 and delivers a true
+  30 fps with depth aligned to colour.
+- The ~20 fps that `d405_check.py` reports, here and on Windows in October, is
+  the script counting its own pipeline start-up, not the camera or the cable.
 ## 0.1.0 — 2026-10-17
 
 First parametric release. Up to here the repository described exactly one
