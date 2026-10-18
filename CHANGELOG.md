@@ -14,6 +14,26 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.1.2 – 2026-10-18
+
+No design change. No generated output changes.
+
+### Added
+- `greenhouse/jetson/prototype/d405_leaf.py`: close-range depth quality on a
+  real plant. Keeps the frame with the most pixels inside a working band and
+  reports fill (valid pixels over the object's filled silhouette), per-pixel
+  temporal noise over 15 frames, and range. Saves a depth map scaled to the
+  band, a side-by-side with colour, and the raw depth.
+
+### Found
+- The D405 works at the arm's distance. On a snake plant under ordinary room
+  light: 94 % fill and 0.79 mm temporal noise at 225-333 mm; 97 % fill and
+  2.26 mm at 339-525 mm. Noise scales close to distance squared, as stereo
+  should. October's Windows result (2 % valid) was the camera aimed at a room
+  with nothing inside its range.
+- Textureless surfaces such as a plain wall return no depth, because the D405
+  has no IR projector. A plain cabinet back will drop out of the depth image,
+  which isolates the plants rather than hurting.
 ## 0.1.1 – 2026-10-18
 
 No design change. No generated output changes.
