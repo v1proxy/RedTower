@@ -1,23 +1,58 @@
 # Claude Agentic Greenhouse
 
-**A fully automated, modular indoor greenhouse that an AI agent tends.**
-Parametric from a 600 mm closet bay to a 3 m room wall. Build the size your
-space allows, with only the modules you want, and the design solves itself.
+**I am bad at keeping plants alive. So I turned it into an engineering project.**
 
-![design version](https://img.shields.io/badge/design-0.1.0-1d4ed8)
-![license](https://img.shields.io/badge/license-see%20LICENSE-5b6770)
+An indoor greenhouse that an AI agent tends, written down so anyone can build
+one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
+space allows, with only the modules you want.
+
+![design version](https://img.shields.io/badge/design-0.1.3-1d4ed8)
+[![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 ---
 
-## What this is
+## Why this exists
 
-Most "smart garden" projects are a timer with a phone app. This one is built
-around a different premise: that the hard part of growing food indoors is not
-switching a pump on schedule, it is *deciding what the plants need*, and that
-decision is worth handing to something that can look at the plants, read the
-history, and reason about it.
+I am not good at growing plants. Left to me, they die: too much water, then
+too little, then the wrong light, and I only notice when it is too late.
 
-So the greenhouse senses more than it strictly needs to. Every pot has its own
+At some point the engineer in me stopped treating that as a personal failing
+and started treating it as a requirements problem. If I cannot be trusted to
+remember to water, measure the soil. If I cannot read a leaf, point a camera at
+it. If I cannot decide what a plant needs, hand the decision to something that
+reads every sensor, every day, and never forgets. The only way I was ever going
+to keep plants alive was to make keeping them alive a complex engineering
+project.
+
+This repository is that project. I needed one place to keep the frame, the
+firmware, the code and the drawings together, and while I was at it I wrote it
+down carefully enough that someone else can build their own. It is a personal
+build in my house in Houston, shared so it can be replicated anywhere, at
+whatever size your space allows.
+
+If anything is unclear, or you build one and get stuck, write to me at
+**contact@vittorionetti.com**. I am happy to help.
+
+### Inspiration
+
+The starting point was the
+[AutonCorp Biodome Project](https://autoncorp.com/biodome), where Claude grows
+Sol, a tomato, inside a sensor-filled biodome and shares the readings and its
+own decisions on a live dashboard. Watching an AI read VPD, soil moisture and
+CO2 and act on them for one plant is what made me want to try it for a whole
+shelf of herbs. The environmental variables this greenhouse tracks are modelled
+on theirs. Thank you to the people behind it.
+
+---
+
+## What it does
+
+The hard part of growing indoors, for me at least, was never switching a pump
+on a schedule. It was deciding what the plants need. So that decision goes to
+something that can look at the plants, read the history and reason about it,
+while the hardware keeps it from doing anything dangerous.
+
+That is why the greenhouse senses more than it strictly needs to. Every pot has its own
 moisture probe. Every tier measures air temperature, humidity, canopy
 temperature by infrared, and the spectrum actually landing on the leaves. From
 those it computes VPD and leaf VPD, which is what a plant physically
@@ -192,7 +227,7 @@ greenhouse/
 5. [Electrical](docs/05-electrical.md)
 6. [Firmware](docs/06-firmware.md)
 7. [Home Assistant](docs/07-home-assistant.md)
-8. Modules: [gantry](docs/08-gantry.md) · [arm and vision](docs/08-arm.md) · [climate](docs/08-climate.md)
+8. Modules: [gantry](docs/08-gantry.md) · [arm, vision and the Jetson](docs/08-arm.md) · [climate](docs/08-climate.md)
 9. [Commissioning](docs/09-commissioning.md)
 
 ---
@@ -224,11 +259,16 @@ A design under construction, not a finished kit.
   one of them was never electrically valid alongside the drivers specified next
   to it. [`docs/05-electrical.md`](docs/05-electrical.md) has the detail. Do not
   buy drivers until this closes.
+- The Jetson is set up and its core layer (supervisor, safety governor, state
+  store, Home Assistant bridge) runs on the reference build. The drivers,
+  services and agents wait on the hardware they drive.
+  [`docs/08-arm.md`](docs/08-arm.md) has the bring-up, including the steps that
+  cost me an evening.
 
-Open items live in `CHANGELOG.md` under the current version, not in an issue
-tracker nobody reads.
+Open items live in `CHANGELOG.md` under the current version.
 
 ---
 
 Built for [Red Tower](https://github.com/v1proxy/RedTower), a house in Houston,
-and written down so it can be built somewhere else.
+and written down so it can be built somewhere else. Questions are welcome at
+contact@vittorionetti.com.

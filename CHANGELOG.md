@@ -14,6 +14,43 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.1.3 – 2026-10-18
+
+No design change. No generated output changes.
+
+### Changed
+- README: a rewritten opening. Why the project exists, an invitation to get in
+  touch by email, and credit to the AutonCorp Biodome Project for the
+  inspiration. The comparison with other smart-garden products is gone.
+
+### Added
+- `LICENSE`: the whole repository is MIT licensed. Build it, change it, share
+  it; keep the copyright notice.
+- `docs/08-arm.md`: Jetson bring-up, from the box to a running core layer.
+  JetPack 7.2.1 from a USB stick, the QSPI firmware prompt that must be answered,
+  the missing SSH host keys, base settings, the RealSense SDK with its new
+  signing key, the Mosquitto logins, and starting the four core services.
+
+### Found while bringing up the core layer
+- The core layer runs on the reference build. Supervisor, safety governor, store
+  and bridge publish about 220 entities to Home Assistant, pass all six broker
+  checks against the Mosquitto app, and are back about 40 seconds after a reboot.
+  The 145 unit tests pass on the Jetson.
+- Home Assistant now has two authority selectors and two kill switches: the
+  package's `input_select.gh_authority` and `input_boolean.gh_kill`, which the
+  panel card drives, and the bridge's `select.greenhouse_authority` and
+  `switch.greenhouse_kill`, which the supervisor obeys. They are not linked, and
+  at the time of writing they disagree: the panel's kill switch is on, the
+  supervisor's is off. Harmless while no agent container exists; it must be
+  resolved before any agent is started.
+- `binary_sensor.greenhouse_robot_busy` did not exist until the bridge ran, so
+  "Greenhouse - zone watering" logged a warning on every evaluation. The bridge
+  now provides it.
+
+### Open
+- `mosquitto-acl.sample` is not applied, so both broker users can write every
+  topic.
+
 ## 0.1.2 – 2026-10-18
 
 No design change. No generated output changes.
