@@ -1,0 +1,9 @@
+name: d405
+title: Depth camera
+layer: driver
+version: 0.1.0
+installed: true
+description: Intel RealSense D405 on the arm flange.
+config:
+  backend: realsense
+  live_period_s: 2

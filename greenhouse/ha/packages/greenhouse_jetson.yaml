@@ -1,0 +1,452 @@
+# Home Assistant package: the link between Home Assistant and the Jetson greenhouse stack.
+# Lives next to the existing greenhouse.yaml package and does not change it.
+# Replace notify.notify with your phone's notify service (for example notify.mobile_app_<phone>).
+#
+# What is in here
+#   1. Mirror: copies the ESPHome node states to MQTT so the Jetson can read them.
+#   2. Actuator bridge: turns approved governor commands into ESPHome actions.
+#   3. Watering fallback: Home Assistant waters by itself only when the Jetson irrigation fails.
+#   4. Energy: daily and monthly totals, computed per-subsystem power and energy.
+#   5. Alerts: agent down (hourly repeat, recovery notice), approval needed, ready to pick.
+
+input_boolean:
+  gh_agent_alert_sent:
+    name: Greenhouse agent alert sent
+    icon: mdi:robot-off
+
+# ---------------------------------------------------------------- 4. Energy
+utility_meter:
+  greenhouse_energy_daily:
+    source: sensor.greenhouse_utility_cabinet_energy
+    name: Greenhouse energy today
+    cycle: daily
+  greenhouse_energy_monthly:
+    source: sensor.greenhouse_utility_cabinet_energy
+    name: Greenhouse energy this month
+    cycle: monthly
+
+template:
+  - sensor:
+      # Computed from device state times rated power. ESTIMATES: correct the constants against
+      # the metered cabinet power once the lights run. Only the cabinet total is metered.
+      - name: Greenhouse power lights
+        unique_id: gh_power_lights
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set rated = {'a': 74, 'b': 42, 'c': 42} %}
+          {% set ns = namespace(w=0) %}
+          {% for t in ['a','b','c'] %}
+            {% set e = 'light.greenhouse_tier_' ~ t ~ '_grow_light' %}
+            {% if is_state(e, 'on') %}
+              {% set ns.w = ns.w + rated[t] * (state_attr(e, 'brightness') | float(255)) / 255 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.w | round(0) }}
+      - name: Greenhouse power fans
+        unique_id: gh_power_fans
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set ns = namespace(w=0) %}
+          {% for t in ['a','b','c'] %}
+            {% set e = 'fan.greenhouse_tier_' ~ t ~ '_circulation_fan' %}
+            {% if is_state(e, 'on') %}{% set ns.w = ns.w + 1.0 * (state_attr(e, 'percentage') | float(40)) / 100 %}{% endif %}
+          {% endfor %}
+          {% if is_state('fan.greenhouse_tier_c_exhaust_fans', 'on') %}
+            {% set ns.w = ns.w + 3.6 * (state_attr('fan.greenhouse_tier_c_exhaust_fans', 'percentage') | float(25)) / 100 %}
+          {% endif %}
+          {{ ns.w | round(1) }}
+      - name: Greenhouse power compute
+        unique_id: gh_power_compute
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ (12 + 5) if is_state('binary_sensor.greenhouse_supervisor_alive', 'on') else 0 }}
+      - name: Greenhouse power nodes and network
+        unique_id: gh_power_nodes
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "13"
+      - name: Greenhouse power water
+        unique_id: gh_power_water
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ (30 if is_state('binary_sensor.greenhouse_utility_watering_active', 'on') else 0)
+             + (25 if is_state('switch.greenhouse_utility_humidifier', 'on') else 0) }}
+      - name: Greenhouse power robot
+        unique_id: gh_power_robot
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ 60 if is_state('binary_sensor.greenhouse_robot_busy', 'on') else 5 }}"
+      - name: Greenhouse power unaccounted
+        unique_id: gh_power_unaccounted
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.greenhouse_utility_cabinet_power') | is_number }}"
+        state: >
+          {% set known = ['lights','fans','compute','nodes_and_network','water','robot']
+               | map('regex_replace', '^', 'sensor.greenhouse_power_') | map('states') | map('float', 0) | sum %}
+          {{ [0, (states('sensor.greenhouse_utility_cabinet_power') | float(0)) - known] | max | round(0) }}
+
+  - binary_sensor:
+      # ------------------------------------------------------------ 5. Agent-down watchdog
+      # Evaluated by Home Assistant, so it works when the whole Jetson is dead: the "alive"
+      # sensors expire on their own after 45 seconds without a heartbeat.
+      - name: Greenhouse agent problem
+        unique_id: gh_agent_problem
+        device_class: problem
+        delay_on: "00:02:00"
+        state: >
+          {{ states('select.greenhouse_authority') in ['proposes', 'autonomous']
+             and not is_state('switch.greenhouse_kill', 'on')
+             and (this.attributes.reasons | default([]) | length > 0) }}
+        attributes:
+          reasons: >
+            {% set ns = namespace(r=[]) %}
+            {% for a, label in [('envagent','Environment agent'), ('tender','Plant tender'), ('llm','LLM gateway')] %}
+              {% if is_state('switch.greenhouse_' ~ a ~ '_enabled', 'on') %}
+                {% set st = states('sensor.greenhouse_' ~ a ~ '_status') %}
+                {% if not is_state('binary_sensor.greenhouse_' ~ a ~ '_alive', 'on') %}
+                  {% set ns.r = ns.r + [label ~ ' is not running'] %}
+                {% elif st in ['fault', 'offline', 'degraded'] %}
+                  {% set ns.r = ns.r + [label ~ ' ' ~ st ~ ': ' ~ (state_attr('sensor.greenhouse_' ~ a ~ '_status', 'detail') or 'no detail')] %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {% if is_state('switch.greenhouse_envagent_enabled', 'on') and is_state('sensor.greenhouse_envagent_last_cycle', 'unavailable') %}
+              {% set ns.r = ns.r + ['Environment agent has not completed a cycle in 45 minutes'] %}
+            {% endif %}
+            {{ ns.r }}
+
+sensor:
+  - platform: integration
+    source: sensor.greenhouse_power_lights
+    name: Greenhouse energy lights
+    unique_id: gh_energy_lights
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.greenhouse_power_fans
+    name: Greenhouse energy fans
+    unique_id: gh_energy_fans
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.greenhouse_power_compute
+    name: Greenhouse energy compute
+    unique_id: gh_energy_compute
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.greenhouse_power_nodes_and_network
+    name: Greenhouse energy nodes and network
+    unique_id: gh_energy_nodes
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.greenhouse_power_water
+    name: Greenhouse energy water
+    unique_id: gh_energy_water
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.greenhouse_power_robot
+    name: Greenhouse energy robot
+    unique_id: gh_energy_robot
+    unit_prefix: k
+    round: 3
+    method: left
+
+automation:
+  # -------------------------------------------------------------- 1. Mirror
+  - id: gh_mirror_change
+    alias: Greenhouse - mirror node state to MQTT
+    mode: parallel
+    max: 50
+    trigger:
+      - platform: event
+        event_type: state_changed
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.event.data.entity_id is search('^(sensor|binary_sensor|light|fan|switch|number)\.greenhouse_(tier|utility)_')
+             and trigger.event.data.new_state is not none }}
+    action:
+      - action: mqtt.publish
+        data:
+          topic: "greenhouse/ha/{{ trigger.event.data.entity_id | replace('.', '/') }}/state"
+          payload: "{{ trigger.event.data.new_state.state }}"
+          retain: true
+
+  - id: gh_mirror_resync
+    alias: Greenhouse - resync node states to MQTT
+    description: Full copy every 5 minutes, at start, and whenever the Jetson asks. Also tells the Jetson the mirror is alive.
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: homeassistant
+        event: start
+      - platform: mqtt
+        topic: greenhouse/esphome/refresh
+    action:
+      - repeat:
+          for_each: >
+            {{ states | selectattr('entity_id', 'search', '^(sensor|binary_sensor|light|fan|switch|number)\.greenhouse_(tier|utility)_')
+               | map(attribute='entity_id') | list }}
+          sequence:
+            - action: mqtt.publish
+              data:
+                topic: "greenhouse/ha/{{ repeat.item | replace('.', '/') }}/unit_of_measurement"
+                payload: "{{ (state_attr(repeat.item, 'unit_of_measurement') or '') | tojson }}"
+                retain: true
+            - action: mqtt.publish
+              data:
+                topic: "greenhouse/ha/{{ repeat.item | replace('.', '/') }}/state"
+                payload: "{{ states(repeat.item) }}"
+                retain: true
+      - action: mqtt.publish
+        data:
+          topic: greenhouse/ha/heartbeat
+          payload: "{{ now().timestamp() | int }}"
+
+  # -------------------------------------------------------------- 2. Actuator bridge
+  # Only the safety governor publishes under greenhouse/actuator/ (enforced by the broker
+  # access list). The ESPHome nodes keep their own interlocks whatever arrives here.
+  - id: gh_actuator_bridge
+    alias: Greenhouse - actuator bridge
+    mode: queued
+    max: 20
+    trigger:
+      - platform: mqtt
+        topic: greenhouse/actuator/+/set
+    variables:
+      act: "{{ trigger.topic.split('/')[2] }}"
+      cmd: "{{ trigger.payload_json }}"
+      tier: "{{ trigger.topic.split('/')[2][-1] }}"
+      zone: "{{ {'a': 1, 'b': 2, 'c': 3}.get(trigger.topic.split('/')[2][-1], 0) }}"
+    action:
+      - choose:
+          - conditions: "{{ act in ['water_a', 'water_b', 'water_c'] and cmd.action == 'run' }}"
+            sequence:
+              - action: esphome.greenhouse_utility_water_zone
+                data:
+                  zone: "{{ zone | int }}"
+                  seconds: "{{ cmd.value | int }}"
+          - conditions: "{{ act == 'water' and cmd.action == 'stop' }}"
+            sequence:
+              - action: esphome.greenhouse_utility_stop_watering
+          - conditions: "{{ act in ['light_a', 'light_b', 'light_c'] and cmd.action == 'intensity' }}"
+            sequence:
+              - action: number.set_value
+                target:
+                  entity_id: "number.greenhouse_tier_{{ tier }}_light_intensity"
+                data:
+                  value: "{{ cmd.value | float }}"
+          - conditions: "{{ act in ['light_a', 'light_b', 'light_c'] and cmd.action == 'photoperiod' }}"
+            sequence:
+              - action: number.set_value
+                target:
+                  entity_id: "number.greenhouse_tier_{{ tier }}_photoperiod"
+                data:
+                  value: "{{ cmd.value | float }}"
+          - conditions: "{{ act in ['light_a', 'light_b', 'light_c'] and cmd.action == 'off' }}"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: "switch.greenhouse_tier_{{ tier }}_light_schedule"
+              - action: light.turn_off
+                target:
+                  entity_id: "light.greenhouse_tier_{{ tier }}_grow_light"
+          - conditions: "{{ act in ['light_a', 'light_b', 'light_c'] and cmd.action == 'schedule_on' }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: "switch.greenhouse_tier_{{ tier }}_light_schedule"
+          - conditions: "{{ act in ['circ_a', 'circ_b', 'circ_c'] and cmd.action == 'duty' }}"
+            sequence:
+              - action: number.set_value
+                target:
+                  entity_id: "number.greenhouse_tier_{{ tier }}_circulation_fan_duty"
+                data:
+                  value: "{{ cmd.value | float }}"
+          - conditions: "{{ act == 'exhaust' and cmd.action in ['setpoint', 'rh_limit', 'min_duty'] }}"
+            sequence:
+              - action: number.set_value
+                target:
+                  entity_id: >
+                    number.greenhouse_tier_c_{{ {'setpoint': 'temperature_setpoint', 'rh_limit': 'humidity_limit',
+                                                  'min_duty': 'exhaust_minimum_duty'}[cmd.action] }}
+                data:
+                  value: "{{ cmd.value | float }}"
+          - conditions: "{{ act == 'humidifier' and cmd.action == 'on' }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.greenhouse_utility_humidifier
+              - action: script.turn_on
+                target:
+                  entity_id: script.gh_humidifier_off_after
+                data:
+                  variables:
+                    minutes: "{{ cmd.value | int }}"
+          - conditions: "{{ act == 'humidifier' and cmd.action == 'off' }}"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.greenhouse_utility_humidifier
+
+  # -------------------------------------------------------------- 3. Watering fallback
+  - id: gh_watering_handover
+    alias: Greenhouse - Jetson irrigation takes over
+    trigger:
+      - platform: state
+        entity_id: sensor.greenhouse_irrigation_status
+        to: running
+        for: "00:02:00"
+    action:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.gh_auto_water
+
+  - id: gh_watering_fallback
+    alias: Greenhouse - fall back to Home Assistant watering
+    description: >
+      Only on failure. If you disabled irrigation or set authority to off or manual, that is
+      your choice and Home Assistant does not start watering on its own.
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.greenhouse_irrigation_alive
+        to: ["off", "unavailable"]
+        for: "00:10:00"
+      - platform: state
+        entity_id: sensor.greenhouse_irrigation_status
+        to: ["fault", "offline", "degraded"]
+        for: "00:10:00"
+    condition:
+      - condition: state
+        entity_id: switch.greenhouse_irrigation_enabled
+        state: "on"
+      - condition: state
+        entity_id: select.greenhouse_authority
+        state: ["auto", "proposes", "autonomous"]
+    action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.gh_auto_water
+      - action: notify.notify
+        data:
+          title: "Greenhouse: watering fallback"
+          message: "The Jetson irrigation module is down. Home Assistant is watering by its own rule until it returns."
+
+  # -------------------------------------------------------------- 5. Alerts
+  - id: gh_agent_down
+    alias: Greenhouse - agent down
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.greenhouse_agent_problem
+        to: "on"
+      - platform: time_pattern
+        minutes: 7                       # hourly repeat while the problem lasts
+    condition:
+      - condition: state
+        entity_id: binary_sensor.greenhouse_agent_problem
+        state: "on"
+    action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.gh_agent_alert_sent
+      - action: notify.notify
+        data:
+          title: "Greenhouse: agent down"
+          message: >
+            {{ state_attr('binary_sensor.greenhouse_agent_problem', 'reasons') | join('. ') }}.
+            Climate and watering are still running without the AI.
+
+  - id: gh_agent_recovered
+    alias: Greenhouse - agent recovered
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.greenhouse_agent_problem
+        to: "off"
+        for: "00:02:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.gh_agent_alert_sent
+        state: "on"
+    action:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.gh_agent_alert_sent
+      - action: notify.notify
+        data:
+          title: "Greenhouse: agents back"
+          message: "The greenhouse agents are running again."
+
+  - id: gh_approval_needed
+    alias: Greenhouse - approval needed
+    trigger:
+      - platform: state
+        entity_id: sensor.greenhouse_pending_approvals
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state | int(0) > trigger.from_state.state | int(0) }}"
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse: approval needed"
+          message: "{{ trigger.to_state.state }} action(s) are waiting for your approval in the Greenhouse view."
+
+  - id: gh_ready_to_pick
+    alias: Greenhouse - ready to pick
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.greenhouse_plant_a01
+          - sensor.greenhouse_plant_a02
+          - sensor.greenhouse_plant_a03
+          - sensor.greenhouse_plant_a04
+          - sensor.greenhouse_plant_a05
+          - sensor.greenhouse_plant_a06
+          - sensor.greenhouse_plant_a07
+          - sensor.greenhouse_plant_b01
+          - sensor.greenhouse_plant_b02
+          - sensor.greenhouse_plant_b03
+          - sensor.greenhouse_plant_b04
+          - sensor.greenhouse_plant_b05
+          - sensor.greenhouse_plant_b06
+          - sensor.greenhouse_plant_b07
+          - sensor.greenhouse_plant_b08
+          - sensor.greenhouse_plant_b09
+          - sensor.greenhouse_plant_b10
+          - sensor.greenhouse_plant_c01
+          - sensor.greenhouse_plant_c02
+          - sensor.greenhouse_plant_c03
+          - sensor.greenhouse_plant_c04
+          - sensor.greenhouse_plant_c05
+          - sensor.greenhouse_plant_c06
+          - sensor.greenhouse_plant_c07
+          - sensor.greenhouse_plant_c08
+          - sensor.greenhouse_plant_c09
+          - sensor.greenhouse_plant_c10
+        to: ready
+    action:
+      - action: notify.notify
+        data:
+          title: "Greenhouse: ready to pick"
+          message: >
+            {{ state_attr(trigger.entity_id, 'common') }} at {{ state_attr(trigger.entity_id, 'position') }} is ready to pick.

@@ -1,0 +1,14 @@
+# myCobot 280 Pi joint poses, degrees J1 to J6. Read by the arm driver.
+#
+# PLACEHOLDERS, NOT TAUGHT. The driver will not move the real arm until "taught" is true.
+# To teach (commissioning step 10): gantry homed and parked, doors closed, stack stopped.
+# Release the servos with tools_arm_check.py --release, move the arm by hand into each pose,
+# read the angles with tools_arm_check.py, write them here, then set taught: true.
+#   stow  folded inside the 174 mm lane, clear of both rails, safe for any gantry move
+#   look  D405 about 200 mm in front of the pot, looking at the plant; the gantry's Z sets the tier
+taught: false
+speed: 30                 # pymycobot speed 1 to 100; keep it low until the poses are proven
+tolerance_deg: 2.0        # a pose is reached when every joint is this close
+poses:
+  stow: [0, -135, 140, -5, 0, 0]
+  look: [0, -40, 70, -30, 0, 0]

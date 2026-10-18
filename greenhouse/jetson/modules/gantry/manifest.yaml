@@ -1,0 +1,13 @@
+name: gantry
+title: Gantry
+layer: driver
+version: 0.1.0
+installed: true
+description: FluidNC X and Z axes.
+stub: true
+config:
+  backend: sim                 # sim or fluidnc
+  port: /dev/ttyUSB0           # better: the /dev/serial/by-id/... name of the Jackpot3
+  baud: 115200
+  move_timeout_s: 90           # a move or homing cycle that takes longer is stopped
+  sim_travel_s: 3

@@ -1,0 +1,5 @@
+name: bridge
+title: HA bridge
+layer: core
+version: 0.1.0
+description: Publishes every module and plant to Home Assistant through MQTT discovery.

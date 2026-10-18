@@ -1,0 +1,10 @@
+# Add as a view of the Red Tower dashboard (raw configuration editor), and add the resource
+#   /local/greenhouse/greenhouse-panel.js   (type: JavaScript module)
+# under Settings, Dashboards, Resources.
+- title: Greenhouse
+  path: greenhouse
+  icon: mdi:sprout
+  type: panel
+  cards:
+    - type: custom:greenhouse-panel
+      demo: true        # simulated data. Remove this line once the real entities exist.

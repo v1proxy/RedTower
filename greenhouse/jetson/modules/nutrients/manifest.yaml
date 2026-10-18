@@ -1,0 +1,14 @@
+name: nutrients
+title: Nutrients
+layer: service
+version: 0.1.0
+depends:
+- esphome
+requests:
+- dosing
+stub: true
+default_enabled: false
+description: 'Dosing with EC and pH. Stub: defined, no hardware yet.'
+config:
+  target_ec: 1.2
+  target_ph: 6.2

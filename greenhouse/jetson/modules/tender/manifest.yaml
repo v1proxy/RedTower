@@ -1,0 +1,15 @@
+name: tender
+title: Plant tender
+layer: agent
+version: 0.1.0
+depends:
+- perception
+- motion
+- llm
+requests:
+- robot
+installed: true
+description: Per-plant care. Picks a labelled candidate, never a coordinate.
+config:
+  min_confidence: 0.75
+  reply_timeout_s: 150

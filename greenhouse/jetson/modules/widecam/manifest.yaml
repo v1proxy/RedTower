@@ -1,0 +1,13 @@
+name: widecam
+title: Overview camera
+layer: driver
+version: 0.1.0
+installed: true
+stub: true
+description: Fixed wide-angle overview camera. Per-pot canopy, colour and stress, twice a day.
+config:
+  backend: sim                 # sim or v4l2
+  device: 0                    # /dev/video0; better the /dev/v4l/by-id/... path of the Arducam
+  width: 1920
+  height: 1080
+  times: ["11:00", "19:00"]    # lights on and at their day setting

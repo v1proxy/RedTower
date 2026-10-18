@@ -1,0 +1,7 @@
+name: esphome
+title: ESPHome link
+layer: driver
+version: 0.1.0
+installed: true
+description: Lights, pump, valves, fans, humidifier and sensors on the four ESPHome
+  nodes.

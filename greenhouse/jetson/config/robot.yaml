@@ -1,0 +1,43 @@
+# Gantry coordinates, machine millimetres after homing (FluidNC G53). Read by the gantry driver.
+#
+# PLACEHOLDERS. Every number below is computed from the drawing pitches (Tier A 188 mm, Tiers
+# B and C 132 mm, pots centred on an assumed 1200 mm X travel), not measured. Commissioning
+# step 9: home the gantry, jog to each pot, and write the real values here before the first
+# route. The driver refuses any target outside "travel".
+travel: {x_min: 0, x_max: 1200, z_min: 0, z_max: 1250}
+park: {x: 0, z: 0}                 # where "home" returns to once homed
+feed_mm_min: 3000                  # G1 feed for plant moves; the controller caps each axis itself
+
+tiers:                             # carriage Z with the arm in the look pose for that tier
+  A: 260
+  B: 820
+  C: 1180
+
+plants:                            # carriage X in front of each pot
+  A01: 36
+  A02: 224
+  A03: 412
+  A04: 600
+  A05: 788
+  A06: 976
+  A07: 1164
+  B01: 6
+  B02: 138
+  B03: 270
+  B04: 402
+  B05: 534
+  B06: 666
+  B07: 798
+  B08: 930
+  B09: 1062
+  B10: 1194
+  C01: 6
+  C02: 138
+  C03: 270
+  C04: 402
+  C05: 534
+  C06: 666
+  C07: 798
+  C08: 930
+  C09: 1062
+  C10: 1194

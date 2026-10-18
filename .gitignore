@@ -3,16 +3,23 @@ secrets.yaml
 gardener.json
 robot.json
 *.local.json
+.env
+*.env
+!.env.example
 
 # Runtime state written on the Jetson
 journal.jsonl
 tender_journal.jsonl
 escalations.jsonl
 plant_records.json
+data/
+*.db
+greenhouse/jetson/d405_out/
 
 # Python
 __pycache__/
 *.pyc
+.venv/
 
 # Superseded by git history
 *.revD-backup

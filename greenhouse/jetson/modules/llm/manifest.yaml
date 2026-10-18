@@ -1,0 +1,11 @@
+name: llm
+title: LLM gateway
+layer: agent
+version: 0.1.0
+installed: true
+description: The single place the Claude API is called. Budget cap and offline fallback.
+config:
+  model: claude-sonnet-5-5
+  max_tokens: 1200
+  daily_token_cap: 400000
+  calls_per_hour: 40

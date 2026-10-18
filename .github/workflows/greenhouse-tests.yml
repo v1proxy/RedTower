@@ -1,0 +1,72 @@
+name: greenhouse tests
+
+on:
+  push:
+    paths: ["greenhouse/**", ".github/workflows/greenhouse-tests.yml"]
+  pull_request:
+    paths: ["greenhouse/**", ".github/workflows/greenhouse-tests.yml"]
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: greenhouse/jetson
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-test.txt
+      - run: python -m unittest discover -s tests -v
+
+  stack:
+    # The whole stack as separate processes on a real Mosquitto with the sample access list.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: greenhouse/jetson
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y mosquitto
+      - run: sudo systemctl stop mosquitto || true    # the check starts its own broker
+      - run: pip install -r requirements-test.txt
+      - run: python tools_stack_check.py
+
+  docker:
+    # Build both images and run the same checks on the containers from docker-compose.yml.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: greenhouse/jetson
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y mosquitto
+      - run: sudo systemctl stop mosquitto || true
+      - run: pip install -r requirements-test.txt
+      - run: docker compose build
+      - run: python tools_stack_check.py --docker
+
+  homeassistant:
+    # The package, the panel and MQTT discovery against the current stable Home Assistant.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: greenhouse/jetson
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y mosquitto
+      - run: sudo systemctl stop mosquitto || true
+      - run: pip install -r requirements-test.txt playwright websocket-client
+      - run: python -m playwright install --with-deps chromium
+      - run: docker pull homeassistant/home-assistant:stable
+      - run: python tools_ha_check.py

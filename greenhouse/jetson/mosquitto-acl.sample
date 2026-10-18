@@ -1,0 +1,37 @@
+# Sample access list for the Mosquitto broker on the Home Assistant Yellow. NOT YET TESTED.
+# It is what makes "only the governor drives actuators" and "only the user sets a plant
+# type" true on the wire, not only in the code. Two broker users for the Jetson:
+#   gh_core    supervisor, safety governor, store, bridge
+#   gh_module  every other module
+
+user gh_core
+topic readwrite greenhouse/#
+topic readwrite homeassistant/#
+
+user gh_module
+topic read greenhouse/#
+topic write greenhouse/+/health
+topic write greenhouse/+/config
+topic write greenhouse/+/cycle
+topic write greenhouse/+/output
+topic write greenhouse/sensor/#
+topic write greenhouse/interlock/#
+topic write greenhouse/photo/#
+topic write greenhouse/live/#
+topic write greenhouse/capture/#
+topic write greenhouse/observation/#
+topic write greenhouse/vision/#
+topic write greenhouse/robot/busy
+topic write greenhouse/gantry/state
+topic write greenhouse/arm/#
+topic write greenhouse/llm/#
+topic write greenhouse/d405/cmd
+topic write greenhouse/esphome/refresh
+topic write greenhouse/safety/request
+topic write greenhouse/store/cmd
+topic write greenhouse/log/#
+# gh_module cannot write: greenhouse/actuator/#, greenhouse/safety/request/ui,
+# greenhouse/store/cmd/ui, greenhouse/+/enable, greenhouse/authority, greenhouse/kill,
+# greenhouse/proposal/+/decision. Those belong to gh_core or to Home Assistant.
+# Known gap: gh_module may write greenhouse/interlock/#, because the ESPHome link derives the
+# interlocks. A stricter setup gives the ESPHome link its own broker user. To be decided at Gate B.

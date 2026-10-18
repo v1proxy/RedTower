@@ -1,0 +1,5 @@
+# What the unit tests need. The images pin their own versions in the Dockerfiles.
+paho-mqtt==2.1.0
+PyYAML==6.0.2
+numpy
+opencv-python-headless

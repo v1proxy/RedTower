@@ -1,0 +1,8 @@
+name: perception
+title: Perception
+layer: service
+version: 0.1.0
+depends:
+- d405
+installed: true
+description: Plant geometry and health from the cameras.

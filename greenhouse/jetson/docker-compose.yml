@@ -1,0 +1,137 @@
+# Greenhouse stack on the Jetson. Start with: docker compose up -d --build
+# Core services always run. The supervisor starts and stops the others by container name.
+x-base: &base
+  build: .
+  image: greenhouse-core:0.2.0
+  restart: unless-stopped
+  init: true                    # signals reach Python even while it starts: a stop never waits 10 s
+  volumes:
+    - gh-data:/data
+x-vision: &vision
+  build:
+    context: .
+    dockerfile: Dockerfile.vision
+  image: greenhouse-vision:0.2.0
+  restart: unless-stopped
+  init: true
+  volumes:
+    - gh-data:/data
+x-core-env: &core-env
+  TZ: America/Chicago
+  GH_MQTT_HOST: ${GH_MQTT_HOST:-192.168.10.10}
+  GH_MQTT_USER: ${GH_CORE_USER}
+  GH_MQTT_PASSWORD: ${GH_CORE_PASSWORD}
+x-module-env: &module-env
+  TZ: America/Chicago
+  GH_MQTT_HOST: ${GH_MQTT_HOST:-192.168.10.10}
+  GH_MQTT_USER: ${GH_MODULE_USER}
+  GH_MQTT_PASSWORD: ${GH_MODULE_PASSWORD}
+
+services:
+  supervisor:
+    <<: *base
+    container_name: gh-supervisor
+    command: python -m gh.core.main supervisor
+    environment: *core-env
+    volumes:
+      - gh-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+  safety:
+    <<: *base
+    container_name: gh-safety
+    command: python -m gh.core.main safety
+    environment: *core-env
+  store:
+    <<: *base
+    container_name: gh-store
+    command: python -m gh.core.main store
+    environment: *core-env
+  bridge:
+    <<: *base
+    container_name: gh-bridge
+    command: python -m gh.core.main bridge
+    environment: *core-env
+  nutrients:
+    <<: *base
+    container_name: gh-nutrients
+    command: python /app/modules/nutrients/main.py
+    environment: *module-env
+  esphome:
+    <<: *base
+    container_name: gh-esphome
+    command: python /app/modules/esphome/main.py
+    environment: *module-env
+  climate:
+    <<: *base
+    container_name: gh-climate
+    command: python /app/modules/climate/main.py
+    environment: *module-env
+  irrigation:
+    <<: *base
+    container_name: gh-irrigation
+    command: python /app/modules/irrigation/main.py
+    environment: *module-env
+  gantry:
+    <<: *base
+    container_name: gh-gantry
+    command: python /app/modules/gantry/main.py
+    environment: *module-env
+    volumes:
+      - gh-data:/data
+      - /dev:/dev                   # the Jackpot3 appears here when plugged in; compose starts without it
+    device_cgroup_rules:
+      - "c 188:* rmw"               # ttyUSB
+      - "c 166:* rmw"               # ttyACM
+  arm:
+    <<: *base
+    container_name: gh-arm
+    command: python /app/modules/arm/main.py
+    environment: *module-env
+  motion:
+    <<: *base
+    container_name: gh-motion
+    command: python /app/modules/motion/main.py
+    environment: *module-env
+  llm:
+    <<: *base
+    container_name: gh-llm
+    command: python /app/modules/llm/main.py
+    environment:
+      <<: *module-env
+      GH_ANTHROPIC_API_KEY: ${GH_ANTHROPIC_API_KEY}
+  envagent:
+    <<: *base
+    container_name: gh-envagent
+    command: python /app/modules/envagent/main.py
+    environment: *module-env
+  tender:
+    <<: *base
+    container_name: gh-tender
+    command: python /app/modules/tender/main.py
+    environment: *module-env
+  d405:
+    <<: *vision
+    container_name: gh-d405
+    command: python /app/modules/d405/main.py
+    environment: *module-env
+    privileged: true            # USB access to the RealSense
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+  widecam:
+    <<: *vision
+    container_name: gh-widecam
+    command: python /app/modules/widecam/main.py
+    environment: *module-env
+    volumes:
+      - gh-data:/data
+      - /dev:/dev                   # the overview camera; compose starts without it
+    device_cgroup_rules:
+      - "c 81:* rmw"                # video4linux
+  perception:
+    <<: *vision
+    container_name: gh-perception
+    command: python /app/modules/perception/main.py
+    environment: *module-env
+
+volumes:
+  gh-data:

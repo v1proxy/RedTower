@@ -1,0 +1,23 @@
+name: irrigation
+title: Irrigation
+layer: service
+version: 0.1.0
+depends:
+- esphome
+requests:
+- water_a
+- water_b
+- water_c
+- water
+installed: true
+description: Drip irrigation by soil moisture.
+config:
+  threshold_a: 35
+  threshold_b: 40
+  threshold_c: 40
+  run_a_s: 120
+  run_b_s: 60
+  run_c_s: 60
+  min_gap_s: 3600
+  start_hour: 7
+  end_hour: 20

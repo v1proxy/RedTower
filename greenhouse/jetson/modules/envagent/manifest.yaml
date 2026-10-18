@@ -1,0 +1,26 @@
+name: envagent
+title: Environment agent
+layer: agent
+version: 0.1.0
+depends:
+- climate
+- llm
+requests:
+- climate_setpoint
+- water_a
+- water_b
+- water_c
+- light_a
+- light_b
+- light_c
+- circ_a
+- circ_b
+- circ_c
+- exhaust
+- humidifier
+installed: true
+description: Sol-style 30 minute climate loop.
+cycle_minutes: 30
+config:
+  cycle_minutes: 30
+  reply_timeout_s: 150

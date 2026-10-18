@@ -1,0 +1,35 @@
+# Overview camera: each pot's region in the frame, [x, y, width, height] in pixels of a
+# 1920 x 1080 image. Read by the widecam driver.
+#
+# PLACEHOLDERS: a plain grid, tiers top to bottom C, B, A. The real camera sits in the top back-left
+# corner behind a 160 degree lens, so the pots will not form a grid. Once it is mounted, take a
+# frame (tools_widecam_check.py), draw a box round each pot and write the boxes here. Keep the
+# lights at their day setting and the white balance fixed for every capture.
+regions:
+  C01: [106, 120, 160, 260]
+  C02: [278, 120, 160, 260]
+  C03: [450, 120, 160, 260]
+  C04: [622, 120, 160, 260]
+  C05: [794, 120, 160, 260]
+  C06: [966, 120, 160, 260]
+  C07: [1138, 120, 160, 260]
+  C08: [1310, 120, 160, 260]
+  C09: [1482, 120, 160, 260]
+  C10: [1654, 120, 160, 260]
+  B01: [106, 420, 160, 260]
+  B02: [278, 420, 160, 260]
+  B03: [450, 420, 160, 260]
+  B04: [622, 420, 160, 260]
+  B05: [794, 420, 160, 260]
+  B06: [966, 420, 160, 260]
+  B07: [1138, 420, 160, 260]
+  B08: [1310, 420, 160, 260]
+  B09: [1482, 420, 160, 260]
+  B10: [1654, 420, 160, 260]
+  A01: [106, 720, 233, 300]
+  A02: [351, 720, 233, 300]
+  A03: [596, 720, 233, 300]
+  A04: [841, 720, 233, 300]
+  A05: [1086, 720, 233, 300]
+  A06: [1331, 720, 233, 300]
+  A07: [1576, 720, 233, 300]

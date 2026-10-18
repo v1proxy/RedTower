@@ -1,0 +1,23 @@
+# Care profiles, keyed by the plant type the user enters (lower case).
+# A type with no profile here is accepted, marked "profile pending", and uses generic milestones.
+# Targets are starting values for review, not agronomic advice that has been validated.
+pepper:
+  common: Compact pepper
+  scientific: Capsicum annuum
+  milestones: [Seedling, Vegetative, Flowering, Fruit set, Ripe]
+  soil_moisture_pct: [35, 55]
+basil:
+  common: Basil
+  scientific: Ocimum basilicum
+  milestones: [Seedling, Established, Bushy, Ready to cut]
+  soil_moisture_pct: [40, 60]
+parsley:
+  common: Parsley
+  scientific: Petroselinum crispum
+  milestones: [Seedling, Established, Bushy, Ready to cut]
+  soil_moisture_pct: [40, 60]
+thyme:
+  common: Thyme
+  scientific: Thymus vulgaris
+  milestones: [Seedling, Established, Bushy, Ready to cut]
+  soil_moisture_pct: [25, 45]

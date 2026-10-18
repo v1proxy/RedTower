@@ -1,0 +1,15 @@
+name: motion
+title: Motion
+layer: service
+version: 0.1.0
+depends:
+- arm
+- gantry
+requests:
+- arm
+- gantry
+installed: true
+description: Arm and gantry planning, daily photo route.
+config:
+  capture_hour: 9
+  step_timeout_s: 120

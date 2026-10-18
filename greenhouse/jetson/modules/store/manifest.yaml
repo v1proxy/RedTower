@@ -1,0 +1,5 @@
+name: store
+title: State store
+layer: core
+version: 0.1.0
+description: Plant registry and decision log in SQLite.

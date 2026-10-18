@@ -1,0 +1,5 @@
+name: supervisor
+title: Supervisor
+layer: core
+version: 0.1.0
+description: Starts and stops modules, owns enable state, authority and the kill switch.

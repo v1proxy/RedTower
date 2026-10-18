@@ -1,0 +1,26 @@
+name: climate
+title: Climate
+layer: service
+version: 0.1.0
+depends:
+- esphome
+requests:
+- light_a
+- light_b
+- light_c
+- circ_a
+- circ_b
+- circ_c
+- exhaust
+- humidifier
+installed: true
+description: VPD, photoperiod and fan control.
+config:
+  vpd_target: 1.0
+  vpd_band: 0.2
+  humidify_minutes: 5
+  humidify_gap_min: 20
+  exhaust_base_duty: 25
+  exhaust_boost_duty: 50
+  photoperiod_hours: 16
+  light_intensity: 100

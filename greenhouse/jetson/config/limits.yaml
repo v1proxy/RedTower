@@ -1,0 +1,64 @@
+# Hard limits enforced by the safety governor. STARTING VALUES: review before first water.
+# An actuator action that is not listed here is always denied.
+# The ESPHome nodes keep their own hard caps as well (pump watchdog, leak lockout, humidifier
+# watchdog). These limits sit on top of those, they do not replace them.
+#
+# approval: never  = runs without asking
+#           agent  = an agent's request waits for approval unless authority is "autonomous"
+#           always = any module's request waits for approval, in every mode
+# safe_off: true   = allowed even when authority is off or manual (turning things off)
+# value limits: min, max, and max_per_hour (sum of values over a rolling hour)
+
+water_a: {run: {min: 5, max: 180, max_per_hour: 180, interlocks: [water], approval: agent}}   # seconds
+water_b: {run: {min: 5, max: 180, max_per_hour: 180, interlocks: [water], approval: agent}}
+water_c: {run: {min: 5, max: 180, max_per_hour: 180, interlocks: [water], approval: agent}}
+water:   {stop: {safe_off: true}}
+
+light_a: &light
+  intensity:   {min: 10, max: 100, approval: agent}     # percent
+  photoperiod: {min: 8, max: 18, approval: agent}       # hours
+  "off":       {safe_off: true}
+  schedule_on: {}
+light_b: *light
+light_c: *light
+
+circ_a: &circ {duty: {min: 20, max: 100, approval: agent}}   # percent, never below 20: still air breeds mould
+circ_b: *circ
+circ_c: *circ
+
+exhaust:
+  setpoint: {min: 20, max: 30, approval: agent}         # degrees C
+  rh_limit: {min: 55, max: 85, approval: agent}         # percent
+  min_duty: {min: 15, max: 100, approval: agent}        # percent
+
+humidifier:
+  "on":  {min: 1, max: 15, max_per_hour: 30, approval: agent}   # minutes
+  "off": {safe_off: true}
+
+climate_setpoint:
+  vpd_target: {min: 0.6, max: 1.5, approval: agent}     # kPa
+
+# arm_stowed: published by the arm driver, OK only while the arm is parked inside the lane.
+# gantry_still: published by the gantry driver, OK only while the gantry is not moving.
+# So the gantry never travels with the arm out, and the arm never moves on a moving carriage.
+# Both drivers also refuse on their own if the other is not in the safe state.
+gantry:
+  home: {interlocks: [door, estop, arm_stowed]}
+  goto: {interlocks: [door, estop, arm_stowed], needs_plant: true}
+  jog_x: {min: -50, max: 50, interlocks: [door, estop, arm_stowed], approval: always}   # millimetres
+  jog_z: {min: -50, max: 50, interlocks: [door, estop, arm_stowed], approval: always}
+  stop: {safe_off: true}
+arm:
+  capture: {interlocks: [door, estop, gantry_still], needs_plant: true}
+  approach: {interlocks: [door, estop, gantry_still], needs_plant: true, needs_grant: tend}
+  cut:     {interlocks: [door, estop, gantry_still], needs_plant: true, needs_grant: tend}
+  park:    {safe_off: true}
+# A tend task is how a cut happens: the tender proposes it, the owner approves it, and motion
+# runs the whole sequence (go there, capture again, find the leaf again, approach, cut, park).
+# Approval grants exactly one approach and one cut at that plant for 15 minutes. needs_grant:
+# the governor refuses those arm actions from any module without a live grant.
+robot:
+  tend: {interlocks: [door, estop], needs_plant: true, approval: always, grants: {approach: 1, cut: 1}}
+
+dosing:
+  dose: {min: 0, max: 0, max_per_hour: 0, approval: always}     # stub: no hardware, nothing passes

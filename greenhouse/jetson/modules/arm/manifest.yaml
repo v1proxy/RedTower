@@ -1,0 +1,13 @@
+name: arm
+title: Arm
+layer: driver
+version: 0.1.0
+installed: true
+description: myCobot 280 Pi driver.
+stub: true
+config:
+  backend: sim                 # sim or mycobot
+  host: 192.168.10.25          # the arm's Raspberry Pi; give it a static mapping in pfSense
+  port: 9000                   # pymycobot socket server on the Pi
+  move_timeout_s: 30
+  sim_move_s: 2

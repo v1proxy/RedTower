@@ -1,0 +1,5 @@
+name: safety
+title: Safety governor
+layer: core
+version: 0.1.0
+description: The only path to an actuator. Enforces hard limits, interlocks and approvals.

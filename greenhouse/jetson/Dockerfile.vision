@@ -1,0 +1,15 @@
+# Image for the modules that need OpenCV and the RealSense SDK.
+# Built and run on x86 (step 14): OpenCV, numpy and pyrealsense2 import, perception runs.
+# For the Jetson (arm64), PyPI has cp312 aarch64 wheels of all three pinned versions, so no
+# source build of librealsense should be needed. Not yet built on arm64.
+# libusb is the one system library needed: pyrealsense2 fails to import without it. Headless
+# OpenCV needs neither libgl1 nor libglib.
+FROM python:3.12-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libusb-1.0-0 && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir paho-mqtt==2.1.0 PyYAML==6.0.2 numpy==2.5.3 opencv-python-headless==5.0.0.93 \
+    pyrealsense2==2.58.4.10922
+WORKDIR /app
+COPY gh /app/gh
+COPY modules /app/modules
+COPY config /app/config
+ENV PYTHONPATH=/app PYTHONUNBUFFERED=1 GH_MODULES_DIR=/app/modules GH_CONFIG_DIR=/app/config GH_DATA_DIR=/data
