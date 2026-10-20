@@ -166,7 +166,7 @@ def render(ax, scene, title, sub="", width=1500):
 
 
 fig = plt.figure(figsize=(13.6, 13.6), facecolor="#FBFCFA")
-fig.suptitle("Herb Tower  ·  the two bought T-slot brackets, placed  ·  Rev 5",
+fig.suptitle("Maag  ·  the two bought T-slot brackets, placed  ·  Rev 5",
              fontsize=15, fontweight="bold", color=INK, x=.042, ha="left", y=.987)
 fig.text(.042, .966,
          "Terracotta = PETOX 3540 external gusset, 20 off, \$29.99.  Green = TOCLUX hidden inside connector, 10 off, \$16.99.  Both are 40 series, slot 8.\n"

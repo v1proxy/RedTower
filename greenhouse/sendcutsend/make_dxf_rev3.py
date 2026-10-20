@@ -23,8 +23,9 @@ corner stays convex, and nothing overlaps.
     upright corner   (40, 40)
     clearance        |40 + 40 - 84| / sqrt(2) = 2.83 mm
 """
+import os
 import math, sys
-sys.path.insert(0, "/home/claude/greenhouse/sendcutsend")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from unfold import unfold, MAXFLAT, MAXBEND, F, R
 
 C = 84.0                 # chamfer intercept

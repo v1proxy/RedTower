@@ -1,4 +1,4 @@
-"""Herb Tower design parameters.
+"""Maag (Modular Agentic Autonomous Greenhouse) design parameters.
 
 One Envelope describes the space somebody has. Everything else in the repo is
 derived from it by solve.py, so there is exactly one place to change a number.
@@ -52,29 +52,32 @@ ARM_PLATE_T = 6.35         # G071, 0.250 in
 # corridor: arm plate, Z carriage, C-Beam mast, X carriage, X rail.
 #
 # A C-Beam carriage's wheels straddle the beam and ride the grooves on its
-# top and bottom faces, 10 mm behind the front face. Plate 6, spacer 6 and
-# half a 10.23 wheel put the plate's back 1.115 proud of the beam, so each
-# carriage adds 7.115, not the bare 6 of the plate (0.2.0 first cut).
+# top and bottom faces. OpenBuilds' own stack (0.3.0, from bd_warehouse's
+# models of their drawings): screw, plate 6, spacer 6, shim 1, wheel 11,
+# nyloc. That leaves the plate's back 2.5 off the beam, so each carriage adds
+# 8.5. 0.2.0 had 7.115 from a stack with no shim and a 10.23 wheel.
 CARRIAGE_T = 6.0           # XL C-Beam gantry plate
-CARR_STACK = 7.115         # beam face to the plate's front face
+PLATE_GAP = 2.5            # beam face to the plate's back face
+CARR_STACK = PLATE_GAP + CARRIAGE_T          # 8.5, beam face to the plate's front
 MAST_D = 40.0              # C-Beam 40 x 80, depth
 RAIL_D = 40.0              # the X rail, same section
 REAR_POST = 40.0           # the rear uprights the X rail bolts to
 GANTRY_CARRIAGE_D = 70.0   # retained for old callers
 
 # Front of the arm plate to the front of the rear uprights.
-GANTRY_STACK = ARM_PLATE_T + CARR_STACK + MAST_D + CARR_STACK + RAIL_D   # 100.58
+GANTRY_STACK = ARM_PLATE_T + CARR_STACK + MAST_D + CARR_STACK + RAIL_D   # 103.35
 # J1 axis to the back of the cabinet.
-ARM_SETBACK = GANTRY_STACK + REAR_POST + ARM_MOUNT_OFF                   # 170.58
+ARM_SETBACK = GANTRY_STACK + REAR_POST + ARM_MOUNT_OFF                   # 173.35
 
-TRANSIT_CLEAR = 22.5       # folded arm to the tray line, crossing a tier.
-                           # The reference build has 22.8.
+TRANSIT_CLEAR = 20.0       # folded arm to the tray line, crossing a tier.
+                           # The reference build has 20.05 (0.2.0 said 22.8,
+                           # from the carriage stack that was 1.4 mm too thin).
 # The arm crosses a tray plane on every tier change, so the corridor has to
 # swallow the folded arm AND the whole stack behind it. This is the number
 # that forced the reference build from 457 deep to 559 at 0.2.0.
 CORRIDOR_MIN_ARM = (ARM_FOLD_L + ARM_MOUNT_OFF + GANTRY_STACK
-                    + REAR_POST + TRANSIT_CLEAR)          # 355.68
-CORRIDOR_MIN_GANTRY = GANTRY_STACK + REAR_POST + 22.0     # 162.58, no arm
+                    + REAR_POST + TRANSIT_CLEAR)          # 355.95
+CORRIDOR_MIN_GANTRY = GANTRY_STACK + REAR_POST + 22.0     # 165.35, no arm
 CORRIDOR_MIN = CORRIDOR_MIN_ARM                            # back-compatible name
 
 MODULES = ("gantry", "arm", "climate")

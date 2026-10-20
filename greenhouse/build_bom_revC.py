@@ -79,7 +79,7 @@ cl.cell(row=tr + 7, column=2, value="8020 cut-to-length holds +/-0.5 mm and will
 
 # ---------------- BOM ----------------
 bom = wb.create_sheet("BOM", 0)
-bom["A1"] = "Herb Tower BOM Rev C, commercial off-the-shelf parts, Claude-in-the-loop control. Blue = editable input. Amber rows are alternates, set their Qty to use them."
+bom["A1"] = "Maag BOM Rev C, commercial off-the-shelf parts, Claude-in-the-loop control. Blue = editable input. Amber rows are alternates, set their Qty to use them."
 bom["A1"].font = BOLD
 cols = ["ID", "Subsystem", "Item", "Manufacturer", "Part number / SKU", "Vendor", "Link", "Qty", "Unit",
         "Unit price", "Ext price", "Price basis", "Notes"]
@@ -330,7 +330,7 @@ bom.auto_filter.ref = f"A3:M{last}"
 
 # ---------------- Summary ----------------
 sm = wb.create_sheet("Summary", 0)
-sm["A1"] = "Herb Tower Rev C, cost by subsystem"
+sm["A1"] = "Maag Rev C, cost by subsystem"
 sm["A1"].font = BOLD
 header(sm, 3, ["Subsystem", "Cost (USD)", "Share"], [22, 16, 10])
 for j, sub in enumerate(subsystems):

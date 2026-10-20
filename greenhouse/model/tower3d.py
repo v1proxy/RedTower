@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Herb Tower as real 3D geometry, in millimetres.
+"""Maag as real 3D geometry, in millimetres.
 
 Frame members come from drawings/brackets.py, so the cabinet is built from the
 same table the bracket allocation uses. The arm is Elephant Robotics' own mesh

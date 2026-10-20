@@ -1,5 +1,5 @@
 [Unit]
-Description=Claude tending loop for the Herb Tower
+Description=Claude tending loop for Maag
 After=network-online.target
 Wants=network-online.target
 

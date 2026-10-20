@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sheet E-01: Herb Tower power distribution and safety circuit.
+"""Sheet E-01: Maag power distribution and safety circuit.
 
 Every part number and rating comes from build_bom_revE.py. Every GPIO comes
 from the pin-map headers in esphome/common/*.yaml and greenhouse-utility.yaml.
@@ -15,7 +15,7 @@ fig, ax = sheet(22.4, 15.0, (0, X1), (0, Y1),
                 "E-stop chain", "E-01")
 ax.plot([COL - 14, COL - 14], [70, Y1 - 16], color=RULE, lw=1.0, zorder=0)
 
-ax.text(22, Y1 - 20, "Herb Tower  ·  electrical single line",
+ax.text(22, Y1 - 20, "Maag  ·  electrical single line",
         fontsize=18, fontweight="bold", color=INK, va="top")
 ax.text(22, Y1 - 46,
         "Part numbers and ratings from BOM Rev E; GPIO assignments from the ESPHome "
@@ -190,7 +190,8 @@ sr = Box(ax, 208, ROWE, 152, HE, "SAFETY RELAY",
          "Omron G9SE-201 · 24 VDC\ndual channel\nmanual reset", tag="G079", kind="safe")
 sr.port("A1", "t", 0.16)
 sr.left("T11", "T12", "T21", "T22", fs=6.6, start=ROWE + 8, span=52)
-sr.right("13", "14", "41", "42", fs=6.6, start=ROWE + 8, span=52)
+sr.right("13", "14", "23", "24", fs=6.6, start=ROWE + 8, span=52)
+sr.port("X1", "b", 0.92)
 for nm in ("T11", "T12", "T21", "T22"):
     yy = sr.p(nm)[1]
     wire(ax, [(es.x + es.w, yy), sr.p(nm)], color=SAFE, lw=1.3)
@@ -219,25 +220,32 @@ fnc = Box(ax, 714, ROWE, 162, HE, "MOTION CONTROLLER",
 fnc.port("in", "t", 0.22); fnc.port("x", "b", 0.30); fnc.port("sig", "b", 0.72)
 
 brk = Box(ax, 892, ROWE, 132, HE, "Z BRAKE",
-          "24 V 4.5 W coil inside\n23HS22-4004D-B280\npower off = mast held",
+          "24 V 4.5 W coil inside\n23HS22-4004D-B280\noff = held; low side MOSFET 1",
           tag="G065", kind="safe")
 brk.port("in", "t", 0.24)
 
 # motion 24 V through the safety contact
 tap(ax, 1112, V24Y, 278, color=V24, lw=1.6)
-fuse(ax, 1112, 278, label="10 A")
+fuse(ax, 1112, 278, label="5 A")
 contact(ax, 1112, 262, label="G9SE 13/14", color=SAFE, w=17)
 wire(ax, [(1095, 262), (fnc.p("in")[0], 262), fnc.p("in")], color=SAFE, lw=1.7,
      label="24 V MOTION, safety-switched", lpos=0.62)
-wire(ax, [(brk.p("in")[0], 262), brk.p("in")], color=SAFE, lw=1.7, dots=(0,))
+# the Z brake through the second safety contact, on its own 1 A fuse; its low
+# side goes to the motion controller's MOSFET 1 (gantry booklet, wiring pages)
+brk.port("in2", "r", 0.81)
+tap(ax, 1167, V24Y, 278, color=V24, lw=1.5)
+fuse(ax, 1167, 278, label="1 A")
+wire(ax, [(1167, 272), (1167, 236)], color=V24, lw=1.5)
+contact(ax, 1150, 236, label="G9SE 23/24", color=SAFE, w=17)
+wire(ax, [(1133, 236), brk.p("in2")], color=SAFE, lw=1.7)
 wire(ax, [sr.p("13"), (370, sr.p("13")[1]), (370, 276), (1112, 276)],
      color=SAFE, lw=1.0, ls=(0, (4, 3)))
 ax.text(560, 270, "13 / 14 contact, drawn at the load", fontsize=6.8, color=SAFE,
         ha="center", va="top")
 
-wire(ax, [sr.p("41"), (370, sr.p("41")[1]), (370, 146), (690, 146)],
+wire(ax, [sr.p("X1"), (sr.p("X1")[0], 146), (690, 146)],
      color=SIG, lw=1.3)
-ax.text(696, 146, "aux 41 / 42 → MCP23017 pin A6, \"Safety circuit tripped\".\n"
+ax.text(696, 146, "X1 (PNP status, 100 mA) → opto → MCP23017 pin A6, \"Safety circuit tripped\".\n"
                   "ESPHome stops watering the instant this opens.",
         fontsize=7.2, color=SIG, va="center")
 
@@ -322,8 +330,8 @@ note(ax, COL, 416,
      "shorted contact is detected and the relay refuses\n"
      "to reset. That is why the BOM carries TWO contact\n"
      "blocks and not one.\n\n"
-     "The 13/14 contact switches 24 V to the motion\n"
-     "controller and the Z brake only. Sensing, lighting\n"
+     "13/14 switches 24 V to the motion controller,\n"
+     "23/24 the Z brake coil. Sensing, lighting\n"
      "and the nodes stay alive through an E-stop, so the\n"
      "cabinet still reports what it sees.", fs=7.5)
 

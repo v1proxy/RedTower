@@ -74,7 +74,7 @@ def render(ax, scene, title, sub="", width=1500):
 
 
 fig = plt.figure(figsize=(13.6, 13.6), facecolor="#FBFCFA")
-fig.suptitle("Herb Tower  ·  trays on the 4040 frame  ·  Rev 2",
+fig.suptitle("Maag  ·  trays on the 4040 frame  ·  Rev 2",
              fontsize=15, fontweight="bold", color=INK, x=.042, ha="left", y=.987)
 fig.text(.042, .966,
          "Real 40-series T-slot section: the top face is two 16 mm lands with an 8 mm groove, not a flat 40 mm bearing.  "

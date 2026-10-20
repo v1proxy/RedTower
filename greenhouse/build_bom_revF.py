@@ -510,7 +510,7 @@ def build():
 
     # ---------------------------------------------------------------- BOM
     ws = wb.create_sheet("BOM", 1)
-    ws["A1"] = "Herb Tower BOM Rev E, with buying links checked 2026-10-10"
+    ws["A1"] = "Maag BOM Rev E, with buying links checked 2026-10-10"
     ws["A1"].font = TITLE
     ws["A2"] = ("Click any Link cell to open the product page. Confidence: Verified = page opened and price read; "
                 "Search = real part, vendor search pre-filled; Alternate = the specified part does not exist or is "
@@ -655,7 +655,7 @@ def build():
 
     # ---------------------------------------------------------------- Summary
     sm = wb.create_sheet("Summary", 0)
-    sm["A1"] = "Herb Tower Rev E"
+    sm["A1"] = "Maag Rev E"
     sm["A1"].font = Font(bold=True, size=16, color="1F3A2E")
     sm["A2"] = "Cost by subsystem. Links checked 2026-10-03, consumables and tray drainage added 2026-10-10"
     sm["A2"].font = Font(size=10, italic=True, color="4A5A4E")

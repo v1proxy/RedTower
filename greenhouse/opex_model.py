@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Herb Tower daily running cost: electricity + Claude tokens.
+"""Maag daily running cost: electricity + Claude tokens.
 
 Electricity comes from the Rev E BOM Power sheet, with two corrections (see NOTE).
 Token counts are built from the real prompts in jetson/claude_gardener.py and

@@ -4,15 +4,89 @@ This repository is a buildable design, so it is versioned like one. The version
 in `VERSION` describes the *design*, not the code, and every generated artifact
 is stamped with it.
 
-- **MAJOR** — a change that makes an already-built unit wrong: a frame dimension,
+- **MAJOR**: a change that makes an already-built unit wrong: a frame dimension,
   a pin reassignment, a part that is not a drop-in for the one it replaces.
-- **MINOR** — a new module, a new size preset, a new capability. Existing builds
+- **MINOR**: a new module, a new size preset, a new capability. Existing builds
   stay valid.
-- **PATCH** — corrections, better documentation, a part substitution that is a
+- **PATCH**: corrections, better documentation, a part substitution that is a
   genuine drop-in, generator fixes that change no output.
 
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
+
+## 0.3.0 – 2026-10-20
+
+**The project is now Maag, the Modular Agentic Autonomous Greenhouse.** It was
+Herb Tower up to 0.2.0. Display names only: titles, drawings, BOMs, the Home
+Assistant panel title and the MQTT device model. Entity IDs, hostnames, file
+paths and the `greenhouse` names in code are unchanged, so nothing that is
+already deployed breaks.
+
+**Gantry Rev E. Every Rev D drawing was a mirror image, and the OpenBuilds
+parts are now OpenBuilds' own geometry.** Two purchased parts change: the arm
+plate (Rev A's slots fit no published pattern) and the X rail's end brackets
+(cast corners cannot sit where the top depth rails already are). The cabinet,
+the cut list and every pin are unchanged.
+
+### The mirror
+
+`kit3d.iso_matrix` was left-handed, so every Rev D page showed the assembly
+reflected: what sat on the left was on the right. Fixed, and every page was
+re-rendered and re-checked. Anyone who marked up Rev D should re-read Rev E.
+
+### OpenBuilds hardware from OpenBuilds' drawings
+
+Modelled from bd_warehouse's transcription of OpenBuilds' drawings instead of
+photographs:
+
+- **XL plate**: fixed wheels on one edge (5.1 holes, counterbored), eccentrics
+  on the other (7.2); tapped M5 grid; nut recess; no centre window.
+- **Wheel stack**: plate 6, spacer 6, **1 mm precision shim**, wheel 11, nyloc;
+  the plate sits **2.5** off the beam, so each carriage is **8.5** deep, not
+  7.115. Eccentrics are **10 mm** hex. Low profile heads are 1.5 mm.
+- **Nut block** 34 × 33 × 12 on two 6 mm spacers, M5 × 25 low profile, hex nuts
+  in its pockets. **C-Beam End Mount** 80 × 50 × 12 at the mast top.
+- `design/params.py`: `CARR_STACK = 8.5`, `TRANSIT_CLEAR = 20.0`. J1 moves to
+  385.65 from the front; the folded arm clears the tray line by **20.0**
+  (was 22.8); X travel **1086**. `solve.py` still passes the 559 reference
+  build, with no depth to spare.
+
+### Purchased parts that change
+
+- **Arm plate Rev B** (`arm_plate_revB.dxf`): tapped M3 × 4 for the G base,
+  tapped M4 × 4 on the bare arm's 44 mm square, countersunk M5 × 4 into the XL
+  plate's tapped holes. SendCutSend drawing sizes. Rev A should not be cut.
+- **Rail brackets**, bent 5052-H32 0.125 in, TOP and BOTTOM at each end of the
+  X rail (`rail_bracket_*.dxf`). Replaces four cast corner brackets.
+- **Reset button** for the G9SE-201's manual reset (BOM S07). Rev D had none.
+
+### Safety wiring
+
+- **13-14** feeds the controller; **23-24** feeds the Z brake coil, switched on
+  its low side by the controller's MOSFET output, so software releases the
+  brake only for a Z move and an E-stop or power cut always sets it.
+- Manual reset: 24 V on T33, the NO button from T31 to T32.
+- X1 is the G9SE-201's PNP status output (100 mA, not a safety output) to the
+  utility node's A6, through an opto input.
+- **Sheet E-01 corrected**: it drew an aux "41/42" contact the G9SE-201 does
+  not have, fed the brake from 13/14, and put a 10 A fuse ahead of 13/14, above
+  both the contact's 5 A rating and Omron's 8 A fuse limit. Now 5 A ahead of
+  13-14, 1 A ahead of 23-24, X1 to A6.
+
+### Booklet
+
+Rendered cover; parts and fasteners counted off the model; a tools page; two
+wiring pages (power and safety; controller, motors, brake, limits); step 11
+rebuilt around the real nut block; step 16 exploded; step 23 shows where each
+bracket leg lands; step 19 mounts the arm on its G base; step 27 recentred.
+Gantry BOM **Rev C**: shims, spacer count, End Mount, brackets, arm plate Rev B,
+reset button and a complete, counted fastener list.
+
+Type: titles, step numbers, wiring box headings and tool names are IBM Plex
+Mono, everything else Inter. That is the Maag house style for every booklet,
+sheet and deck from here on. The fonts are not in the repo: the generator reads
+them from `$MAAG_FONTS` or from `greenhouse-esphome/_fonts` beside the repo,
+and falls back to DejaVu Sans Mono without them.
 
 ## 0.2.0 – 2026-10-20
 
@@ -218,16 +292,16 @@ No design change. No generated output changes.
   30 fps with depth aligned to colour.
 - The ~20 fps that `d405_check.py` reports, here and on Windows in October, is
   the script counting its own pipeline start-up, not the camera or the cable.
-## 0.1.0 — 2026-10-17
+## 0.1.0 – 2026-10-17
 
 First parametric release. Up to here the repository described exactly one
 greenhouse, 1397 × 457 × 1829 mm, and every dimension was a constant somebody
 had typed into `brackets.py`.
 
 ### Added
-- `design/params.py` — one `Envelope` describing the space you have, plus five
+- `design/params.py`: one `Envelope` describing the space you have, plus five
   presets spanning 600 mm to 3000 mm of wall.
-- `design/solve.py` — derives the whole design from the envelope: bay count and
+- `design/solve.py`: derives the whole design from the envelope: bay count and
   intermediate uprights, shelf levels and headroom, the pot grid, probe and ADC
   allocation, LED wattage from a PPFD target, zone flow rates, reservoir size,
   node count and switch selection, and the arm's reach geometry.

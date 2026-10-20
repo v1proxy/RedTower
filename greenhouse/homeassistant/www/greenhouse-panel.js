@@ -1,6 +1,6 @@
 /*
  * greenhouse-panel-card
- * Herb Tower control interface for Home Assistant.
+ * Maag control interface for Home Assistant.
  *
  * Port of the approved interface baseline (Baseline 1, 2026-10-03, mockup v7).
  * One custom card, shown in panel mode as the Greenhouse view of the Red Tower
@@ -133,7 +133,7 @@ class GreenhousePanelCard extends HTMLElement {
   }
 
   setConfig(config) {
-    this._config = Object.assign({ title: 'Herb Tower', power_entity: 'sensor.greenhouse_utility_cabinet_power' }, config || {});
+    this._config = Object.assign({ title: 'Maag', power_entity: 'sensor.greenhouse_utility_cabinet_power' }, config || {});
   }
 
   getCardSize() { return 40; }
@@ -683,7 +683,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'greenhouse-panel-card',
   name: 'Greenhouse panel',
-  description: 'Herb Tower control interface, one card in panel mode',
+  description: 'Maag control interface, one card in panel mode',
   preview: false,
 });
 

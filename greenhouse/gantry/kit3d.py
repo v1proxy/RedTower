@@ -89,13 +89,29 @@ def extrude(poly, h, z0=0.0, holes=None, cap=True):
     V = np.vstack(V)
     if cap:
         pts = np.vstack(loops)
-        from matplotlib.path import Path as _P
-        tri = Delaunay(pts)
-        cen = pts[tri.simplices].mean(1)
-        ok = _P(poly).contains_points(cen)
-        for hl in holes:
-            ok &= ~_P(hl).contains_points(cen)
-        keep = tri.simplices[ok]
+        keep = None
+        try:
+            import earcut as _ec
+            _P2, keep = _ec.triangulate(poly, holes)
+            if len(keep) == 0:
+                keep = None
+        except Exception:
+            keep = None
+        if keep is None:
+            from matplotlib.path import Path as _P
+            tri = Delaunay(pts)
+            cen = pts[tri.simplices].mean(1)
+            ok = _P(poly).contains_points(cen)
+            for hl in holes:
+                ok &= ~_P(hl).contains_points(cen)
+            keep = tri.simplices[ok]
+        else:
+            # earcut may reverse loops internally; keep caps wound like
+            # Delaunay's (counter-clockwise in xy) for the bottom flip below
+            a = pts[keep]
+            cr = ((a[:, 1, 0] - a[:, 0, 0]) * (a[:, 2, 1] - a[:, 0, 1])
+                  - (a[:, 1, 1] - a[:, 0, 1]) * (a[:, 2, 0] - a[:, 0, 0]))
+            keep = np.where((cr < 0)[:, None], keep[:, ::-1], keep)
         if len(keep):
             nb = len(V)
             V = np.vstack([V, np.c_[pts, np.full(len(pts), z0)],
@@ -412,8 +428,12 @@ def iso_matrix(az=35.0, el=27.0):
     """
     a, b = math.radians(az), math.radians(el)
     ca, sa, cb, sb = math.cos(a), math.sin(a), math.cos(b), math.sin(b)
+    # The camera sits at (sa, ca, tan el): the depth row points at it. Rev E
+    # fix: screen x is the camera's RIGHT, depth x up. Through Rev D the first
+    # row was (ca, -sa, 0), whose cross with screen y is MINUS the depth row:
+    # a left-handed screen, so every drawing came out mirror imaged.
     return np.array([
-        [ca,      -sa,      0.0],   # screen x
+        [-ca,      sa,      0.0],   # screen x  (camera right)
         [-sb * sa, -sb * ca, cb],   # screen y  (world +Z -> up)
         [cb * sa,  cb * ca,  sb],   # depth     (larger = nearer)
     ])

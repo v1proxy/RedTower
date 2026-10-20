@@ -15,7 +15,7 @@ fig, ax = sheet(22.4, 15.0, (0, X1), (0, Y1),
                 "authority chain", "E-04")
 ax.plot([COL - 12, COL - 12], [70, Y1 - 16], color=RULE, lw=1.0, zorder=0)
 
-ax.text(22, Y1 - 20, "Herb Tower  ·  motion, vision and compute",
+ax.text(22, Y1 - 20, "Maag  ·  motion, vision and compute",
         fontsize=18, fontweight="bold", color=INK, va="top")
 ax.text(22, Y1 - 46,
         "The gantry carries the arm along the long face of the cabinet, in the 254 mm "

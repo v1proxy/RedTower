@@ -8,7 +8,7 @@ from .. import topics as T
 from .store import positions
 
 DEVICE = {"identifiers": ["greenhouse"], "name": "Greenhouse", "manufacturer": "Red Tower",
-          "model": "Herb Tower"}
+          "model": "Maag"}
 ALIVE_EXPIRE_S = 45
 
 

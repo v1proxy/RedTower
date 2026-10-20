@@ -153,7 +153,7 @@ class GreenhousePanel extends HTMLElement {
 
   // ---------- rendering
   view(m) {
-    if (!m.known) return `<header><div class="mono sm mute">Red Tower / Greenhouse</div><h1>Herb Tower</h1></header>
+    if (!m.known) return `<header><div class="mono sm mute">Red Tower / Greenhouse</div><h1>Maag</h1></header>
       <div class="banner">The greenhouse stack has not reported to Home Assistant yet. This view fills in once the Jetson core is running.</div>`;
     const plantIds = Object.keys(m.plants).sort();
     if (!this.ui.plant || !m.plants[this.ui.plant]) this.ui.plant = plantIds.find((p) => m.plants[p].status === 'attention') || plantIds[0];
@@ -161,7 +161,7 @@ class GreenhousePanel extends HTMLElement {
       ${this.authority(m)}${this.modules(m)}${this.environment(m)}${this.power(m)}<div class="two">${this.plants(m)}${this.console(m)}</div>`;
   }
   header(m) {
-    return `<header class="row" style="justify-content:space-between;align-items:center"><div><div class="mono sm mute">Red Tower / Greenhouse</div><h1>Herb Tower</h1></div>
+    return `<header class="row" style="justify-content:space-between;align-items:center"><div><div class="mono sm mute">Red Tower / Greenhouse</div><h1>Maag</h1></div>
       <div class="row" style="align-items:center">${this.config.demo ? '<div class="pill mono">Simulated data</div>' : ''}
       <button data-act="kill" aria-pressed="${m.kill}" style="font-weight:600;${m.kill ? `background:${C.red};color:#2a0f09;border-color:${C.red}` : `color:${C.redFg};border-color:#a5574a`}">${m.kill ? 'Agents halted, tap to release' : 'Agent kill switch'}</button></div></header>`;
   }

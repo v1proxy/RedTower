@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Claude tends the Herb Tower.
+"""Claude tends Maag.
 
 Once an hour this wakes up, gathers the same variable set the Sol biodome steers on
 (air temperature, humidity, VPD, leaf-to-air delta, soil moisture, CO2, plus our vision

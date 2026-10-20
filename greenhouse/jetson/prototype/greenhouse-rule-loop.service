@@ -1,5 +1,5 @@
 [Unit]
-Description=Herb Tower rule loop, watches the bands between gardener runs
+Description=Maag rule loop, watches the bands between gardener runs
 After=network-online.target
 Wants=network-online.target
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Mounting slot schedule, read back out of the shipped DXFs (not re-drawn from the model)."""
+import os
 import math
 import brackets as BK
 import matplotlib
@@ -7,7 +8,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 INK, LINE, DIM, HOLE = "#1B2629", "#5E6E70", "#1F6F8B", "#B3261E"
-SRC = "/home/claude/greenhouse/sendcutsend"
+SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sendcutsend")
 
 
 def parse(path):
@@ -62,7 +63,7 @@ PARTS = [("tray_DOWN", 3, 0.0, "tray"), ("tray_UP", 3, 660.0, "tray"),
          ("basepan_DOWN", 1, 0.0, "base pan"), ("basepan_UP", 1, 660.0, "base pan")]
 
 fig = plt.figure(figsize=(13.6, 13.2), facecolor="#FBFCFA")
-fig.suptitle("Herb Tower  ·  mounting slot schedule  ·  Rev 5",
+fig.suptitle("Maag  ·  mounting slot schedule  ·  Rev 5",
              fontsize=15, fontweight="bold", color=INK, x=.045, ha="left", y=.982)
 fig.text(.045, .958,
          "Parsed straight out of the four .dxf files that go to SendCutSend, so this drawing cannot show a hole the cutter will not make.\n"

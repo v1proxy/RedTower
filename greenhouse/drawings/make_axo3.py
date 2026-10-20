@@ -100,7 +100,7 @@ def render(ax, scene, title, sub="", width=1500):
 
 
 fig = plt.figure(figsize=(13.6, 13.8), facecolor="#FBFCFA")
-fig.suptitle("Herb Tower  ·  trays on the 4040 frame  ·  Rev 3",
+fig.suptitle("Maag  ·  trays on the 4040 frame  ·  Rev 3",
              fontsize=15, fontweight="bold", color=INK, x=.042, ha="left", y=.987)
 fig.text(.042, .966,
          "No added profiles at the ends: the trays now run the full 1397 mm frame width and land on the external side members, with a 45 degree corner cut\n"

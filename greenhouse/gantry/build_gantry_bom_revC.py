@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Herb Tower - GANTRY SUBSYSTEM bill of materials.
+"""Maag - GANTRY SUBSYSTEM bill of materials.
 
 Scope: everything needed to assemble the X/Z gantry, mount the robot arm on it,
 power it, wire it and bench-test it BEFORE it goes into the greenhouse frame.
@@ -14,13 +14,22 @@ STATUS column:
   Verified   price and availability read off the live listing
   Estimate   product confirmed live, exact price behind a variant selector
   To source  commodity part, pick any that meets the spec in NOTES
+
+Rev C (booklet Rev E): every OpenBuilds part re-checked against OpenBuilds' own
+drawings as modelled in bd_warehouse. Changes: eccentric spacers are 10 mm hex;
+each wheel stack carries a 1 mm precision shim; the nut block takes its own
+spacers, screws and nuts; the mast top is the C-Beam End Mount (80 x 50 x 12);
+the X rail hangs on four bent SendCutSend brackets instead of cast corners;
+the arm plate is Rev B (tapped M3 for the G base, M4 for the bare arm,
+countersunk M5 to the XL plate); a manual-reset button for the safety relay;
+the fastener list is complete and counted off the model.
 """
 import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-REV = "Gantry Rev B"
+REV = "Gantry Rev C"
 DATE = "2026-10-20"
 
 MS = "https://makerstore.cc"
@@ -45,12 +54,19 @@ ROWS = [
      "the 2.6 kg moving load. Buy it only if you want margin for a heavier future "
      "end effector."),
 
-    ("X03", "Structure", "C-Beam end mount / angle corner, 90 deg",
-     "Maker Store", "Maker Store USA", f"{MS}/product-category/plates/",
-     4, "pc", 6.00, "To source",
-     "The X rail to the rear uprights: one on the rail's top face and one on its "
-     "bottom face at each end, beyond the carriage's travel. The mast hangs from "
-     "the X carriage and needs none."),
+    ("X03", "Structure", "Rail bracket TOP, 5052-H32 0.125 in, one 90 deg bend",
+     "SendCutSend custom, rail_bracket_top.dxf", "SendCutSend", "https://sendcutsend.com/",
+     2, "pc", 9.00, "Estimate",
+     "REPLACES the cast corner brackets: the rail's last 40 mm at each end sit UNDER the "
+     "top depth rails, so nothing can bolt to its top face there. Flat 40 x 69.38, legs "
+     "40 x 35, bend at 37.19 from the leg-A end. Leg A: 2 x M5 into the rail's front top "
+     "groove; leg B: 2 x M5 into the top back rail's slot."),
+
+    ("X04", "Structure", "Rail bracket BOTTOM, 5052-H32 0.125 in, one 90 deg bend",
+     "SendCutSend custom, rail_bracket_bottom.dxf", "SendCutSend", "https://sendcutsend.com/",
+     2, "pc", 9.00, "Estimate",
+     "Under the rail at each end. Flat 40 x 84.38, legs 40 x 50. Leg A: 2 x M5 into the "
+     "rail's front bottom groove; leg B: 2 x M5 into the rear upright's slot."),
 
     # ---------------------------------------------------------------- carriages
     ("C01", "Carriage", "C-Beam gantry plate, XL",
@@ -66,21 +82,31 @@ ROWS = [
      "Four per gantry plate. Solid, not the moulded V wheel: the solid wheel is "
      "what gives the carriage its rigidity under a cantilevered arm."),
 
-    ("C03", "Carriage", "Eccentric spacer, 8 mm hex, 6 mm",
+    ("C03", "Carriage", "Eccentric spacer, 10 mm hex, 6 mm",
      "SHIM-ECCENTRIC-8-6", "Maker Store USA", f"{MS}/product/bun-cbeam-xlgantry/",
      4, "pc", 2.45, "Verified",
      "Two per plate. These are how you preload the wheels against the rail. "
-     "Preload is the single biggest influence on gantry slop, so set it carefully."),
+     "Preload is the single biggest influence on gantry slop, so set it carefully. "
+     "10 mm ACROSS FLATS (Rev B said 8): a thin 10 mm spanner turns them."),
 
     ("C04", "Carriage", "Aluminium spacer, 6 mm",
      "SHIM-SPAC-6MM", "Maker Store USA", f"{MS}/product-category/hardware/",
-     4, "pc", 1.20, "Estimate", "Two per plate, paired with the eccentrics."),
+     6, "pc", 1.20, "Estimate",
+     "Two per plate under the FIXED wheels, and two between the nut block and the Z "
+     "carriage. Rev B had 4."),
+
+    ("C07", "Carriage", "Precision shim, 10 x 5 x 1 mm",
+     "SHIM-PREC-10-5-1", "Maker Store USA", f"{MS}/product-category/hardware/",
+     8, "pc", 0.40, "Estimate",
+     "NEW. One in every wheel stack, between the spacer (or eccentric) and the wheel, "
+     "so the bearing's inner race is clamped and the outer race spins free."),
 
     ("C05", "Carriage", "M5 low profile screws, 30 mm, 10 pack",
      "SCREWS-M5-LP-30", "Maker Store USA", f"{MS}/product-category/hardware/",
      1, "pack", 8.00, "Estimate",
-     "CHANGED FROM 27 mm. Plate 6 + spacer 6 + wheel 10.23 + nyloc 5 is 27.23, so a "
-     "27 mm screw never reaches the nyloc's nylon ring. Four per plate plus spares."),
+     "Plate 6 + spacer 6 + shim 1 + wheel 11 + nyloc 5 is 29, so 30 it is. Four per "
+     "plate, heads in the plate's 1.6 mm counterbores. OpenBuilds low profile heads "
+     "are 1.5 mm: DIN 7984 heads (2.8 to 3.5) do not fit the 2.5 mm gap to the beam."),
 
     ("C06", "Carriage", "M5 nyloc nut, 10 pack",
      "Nyloc M5 DIN 985", "Maker Store USA", f"{MS}/product-category/hardware/",
@@ -136,11 +162,11 @@ ROWS = [
      "BOTH at the top end plate, one each side of it, so the screw hangs from the "
      "top and the coupler at the foot carries only torque. Thrust, not radial."),
 
-    ("D15", "Z drive", "C-Beam end mount plate, 40 x 80, 8 mm bearing seat",
+    ("D15", "Z drive", "C-Beam End Mount, 80 x 50 x 12, 16.1 bearing recess",
      "Maker Store", "Maker Store USA", f"{MS}/product-category/plates/",
      1, "pc", 9.00, "To source",
-     "MISSING FROM REV A. Caps the mast top and carries the two thrust bearings. "
-     "Section sized on purpose: a full motor plate up there hits the X carriage."),
+     "Caps the mast top: four M5 x 25 low profile into the beam's end taps. One "
+     "thrust bearing sits in its 16.1 recess, the other underneath."),
 
     ("D16", "Z drive", "Shaft lock collar, 8 mm",
      "Generic", "Amazon", "https://www.amazon.com/s?k=8mm+shaft+lock+collar",
@@ -195,7 +221,8 @@ ROWS = [
     ("E03", "Electronics", "Fuse block, 6 circuit ATO",
      "Blue Sea 5025", "Amazon", "https://www.amazon.com/s?k=Blue+Sea+5025+fuse+block",
      1, "pc", 28.00, "To source",
-     "Separately fuse the motion branch, the brake and the controller."),
+     "ATO: 5 A motion (ahead of 13/14), 1 A Z brake (ahead of 23/24), 1 A relay "
+     "supply and reset. Omron caps the fuse ahead of each contact at 8 A."),
 
     ("E04", "Electronics", "Hook-up wire, 18 AWG stranded, assorted",
      "Generic", "Amazon", "https://www.amazon.com/s?k=18+AWG+stranded+hookup+wire+kit",
@@ -234,13 +261,54 @@ ROWS = [
      "Eaton M22-A", "DigiKey", "https://www.digikey.com/en/products/filter/emergency-stop/",
      1, "pc", 9.00, "Estimate", ""),
 
+    ("S07", "Limits & safety", "Reset pushbutton, flush, black, with 1 NO block and collar",
+     "Eaton M22-D-B + M22-K10 + M22-A", "DigiKey",
+     "https://www.digikey.com/en/products/filter/pushbutton-switches/",
+     1, "set", 24.00, "Estimate",
+     "NEW. The G9SE-201 is wired for MANUAL reset, which needs a momentary NO button "
+     "between T31 and T32. Rev B had none."),
+
     ("S06", "Limits & safety", "Safety relay, dual channel, 24 VDC",
      "Omron G9SE-201", "DigiKey",
      "https://www.digikey.com/en/products/detail/omron-automation-and-safety/G9SE-201/7495167",
      1, "pc", 217.00, "Verified",
-     "The expensive line. Its 13/14 contact switches 24 V to the motion controller "
-     "and the Z brake only, so an E-stop parks the mast but leaves sensing alive. "
+     "The expensive line. 13/14 switches 24 V to the motion controller, 23/24 "
+     "switches the Z brake coil (low side through the controller's MOSFET 1), so an "
+     "E-stop limps the motors and locks the mast but leaves sensing alive. Manual "
+     "reset: 24 V on T33, the S07 button from T31 to T32. X1 is a status output only. "
      "You CAN bench-test the gantry without it; do not run the arm without it."),
+
+    # --------------------------------------------------------------- fasteners
+    ("H01", "Fasteners", "M5 x 25 low profile, 10 pack", "SCREWS-M5-LP-25", "Maker Store USA",
+     f"{MS}/product-category/hardware/", 1, "pack", 8.00, "Estimate",
+     "Nut block (2), belt clamps (4), End Mount (4)."),
+    ("H02", "Fasteners", "M5 x 10 low profile, 10 pack", "SCREWS-M5-LP-10", "Maker Store USA",
+     f"{MS}/product-category/hardware/", 1, "pack", 6.00, "Estimate",
+     "Mast back to the X carriage plate, 6, into T-nuts in the mast's outer back grooves."),
+    ("H03", "Fasteners", "M5 x 10 socket cap ISO 4762, 50 pack", "Generic A2", "Amazon",
+     "https://www.amazon.com/s?k=M5+x+10+socket+head+cap+screw+stainless", 1, "pack", 9.00, "To source",
+     "Motors (8), X motor plate to the rail (4), rail brackets (16)."),
+    ("H04", "Fasteners", "M5 socket caps: 12 (x4) and 40 (x1)", "Generic A2", "Amazon",
+     "https://www.amazon.com/s?k=M5+socket+head+cap+screw+assortment", 1, "set", 8.00, "To source",
+     "M5 x 12 for the Z foot plate into the mast's end taps; M5 x 40 is the idler axle."),
+    ("H05", "Fasteners", "M5 x 10 flat head ISO 10642, 90 deg", "Generic A2", "Amazon",
+     "https://www.amazon.com/s?k=M5+x+10+flat+head+socket+screw", 4, "pc", 0.50, "To source",
+     "Arm plate into the XL plate's tapped holes, heads flush in SendCutSend's countersinks."),
+    ("H06", "Fasteners", "M5 drop-in T-nut, 20 series (C-Beam), 25 pack", "TNUT-M5-DROP", "Maker Store USA",
+     f"{MS}/product-category/hardware/", 1, "pack", 9.00, "Estimate",
+     "14: mast to carriage (6), rail brackets into the C-Beam (8)."),
+    ("H07", "Fasteners", "M5 T-nut, slot 8 (40 series 4040)", "Generic", "Amazon",
+     "https://www.amazon.com/s?k=M5+T-nut+slot+8+40+series", 8, "pc", 0.40, "To source",
+     "Rail brackets into the top back rails and the rear uprights. NOT the C-Beam size."),
+    ("H08", "Fasteners", "M5 hex nut (2), M5 washer (2)", "Generic A2", "Amazon",
+     "https://www.amazon.com/s?k=M5+hex+nut+washer+assortment", 1, "set", 3.00, "To source",
+     "Nuts in the nut block's pockets; washers either side of the idler."),
+    ("H09", "Fasteners", "M3 x 35 socket cap ISO 4762", "Generic A2", "Amazon",
+     "https://www.amazon.com/s?k=M3+x+35+socket+head+cap+screw", 4, "pc", 0.40, "To source",
+     "The arm's G base onto the arm plate's M3 taps, through its 32 mm."),
+    ("H10", "Fasteners", "M3 x 10 + M3 T-nut, limit switches; M3 standoffs, controller", "Generic", "Amazon",
+     "https://www.amazon.com/s?k=M3+standoff+kit", 1, "set", 12.00, "To source",
+     "8 screws and T-nuts for the four switches; 4 standoffs, nuts and M3 x 6 for the board."),
 
     # ---------------------------------------------------------------- robot arm
     ("R01", "Robot arm", "Robot arm, 6 DOF",
@@ -261,10 +329,12 @@ ROWS = [
     ("R03", "Robot arm", "Arm mounting plate, 6061-T6, 0.250 in",
      "SendCutSend custom, DXF in repo", "SendCutSend",
      "https://sendcutsend.com/",
-     1, "pc", 70.71, "Verified",
-     "Laser cut from arm_plate.dxf in the repo. 160 mm square, 22 mm centre bore, "
-     "8 radial slots for 110 mm of carriage adjustment. Bolts the arm base to the "
-     "XL gantry plate."),
+     1, "pc", 85.00, "Estimate",
+     "Rev B, from arm_plate_revB.dxf. 160 square, 22 bore. TAPPED M3 x 4 at (+/-46, "
+     "+/-65) for the arm's G base, TAPPED M4 x 4 on the 44 mm square for the bare arm, "
+     "COUNTERSUNK M5 90 deg x 4 at (+/-30, +/-50.3) on the arm side: flat heads into "
+     "the XL plate's tapped holes, flush under the base. Rev A's radial slots fitted "
+     "no published pattern. Tapping and countersinking add to the $70.71 cut price."),
 
     # ------------------------------------------------------------------- cables
     ("K01", "Cables", "Cable chain, 15 x 30 mm inner, 1.5 m run",
@@ -298,7 +368,7 @@ ROWS = [
 ]
 
 GROUP_ORDER = ["Structure", "Carriage", "X drive", "Z drive", "Motors",
-               "Electronics", "Limits & safety", "Robot arm", "Cables"]
+               "Electronics", "Limits & safety", "Fasteners", "Robot arm", "Cables"]
 
 HDR = ["Ref", "Group", "Item", "Mfr / Part", "Supplier", "Link",
        "Qty", "Unit", "Unit $", "Ext $", "Status", "Notes"]
@@ -317,7 +387,7 @@ def build(path):
     ws = wb.active
     ws.title = "Gantry BOM"
 
-    ws["A1"] = f"HERB TOWER  ·  GANTRY SUBSYSTEM BOM  ·  {REV}"
+    ws["A1"] = f"MAAG  ·  GANTRY SUBSYSTEM BOM  ·  {REV}"
     ws["A1"].font = Font(size=15, bold=True, color=INK)
     ws["A2"] = (f"Generated {DATE}. Scope: the X/Z gantry, the arm on it, its "
                 "electronics and cabling, through to a bench test. "
@@ -415,7 +485,7 @@ def build(path):
         "The eccentric spacers set wheel preload. Too loose gives slop that defeats hand-eye calibration; too tight wears flats on the wheels. Snug, then back off until the wheel turns with light finger drag.",
         "Wire limit switches NORMALLY CLOSED. A broken wire then reads as a trip, instead of silently disabling the limit.",
         "Check the NEMA 23 shaft diameter before ordering the coupler. It is usually 6.35 mm, not 5 mm. BOM Rev E had this wrong.",
-        "The arm must travel FOLDED between tiers: J2 -110, J3 -80, J4 -140, J5 -90, the shortest fold that does not hit itself, 162.6 mm long. It clears the tray line by 22.8 mm. That belongs in the motion planner, not in a comment.",
+        "The arm must travel FOLDED between tiers: J2 -110, J3 -80, J4 -140, J5 -90, the shortest fold that does not hit itself, 162.6 mm long. With the real carriage stack (8.5 per carriage) it clears the tray line by 20.0 mm. That belongs in the motion planner, not in a comment.",
         "Do not run the arm under power without the safety relay and E-stop wired. Bench-testing the gantry alone without them is fine.",
         "",
         "PRICE CONFIDENCE",
@@ -459,8 +529,9 @@ def build(path):
     tv.number_format = '"$"#,##0.00'
     tv.font = Font(bold=True, size=12, color="B91C1C")
     rr += 2
-    s.cell(rr, 1, "Biggest single line is the arm at $759. The gantry hardware "
-                  "itself, without arm or safety relay, is well under $600.").font = \
+    hw = grand - group_totals.get("Robot arm", 0.0) - 217.00
+    s.cell(rr, 1, f"Biggest single line is the arm at $759. Everything else except the "
+                  f"arm and the $217 safety relay comes to ${hw:,.2f}.").font = \
         Font(size=10, color="5B6770")
     s.column_dimensions["A"].width = 30
     s.column_dimensions["B"].width = 16
@@ -470,8 +541,7 @@ def build(path):
 
 
 if __name__ == "__main__":
-    out = "HerbTower_Gantry_BOM_RevB.xlsx"
-    os.makedirs(os.path.dirname(out), exist_ok=True)
+    out = "Maag_Gantry_BOM_RevC.xlsx"
     total, groups = build(out)
     print(f"saved {out}")
     for g, v in groups.items():

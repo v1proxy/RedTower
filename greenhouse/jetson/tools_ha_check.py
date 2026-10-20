@@ -237,7 +237,7 @@ def panel_renders(ha, tmp):
         page.screenshot(path=str(tmp / "panel.png"), full_page=True)
         browser.close()
     own = [e for e in errors if "greenhouse" in e.lower() or "panel" in e.lower()]
-    shown = all(w in text for w in ("Herb Tower", "Climate", "Safety governor", "Stub", "Paused", "Disabled"))
+    shown = all(w in text for w in ("Maag", "Climate", "Safety governor", "Stub", "Paused", "Disabled"))
     return not own and shown, {"errors": own, "text": text}
 
 

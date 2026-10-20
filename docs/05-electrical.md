@@ -2,10 +2,10 @@
 
 Four sheets, all generated from the BOM and the firmware pin maps:
 
-- `greenhouse/drawings/wiring_E01_power.png` — 120 V AC, 24 V, 12 V, E-stop
-- `greenhouse/drawings/wiring_E02_network.png` — VLAN/PoE and the tier node
-- `greenhouse/drawings/wiring_E03_utility.png` — utility node and water
-- `greenhouse/drawings/wiring_E04_motion.png` — gantry, arm, cameras, compute
+- `greenhouse/drawings/wiring_E01_power.png`: 120 V AC, 24 V, 12 V, E-stop
+- `greenhouse/drawings/wiring_E02_network.png`: VLAN/PoE and the tier node
+- `greenhouse/drawings/wiring_E03_utility.png`: utility node and water
+- `greenhouse/drawings/wiring_E04_motion.png`: gantry, arm, cameras, compute
 
 Regenerate them after any BOM or pin change:
 
@@ -20,7 +20,13 @@ python3 make_wiring3.py && python3 make_wiring4.py
 - Zone valves are normally closed and the pump needs a MOSFET actively held on,
   so a dead controller cannot water anything.
 - The Z brake is released **by** 24 V, so a power cut parks the mast rather than
-  dropping it through the trays.
+  dropping it through the trays. Its coil is fed through the safety relay's
+  **23-24** contact and switched on its low side by the motion controller's
+  MOSFET 1, so software releases it only for a Z move and an E-stop always sets
+  it. The controller itself is fed through **13-14** (5 A fuse; Omron allows at
+  most 8 A ahead of each contact). Manual reset: 24 V on T33, an NO button from
+  T31 to T32. X1 is a PNP status output only. The gantry booklet's two wiring
+  pages carry the terminal-level detail.
 - The GFCI is **manual** reset. After a trip it stays off until somebody pushes
   it. That is deliberate in a cabinet holding water and mains.
 - The grow-light dim input fails to **full light**. See below.

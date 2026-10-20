@@ -15,8 +15,9 @@ re-entrant, so the two notch lips overlap in the flat pattern. They are mitred a
 room, and the joint gets the same silicone bead as every other corner. Five bends per
 piece instead of four.
 """
+import os
 import math, sys
-sys.path.insert(0, "/home/claude/greenhouse/sendcutsend")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from unfold import unfold, MAXFLAT, MAXBEND, MITRE_GAP
 
 N = 41.0                 # 40 mm upright + 1 mm clearance

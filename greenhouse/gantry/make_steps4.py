@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
-"""Gantry assembly instructions, Rev D.
+"""Gantry assembly instructions, Rev E.
+
+Rev E over Rev D
+  * OpenBuilds parts drawn from bd_warehouse's models of OpenBuilds' drawings:
+    the XL plate (fixed wheels on one side, eccentrics on the other, no window),
+    the C-Beam profile, the nut block with its spacers and nuts, the End Mount
+  * carriage stack: spacer 6 + shim 1 + wheel 11; plate 2.5 off the beam
+  * cover render, tools page, gantry wiring, clearer steps 11, 16, 23 and 27
+  * arm plate Rev B: tapped M3 for the G base (M4 on the 44 square without
+    it), countersunk M5 into the XL plate
+  * X rail held by bent 5052 brackets, two per end, instead of cast corners
+
+Rev D notes:
 
 Every drawing is generated from assy.py, the same sub-assemblies the cabinet
 model uses, so a bench page and an installed page cannot disagree.
@@ -29,9 +41,23 @@ import assy as AS
 import frame as Fr
 import arm280 as A
 
+# ------------------------------------------------------------------ type
+# Maag house style: IBM Plex Mono for titles, Inter for everything else.
+# The fonts are not in the repo; they are looked for in $MAAG_FONTS, then in
+# greenhouse-esphome/_fonts beside the repo, then among the system's fonts.
+import glob as _glob
+from matplotlib import font_manager as _fm
+_HERE = os.path.dirname(os.path.abspath(__file__))
+for _d in (os.environ.get("MAAG_FONTS", ""), os.path.join(_HERE, "..", "..", "..", "..", "_fonts")):
+    for _f in _glob.glob(os.path.join(_d, "*.ttf")) if _d else []:
+        _fm.fontManager.addfont(_f)
+TITLE_FONT = ("IBM Plex Mono" if any(f.name == "IBM Plex Mono" for f in _fm.fontManager.ttflist)
+              else "DejaVu Sans Mono")
+plt.rcParams["font.family"] = ["Inter", "DejaVu Sans"]
+
 OUT = os.environ.get("GANTRY_OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "build"))
 os.makedirs(OUT, exist_ok=True)
-REV = "Rev D"
+REV = "Rev E"
 M = iso_matrix(34, 24)
 XL = Fr.RAIL_L                 # the X rail, cut
 ZL = Fr.MAST_L                 # the Z mast
@@ -49,13 +75,14 @@ def new_page(step, title, sub=""):
     if step is not None:
         ax.add_patch(Circle((78, 812), 34, facecolor=INK, edgecolor="none", zorder=301))
         ax.text(78, 812, str(step), ha="center", va="center", color="white",
-                fontsize=26, fontweight="bold", zorder=302)
-    ax.text(132 if step is not None else 48, 822, title, fontsize=18.5,
-            fontweight="bold", color=INK, va="center", zorder=302)
+                fontsize=24, fontweight="bold", family=TITLE_FONT, zorder=302)
+    title = title.replace("  ·  ", " · ")          # monospace: single spaces round the dot
+    ax.text(132 if step is not None else 48, 822, title, fontsize=17.5,
+            fontweight="semibold", family=TITLE_FONT, color=INK, va="center", zorder=302)
     if sub:
         ax.text(132 if step is not None else 48, 790, sub, fontsize=11,
                 color=DIM, va="center", zorder=302)
-    ax.text(1114, 30, f"Herb Tower  ·  Gantry {REV}", fontsize=8, color=DIM,
+    ax.text(1114, 30, f"Maag  ·  Gantry {REV}", fontsize=8, color=DIM,
             ha="right", zorder=302)
     ax._geom = []
     return fig, ax
@@ -107,7 +134,8 @@ def inset(ax, x, y, w, h, parts, MM, focus=None, label=None):
     for a in ax._geom[-1][0]:
         a.set_zorder(a.get_zorder() + 150)
     if label:
-        ax.text(x + 12, y + h - 16, label, fontsize=8.6, color=DIM, zorder=330)
+        ax.text(x + 12, y + h - 16, label, fontsize=8.6, color=DIM, zorder=330,
+                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none"))
     return v
 
 
@@ -152,9 +180,10 @@ def body(ax, txt, color=INK, fs=10.5):
 
 
 def tool(ax, x, y, label):
-    ax.add_patch(Rectangle((x, y - 16), 140, 32, facecolor="#eef2f5",
+    w = max(140.0, 8.6 * len(label) + 24.0)
+    ax.add_patch(Rectangle((x, y - 16), w, 32, facecolor="#eef2f5",
                            edgecolor="#c3ccd2", lw=0.9, zorder=200))
-    ax.text(x + 70, y, label, ha="center", va="center", fontsize=9.5,
+    ax.text(x + w / 2, y, label, ha="center", va="center", fontsize=9.5,
             color="#334", zorder=201, fontweight="bold")
 
 
@@ -179,36 +208,39 @@ MZ = AS.MIDZ
 def p_inv1(pdf):
     fig, ax = new_page(None, "Gantry  ·  parts",
                        "Count everything first. Quantities cover the complete gantry.")
-    items = [("C-Beam 1500 silver  LR-C-S", "2", lambda: AS.rail(300), ALU),
+    items = [("C-Beam 1500, silver", "2", lambda: AS.rail(300), ALU),
              ("XL gantry plate 125 × 125 × 6", "2", P.gantry_plate, STEEL),
-             ("Solid V wheel  OD 23.9", "8", P.solid_v_wheel, POM),
-             ("Eccentric spacer, 8 mm hex", "4", P.eccentric_spacer, ALU_D),
-             ("Aluminium spacer 6 mm", "4", P.plain_spacer, ALU_D),
+             ("Xtreme Solid V wheel", "8", P.solid_v_wheel, POM),
+             ("Eccentric spacer, 10 mm hex", "4", P.eccentric_spacer, ALU_D),
+             ("Aluminium spacer 6 mm", "6", P.plain_spacer, ALU_D),
+             ("Precision shim 10 × 5 × 1", "8", P.shim, STEEL),
              ("NEMA 23  ·  X axis", "1", lambda: P.nema23(76), STEEL),
              ("NEMA 23 + 24 V brake  ·  Z", "1", lambda: P.nema23(76, True), STEEL),
              ("NEMA 23 motor plate", "2", P.motor_mount_plate, ALU),
-             ("C-Beam end plate  ·  mast top", "1 *", P.cbeam_end_plate, ALU),
+             ("C-Beam End Mount", "1", P.cbeam_end_mount, ALU),
              ("GT2 pulley 20T, 6.35 bore", "1", P.gt2_pulley, STEEL),
              ("Idler, 9 mm belt", "1", P.idler, STEEL),
              ("Belt clamp block", "2", P.belt_clamp, ALU_D),
              ("Lead screw Tr8x8, 1500", "1", lambda: P.lead_screw(200), STEEL),
-             ("Anti-backlash nut block", "1", P.nut_block, BRASS),
-             ("Thrust bearing, 8 mm", "2", P.thrust_bearing, STEEL),
-             ("Lock collar, 8 mm", "2 *", lambda: ring(8.0, 4.0, 8.0), STEEL),
+             ("Anti-backlash nut block", "1", P.nut_block, BLACKPART),
+             ("Thrust bearing 8 × 16 × 5", "2", P.thrust_bearing, STEEL),
+             ("Lock collar 8 mm, 14 × 7", "2", P.lock_collar, BLACKPART),
              ("Coupler 6.35 → 8", "1", P.coupler, ALU_D),
              ("Limit switch, NC", "4", P.limit_switch, BLACKPART),
-             ("Corner bracket", "4", P.corner_bracket, ALU),
-             ("Arm plate 160 sq × 6.35", "1", P.arm_plate, ALU)]
+             ("Rail bracket, top  ·  5052", "2", lambda: P.rail_bracket("top"), ALU),
+             ("Rail bracket, bottom", "2", lambda: P.rail_bracket("bottom"), ALU),
+             ("Arm plate Rev B, 160 × 6.35", "1", P.arm_plate, ALU)]
     for i, (nm, q, fn_, col) in enumerate(items):
         r, c = divmod(i, 4)
-        cx, cy = 92 + c * 262, 708 - r * 112
-        scene(ax, [Part(fn_(), col)], (cx, cy), (76, 76), MM=iso_matrix(30, 30),
-              clip=(cx - 50, cy - 50, cx + 50, cy + 50))
+        cx, cy = 92 + c * 262, 716 - r * 100
+        scene(ax, [Part(fn_(), col)], (cx, cy), (70, 70), MM=iso_matrix(30, 30),
+              clip=(cx - 46, cy - 46, cx + 46, cy + 46))
         ax.text(cx + 52, cy + 11, nm, fontsize=8.5, color=INK, va="center")
-        ax.text(cx + 52, cy - 11, f"{q}×" if "*" not in q else q.replace(" *", "×  not in BOM Rev A"),
-                fontsize=9.6, color="#c2410c", fontweight="bold", va="center")
-    body(ax, "Also: GT2 belt 9 mm (2.8 m for the loop), wiring, fuse block, E-stop and the "
-             "safety relay. In the BOM, not drawn.", fs=9.4, color=DIM)
+        ax.text(cx + 52, cy - 11, f"{q}×", fontsize=9.6, color="#c2410c",
+                fontweight="bold", va="center")
+    body(ax, "Also: GT2 belt 9 mm (2.8 m for the loop), the wiring on the wiring pages, fuse block, E-stop "
+             "and the safety relay.\nIn the BOM, not drawn. Rev E changes: shims, the End Mount, the spacer "
+             "count and the bent rail brackets.", fs=9.0, color=DIM)
     save(fig, ax, pdf, "00_parts")
 
 
@@ -218,56 +250,64 @@ def p_inv2(pdf):
                        "Every screw in the build. Lay them out in labelled pots first.")
     items = [("M5 × 30 low profile  ·  wheels", "8", lambda: P.socket_cap(5, 30, low_profile=True)),
              ("M5 nyloc  ·  wheels, idler", "9", P.nyloc),
-             ("M5 × 10  ·  motor, plate, clamps", "12", lambda: P.socket_cap(5, 10)),
-             ("M5 × 12  ·  end plates, nut, arm plate", "14", lambda: P.socket_cap(5, 12)),
+             ("M5 × 25 low profile  ·  block, clamps, mount", "10",
+              lambda: P.socket_cap(5, 25, low_profile=True)),
+             ("M5 hex nut  ·  nut block", "2", P.hex_nut),
+             ("M5 × 10 low profile  ·  mast to X carriage", "6", lambda: P.socket_cap(5, 10, low_profile=True)),
+             ("M5 × 10 socket cap  ·  motors, X motor plate", "12", lambda: P.socket_cap(5, 10)),
+             ("M5 × 12 socket cap  ·  Z foot plate", "4", lambda: P.socket_cap(5, 12)),
              ("M5 × 40 socket cap  ·  idler axle", "1", lambda: P.socket_cap(5, 40)),
-             ("M5 × 10  ·  corner brackets", "8", lambda: P.socket_cap(5, 10)),
-             ("M5 T-nut, drop in", "12", P.tnut),
+             ("M5 × 10 flat head  ·  arm plate", "4", lambda: P.flat_head(5, 10)),
+             ("M5 × 10 socket cap  ·  rail brackets", "16", lambda: P.socket_cap(5, 10)),
+             ("M5 T-nut, 20 series  ·  C-Beam slots", "14", P.tnut),
+             ("M5 T-nut, slot 8  ·  4040 frame", "8", P.tnut),
              ("M5 washer  ·  idler", "2", P.washer),
              ("M5 × 6 grub  ·  pulley", "2", lambda: P.grub_screw(5, 6)),
              ("M4 × 6 grub  ·  coupler", "4", lambda: P.grub_screw(4, 6)),
-             ("M4 × 10 socket cap  ·  arm base", "4", lambda: P.socket_cap(4, 10)),
+             ("M3 × 35 socket cap  ·  arm G base", "4", lambda: P.socket_cap(3, 35)),
              ("M3 × 10 + T-nut  ·  limit switches", "8", lambda: P.socket_cap(3, 10)),
-             ("M3 standoff + M3 × 10", "4", P.standoff)]
+             ("M3 standoff, nut, M3 × 6  ·  controller", "4", P.standoff_mf)]
     for i, (nm, q, fn_) in enumerate(items):
         r, c = divmod(i, 3)
-        cx, cy = 104 + c * 352, 690 - r * 116
-        scene(ax, [Part(fn_(), STEEL)], (cx, cy), (70, 70), MM=iso_matrix(30, 30),
-              clip=(cx - 48, cy - 48, cx + 48, cy + 48))
-        ax.text(cx + 52, cy + 11, nm, fontsize=8.6, color=INK, va="center")
-        ax.text(cx + 52, cy - 11, f"{q}×", fontsize=10.4, color="#c2410c",
+        cx, cy = 96 + c * 352, 712 - r * 98
+        scene(ax, [Part(fn_(), STEEL)], (cx, cy), (62, 62), MM=iso_matrix(30, 30),
+              clip=(cx - 44, cy - 44, cx + 44, cy + 44))
+        ax.text(cx + 50, cy + 11, nm, fontsize=8.3, color=INK, va="center")
+        ax.text(cx + 50, cy - 11, f"{q}×", fontsize=10.0, color="#c2410c",
                 fontweight="bold", va="center")
-    tool(ax, 760, 140, "2 / 2.5 / 3 / 4 mm hex")
-    tool(ax, 920, 140, "8 mm spanner, thin")
-    body(ax, "The wheel screws are M5 × 30, not the 27 of BOM Rev A: plate 6 + spacer 6 + wheel\n"
-             "10.23 + nyloc 5 is 27.2, so a 27 never reaches the nyloc's nylon ring.", fs=9.6,
-         color="#b91c1c")
+    body(ax, "OpenBuilds low profile heads are only 1.5 mm tall: that is what lets them sit between a plate "
+             "and the beam\n(2.5 mm gap) and inside the plate's 1.6 mm counterbores. Do not substitute "
+             "DIN 7984 heads (2.8 to 3.5).", fs=9.2, color="#b91c1c")
     save(fig, ax, pdf, "00b_fasteners")
 
 
-# ============================================================ carriage
 @page
 def s1(pdf):
     fig, ax = new_page(1, "Know your plate",
-                       "Two hole sizes. Getting them the wrong way round costs the carriage.")
+                       "Fixed wheels on one edge, eccentrics on the other. Use the outer two of each row.")
     pl = Part(AS.along_py(P.gantry_plate(), (0, 0, 0)), STEEL)
-    v = scene(ax, [pl], (470, 470), (520, 520), MM=iso_matrix(18, 14))
-    for (sx, sy, lab) in ((1, 1, "Ø 5.1  ·  FIXED wheel"), (1, -1, "Ø 7.2  ·  ECCENTRIC")):
-        p = v((sx * P.WH_X / 2, 0, sy * P.WH_Y / 2))
-        ax.plot([p[0], 800], [p[1], p[1]], color=DIM, lw=0.8, zorder=200)
-        tag(ax, 806, p[1], lab, hi=True)
-    p = v((0, 0, 0)); ax.plot([p[0], 800], [p[1], 460], color=DIM, lw=0.8, zorder=200)
-    tag(ax, 806, 460, "centre window  ·  nut block (Z)")
-    body(ax, "The two small holes sit on one diagonal and take the fixed wheels. The two large ones\n"
-             "take the eccentric spacers, which is how you will preload the wheels against the beam.\n"
-             "The wheels end up OUTSIDE the beam, straddling its 80 mm height, 100.6 mm apart.")
+    v = scene(ax, [pl], (440, 470), (520, 520), MM=iso_matrix(18, 14))
+    labels = [((P.WH_X / 2, 50.3), "Ø 5.1, counterbored  ·  FIXED wheels, this edge"),
+              ((P.WH_X / 2, -50.3), "Ø 7.2, counterbored  ·  ECCENTRICS, this edge"),
+              ((50.3, 30.0), "tapped M5 × 4  ·  the arm plate screws in here"),
+              ((10.0, 10.0), "20 × 20 nut holes in a 1.6 recess  ·  nut block (Z)"),
+              ((0.0, -50.3), "middle mounts: for six-wheel builds, leave empty")]
+    ys = [700, 330, 600, 500, 250]
+    for ((x, y), lab), ty in zip(labels, ys):
+        p = v((x, P.PLATE_T, y))
+        ax.plot([p[0], 780], [p[1], ty], color=DIM, lw=0.8, zorder=200)
+        tag(ax, 786, ty, lab, hi=ty in (700, 330), fs=9.2)
+    body(ax, "The wheels straddle the beam's 80 mm, 100.6 mm apart. Both FIXED wheels go on one edge and "
+             "both eccentrics on the\nother: the plate is drilled that way, and it is what lets two "
+             "eccentrics squeeze the beam between the rows.\nOn the X carriage the fixed edge goes UP, so "
+             "the fixed wheels carry the hanging mast.")
     save(fig, ax, pdf, "01")
 
 
 @page
 def s2(pdf):
     fig, ax = new_page(2, "Fixed wheels  ·  the stack",
-                       "Screw, plate, spacer, wheel, nyloc. Diagonal pair only.")
+                       "Screw, plate, spacer, shim, wheel, nyloc. The two outer 5.1 holes.")
     MMv = iso_matrix(236, 20)                    # from the wheel side
     parts = AS.carriage(0.0, show=("plate",))
     ex = AS.carriage(0.0, explode=22.0, show=("fixed",), hi="fixed")
@@ -278,18 +318,19 @@ def s2(pdf):
             axis3(ax, v, (wx, AS.PLATE_FRONT + 40, wz), (wx, AS.WHEEL_Y0 - 70, wz))
     tag(ax, 820, 690, "M5 × 30 low profile", 2, hi=True)
     tag(ax, 820, 642, "Aluminium spacer 6 mm", 2, hi=True)
-    tag(ax, 820, 594, "Solid V wheel", 2, hi=True)
-    tag(ax, 820, 546, "M5 nyloc", 2, hi=True)
-    tool(ax, 820, 480, "3 mm hex  ·  8 mm")
-    body(ax, "Bottom-left and top-right only. Snug the nylocs, do not torque them: you will re-check\n"
-             "every one after preload, because tightening a wheel usually adds preload.")
+    tag(ax, 820, 594, "Precision shim 10 × 5 × 1", 2, hi=True)
+    tag(ax, 820, 546, "Xtreme Solid V wheel", 2, hi=True)
+    tag(ax, 820, 498, "M5 nyloc", 2, hi=True)
+    tool(ax, 820, 432, "3 mm hex  ·  8 mm")
+    body(ax, "Heads go in the counterbores, on the plate's outer face. The shim keeps the bearing's outer race "
+             "off the spacer.\nSnug the nylocs, do not torque them: you re-check every one after preload.")
     save(fig, ax, pdf, "02")
 
 
 @page
 def s3(pdf):
     fig, ax = new_page(3, "Eccentric wheels",
-                       "The other diagonal. The hex sits between the plate and the wheel.")
+                       "The opposite edge. The hex sits between the plate and the shim.")
     MMv = iso_matrix(236, 20)
     parts = AS.carriage(0.0, show=("plate", "fixed"))
     ex = AS.carriage(0.0, explode=22.0, show=("ecc",), hi="ecc")
@@ -298,13 +339,14 @@ def s3(pdf):
         if ecc:
             wx, wz = sx * P.WH_X / 2, MZ + sy * P.WH_Y / 2
             axis3(ax, v, (wx, AS.PLATE_FRONT + 40, wz), (wx, AS.WHEEL_Y0 - 70, wz))
-    tag(ax, 820, 690, "Eccentric spacer, 8 mm hex", 2, hi=True)
-    tag(ax, 820, 642, "Solid V wheel", 2, hi=True)
-    tag(ax, 820, 594, "M5 × 30 low profile", 2, hi=True)
-    tag(ax, 820, 546, "M5 nyloc", 2, hi=True)
-    body(ax, "The spacer's round boss drops into the 7.2 mm hole; its hex is the spacer. Set both at\n"
-             "their LOOSEST (wheel furthest from the beam) before fitting, or the carriage will not go on.\n"
-             "You turn them later with a thin 8 mm spanner, from the side, between plate and wheel.")
+    tag(ax, 820, 690, "Eccentric spacer, 10 mm hex", 2, hi=True)
+    tag(ax, 820, 642, "Precision shim 10 × 5 × 1", 2, hi=True)
+    tag(ax, 820, 594, "Xtreme Solid V wheel", 2, hi=True)
+    tag(ax, 820, 546, "M5 × 30 low profile", 2, hi=True)
+    tag(ax, 820, 498, "M5 nyloc", 2, hi=True)
+    body(ax, "The spacer's 2.5 mm boss drops into the 7.2 mm hole; its hex is the spacer. Set both at their "
+             "LOOSEST (bore\nfurthest from the beam) before fitting, or the carriage will not go on. "
+             "A thin 10 mm spanner turns them later.")
     save(fig, ax, pdf, "03")
 
 
@@ -315,8 +357,9 @@ def s4(pdf):
     car = AS.carriage(170.0)
     v = scene(ax, [railp()] + car, (470, 520), (500, 420),
               MM=iso_matrix(34, 22), focus=car + [Part(AS.rail(40.0), ALU)])
-    a, b = v((-120, AS.PLATE_FRONT + 20, MZ)), v((60, AS.PLATE_FRONT + 20, MZ))
+    a, b = v((-60, AS.PLATE_FRONT + 20, MZ)), v((70, AS.PLATE_FRONT + 20, MZ))
     arrow2(ax, tuple(a), tuple(b))
+    tool(ax, 790, 200, "thin 10 mm spanner  ·  8 mm")
     # preload inset: one eccentric stack, from the side, with the spanner turn
     ecc = [p for p in AS.carriage(0.0, show=("ecc", "plate"))]
     MMi = iso_matrix(90, 6)
@@ -344,8 +387,8 @@ def s5(pdf):
     car = AS.carriage(260.0)
     scene(ax, [railp(ZL)] + car, (470, 500), (360, 330), focus=car)
     tag(ax, 830, 640, "repeat steps 1 to 4")
-    body(ax, "Build and preload it now, while the method is fresh. The only difference comes at\n"
-             "step 11, when the nut block goes on its back.")
+    body(ax, "Build and preload it on the mast now, while the method is fresh, then slide it off again: at\n"
+             "step 11 the nut block goes on its back, and from then on it only goes on from the mast's end.")
     save(fig, ax, pdf, "05")
 
 
@@ -420,7 +463,7 @@ def s9(pdf):
     v = scene(ax, [railp(), scr] + out_, (450, 500), (460, 440), MM=MMv,
               focus=out_ + [Part(mv(AS.rail(90.0), XL - 90, 0, 0), ALU)])
     axis3(ax, v, (xi, 0, MZ), (xi, 140, MZ))
-    inset(ax, 790, 240, 300, 220, [railp(), scr] + AS.x_idler(XL)[1:], iso_matrix(150, 20),
+    inset(ax, 790, 196, 300, 220, [railp(), scr] + AS.x_idler(XL)[1:], iso_matrix(150, 20),
           focus=[scr, Part(mv(AS.rail(70.0), XL - 70, 0, 0), ALU)],
           label="from behind: the head on the back face")
     tag(ax, 800, 690, "M5 × 40 socket cap", 1, hi=True)
@@ -451,11 +494,13 @@ def s10(pdf):
     inset(ax, 760, 236, 350, 250, car[:1] + cl + AS.x_belt(XL, cx), MMi,
           focus=car[:1] + cl, label="from behind, rail hidden")
     tag(ax, 790, 710, "Belt clamp block", 2, hi=True)
-    tag(ax, 790, 662, "M5 × 10 socket cap", 4, hi=True)
+    tag(ax, 790, 662, "M5 × 25 low profile", 4, hi=True)
     tag(ax, 790, 614, "GT2 9 mm, 2.8 m")
-    body(ax, "Clamp one end. Run the belt left inside the channel, round the pulley, back along the bottom\n"
-             "of the channel, round the idler, and into the second clamp. Pull it through to tension and lock.\n"
-             "Plucked it gives a low clear note, not a thud. Over-tension bends the motor shaft.")
+    body(ax, "Each clamp takes two screws through holes the plate already has: 10 and 30 either side of the "
+             "centre, on the row 10 above it.\nClamp one end. Run the belt left inside the channel, round "
+             "the pulley, back along the bottom of the channel, round the idler,\nand into the second "
+             "clamp. Pull it through to tension and lock: plucked, a low clear note. Over-tension bends the "
+             "motor shaft.")
     save(fig, ax, pdf, "10")
 
 
@@ -463,19 +508,30 @@ def s10(pdf):
 @page
 def s11(pdf):
     fig, ax = new_page(11, "Nut block onto the Z carriage",
-                       "On the back of the plate, two M5 × 12 from the front.")
-    MMv = iso_matrix(214, 24)
-    plate = AS.carriage(0.0, show=("plate",))
-    nb = AS.z_nut(0.0, explode=24.0, hi=True)
-    v = scene(ax, plate + nb, (480, 480), (500, 500), MM=MMv)
-    for dz in (-13, 13):
-        axis3(ax, v, (0, AS.PLATE_FRONT + 50, MZ + dz), (0, 0, MZ + dz))
-    tag(ax, 800, 690, "Anti-backlash nut block", 1, hi=True)
-    tag(ax, 800, 642, "M5 × 12 socket cap", 2, hi=True)
-    body(ax, "Bore along the mast. The spring between the block's two halves is what takes the backlash\n"
-             "out; do not compress it flat or the screw will bind and you will blame the motor.")
+                       "Carriage OFF the mast. The block ends up inside the mast's channel, around the screw.")
+    MMv = iso_matrix(244, 16)                      # side-on, from the wheel side
+    car = AS.carriage(0.0)
+    e = 30.0
+    nb = AS.z_nut(0.0, explode=e, hi=True)
+    v = scene(ax, car + nb, (420, 480), (560, 520), MM=MMv, focus=car + nb)
+    for dz in (-10.0, 10.0):
+        axis3(ax, v, (-10.0, AS.PLATE_FRONT + 1.4 * e, MZ + dz), (-10.0, AS.NB_Y - 2.2 * e, MZ + dz))
+    # inset: true end view down the mast: the block in the channel round the screw
+    MMi = iso_matrix(90, 0)
+    scr = Part(AS.along_px(P.lead_screw(120.0), (20.0, AS.SCREW_Y, MZ)), STEEL)
+    inset(ax, 760, 222, 350, 270, [railp(160.0)] + AS.carriage(80.0) + AS.z_nut(80.0) + [scr], MMi,
+          focus=[Part(AS.rail(40.0), ALU)] + AS.carriage(80.0, show=("plate",)),
+          label="end view down the mast: block in the channel")
+    tag(ax, 790, 712, "M5 × 25 low profile", 2, hi=True)
+    tag(ax, 790, 664, "Aluminium spacer 6 mm", 2, hi=True)
+    tag(ax, 790, 616, "Anti-backlash nut block", 1, hi=True)
+    tag(ax, 790, 568, "M5 hex nut, in the block's pockets", 2, hi=True)
+    tool(ax, 790, 522, "3 mm hex  ·  8 mm")
+    body(ax, "Screws from the plate's outer face, through the two nut holes nearest one edge of the recess "
+             "(20 apart, across the\nmast), then a spacer each, the block, and a nut in each pocket. The bore "
+             "runs ALONG the mast, 9.5 mm behind its mouth.\nThen slide the carriage back on from the mast's "
+             "end and re-check the preload. Leave the block's tension screw for step 12.")
     save(fig, ax, pdf, "11")
-
 
 @page
 def s12(pdf):
@@ -487,28 +543,31 @@ def s12(pdf):
     MMv = iso_matrix(30, 18)
     scene(ax, [railp(ZL)] + car + scr, (470, 520), (560, 380), MM=MMv, focus=car)
     tag(ax, 800, 690, "Lead screw Tr8x8, 1500", 1, hi=True)
-    body(ax, "It sits on the channel centreline, 10 mm behind the mouth. Turn it through the nut by hand\n"
-             "until it runs the full length with even drag. A tight spot now is a bent screw or a nut\n"
-             "block out of line, and both are cheaper to find before the motor is on.")
+    body(ax, "It runs in the channel, 9.5 mm behind the mouth. Turn it through the nut by hand until it runs "
+             "the full length\nwith even drag, then snug the block's tension screw until the play is gone "
+             "and the drag is still light.\nA tight spot now is a bent screw or a block out of line, both "
+             "cheaper to find before the motor is on.")
     save(fig, ax, pdf, "12")
 
 
 @page
 def s13(pdf):
     fig, ax = new_page(13, "Top end  ·  the screw hangs here",
-                       "End plate, a thrust bearing each side, a lock collar each side.")
+                       "C-Beam End Mount on the mast's end, a thrust bearing in its recess, one underneath.")
     top = AS.z_end_plate(ZL, False, hi=True) + AS.z_top_bearings(ZL, hi=True)
     rest = AS.z_screw(ZL)
     MMv = iso_matrix(146, 22)
-    scene(ax, [railp(ZL)] + rest + top, (470, 500), (440, 440), MM=MMv,
+    scene(ax, [railp(ZL)] + rest + top, (450, 500), (440, 440), MM=MMv,
           focus=top + [Part(mv(AS.rail(40.0), ZL - 40, 0, 0), ALU)])
-    tag(ax, 800, 690, "C-Beam end plate", 1, hi=True)
-    tag(ax, 800, 642, "M5 × 12 socket cap", 4, hi=True)
-    tag(ax, 800, 594, "Thrust bearing 8 mm", 2, hi=True)
-    tag(ax, 800, 546, "Lock collar 8 mm", 2, hi=True)
-    body(ax, "The whole hanging load is AXIAL. Two thrust bearings clamp the plate between them and the\n"
-             "collars lock them to the screw, so it hangs from the top and the coupler at the foot only ever\n"
-             "carries torque. The end plate and collars are additions to BOM Rev A.")
+    tag(ax, 790, 700, "C-Beam End Mount 80 × 50 × 12", 1, hi=True)
+    tag(ax, 790, 652, "M5 × 25 low profile, into the end taps", 4, hi=True)
+    tag(ax, 790, 604, "Thrust bearing 8 × 16 × 5", 2, hi=True)
+    tag(ax, 790, 556, "Lock collar 8 mm, 14 × 7", 2, hi=True)
+    tool(ax, 790, 488, "3 mm hex  ·  2.5 mm hex")
+    body(ax, "The mount overhangs the mast's mouth by 10 mm, toward the carriage. One bearing sits in the "
+             "16.1 recess on top with a\ncollar above it; the other goes under the mount with a collar below. "
+             "Tighten the collars against the bearings with the\nscrew pulled up: then it hangs from here and "
+             "the coupler at the foot only ever carries torque.")
     save(fig, ax, pdf, "13")
 
 
@@ -570,26 +629,29 @@ def s15(pdf):
 @page
 def s16(pdf):
     fig, ax = new_page(16, "Controller on standoffs",
-                       "Four M3 standoffs. Keep the board's ground off the frame.")
-    brd = Part(P.controller_board(), PCB)
-    so = [Part(mv(P.standoff(), 10 + 80 * sx, 8 + 54 * sy, -8), HILITE)
-          for sx in (0, 1) for sy in (0, 1)]
-    scene(ax, [brd] + so, (420, 500), (420, 420))
-    tag(ax, 720, 650, "M3 standoff", 4, hi=True)
-    tag(ax, 720, 602, "M3 × 10 socket cap", 4, hi=True)
-    rows = [("24 V DC in", "from the fuse block, via safety relay 13/14"),
-            ("X motor", "4 wires, continuous flex, through the chain"),
-            ("Z motor", "4 wires, plus the separate 24 V brake pair"),
-            ("Limits × 4", "normally closed, in series per axis"),
-            ("USB / wifi", "to the Jetson, for G-code")]
-    for i, (a, b) in enumerate(rows):
-        y = 520 - i * 58
-        ax.add_patch(Rectangle((700, y - 20), 390, 46, facecolor="#f5f7f8",
-                               edgecolor="#c3ccd2", lw=0.9, zorder=200))
-        ax.text(714, y + 8, a, fontsize=10.2, fontweight="bold", color=INK, zorder=201)
-        ax.text(714, y - 10, b, fontsize=8.7, color=DIM, zorder=201)
-    body(ax, "Standoffs, not screws straight into the extrusion: the board's ground plane must not touch\n"
-             "the frame, or you make a loop with the motor shields.")
+                       "Panel, standoffs, board, screws. Keep the board's ground off the frame.")
+    holes = [(10.0 + 80.0 * sx, 8.0 + 54.0 * sy) for sx in (0, 1) for sy in (0, 1)]
+    ox, oy = 25.0, 20.0                            # board on the panel
+    panel = Part(P.mounting_panel(150, 110, 3, [(x + ox, y + oy) for x, y in holes]), ALU_D)
+    zb, zs, zn = 46.0, 12.0, -16.0                 # exploded heights: board, standoffs, nuts
+    brd = Part(mv(P.controller_board(), ox, oy, zb), PCB)
+    so = [Part(mv(P.standoff_mf(10.0), x + ox, y + oy, zs), HILITE) for x, y in holes]
+    sc = [Part(mv(P.socket_cap(3, 6), x + ox, y + oy, zb + 1.8 + 30.0), HILITE) for x, y in holes]
+    nu = [Part(mv(P.hex_nut(3), x + ox, y + oy, zn - 2.4), HILITE) for x, y in holes]
+    MMv = iso_matrix(28, 26)
+    v = scene(ax, [panel, brd] + so + sc + nu, (430, 470), (560, 540), MM=MMv)
+    for x, y in holes:
+        axis3(ax, v, (x + ox, y + oy, zn - 10.0), (x + ox, y + oy, zb + 46.0))
+    tag(ax, 780, 712, "M3 × 6 socket cap", 4, hi=True)
+    tag(ax, 780, 664, "Controller (Elecrow 4-axis FluidNC)", 1)
+    tag(ax, 780, 616, "M3 hex standoff, male-female, 10", 4, hi=True)
+    tag(ax, 780, 568, "Mounting panel, inside the enclosure", 1)
+    tag(ax, 780, 520, "M3 nut", 4, hi=True)
+    tool(ax, 780, 452, "2.5 mm hex  ·  5.5 mm")
+    body(ax, "Standoffs through the panel, nuts underneath, board on top, screws down into the standoffs. "
+             "Use the board's own four\nholes: the pattern drawn here is the footprint block, not the board's "
+             "drawing. Never screw a board straight to the\nextrusion: its ground plane on the frame makes a loop "
+             "with the motor shields. Connections: the wiring pages, next.")
     save(fig, ax, pdf, "16")
 
 
@@ -597,9 +659,9 @@ def s16(pdf):
 def s17(pdf):
     fig, ax = new_page(17, "First motion, before the arm",
                        "Jog, calibrate steps, home. Nothing heavy on the gantry yet.")
-    steps = [("Set driver current", "from the motor datasheet. Too high cooks the TMC2209s, too low loses steps."),
+    steps = [("Set driver current", "X 1.5 A, Z 1.8 A run, half that to hold (wiring page). Too high cooks the TMC2209s."),
              ("Jog 5 mm", "confirm direction on both axes before anything longer."),
-             ("Command 100 mm", "measure it. Correct steps/mm until commanded equals actual."),
+             ("Command 100 mm", "start at X 80, Z 400 steps/mm (16 µsteps), measure, correct until commanded equals actual."),
              ("Home both axes", "and home on every power-up. FluidNC does not know where it is otherwise."),
              ("Run full travel", "ten times, both axes. Listen for a tight spot.")]
     for i, (a, b) in enumerate(steps):
@@ -617,21 +679,25 @@ def s17(pdf):
 @page
 def s18(pdf):
     fig, ax = new_page(18, "Arm plate onto the Z carriage",
-                       "Four M5 × 12. The slots give 110 mm of adjustment.")
-    car = AS.carriage(0.0)
-    ap = Part(AS.along_py(P.arm_plate(), (0, AS.PLATE_FRONT + 46, MZ)), HILITE)
-    sc = [Part(AS.along_py(P.socket_cap(5, 12), (sx * 25, AS.PLATE_FRONT + 74, MZ + sy * 38)), HILITE)
-          for sx in (-1, 1) for sy in (-1, 1)]
-    v = scene(ax, [railp(ZL)] + car + [ap] + sc, (470, 480), (520, 500),
+                       "Four M5 × 10 flat head into the plate's own tapped holes. Flush, so the arm sits flat.")
+    car = AS.carriage(0.0) + AS.z_nut(0.0)
+    e = 40.0
+    ap = Part(AS.place(P.arm_plate(), AS.Z, AS.X, AS.Y, (0, AS.PLATE_FRONT + e, MZ)), HILITE)
+    # arm plate local (x, y) = (across, along) -> bench (z, x): tapped holes at plate (+/-50.3, +/-30)
+    pts = [(sx * 50.3, MZ + sy * 30.0) for sx in (-1, 1) for sy in (-1, 1)]
+    sc = [Part(AS.along_py(P.flat_head(5, 10), (x, AS.PLATE_FRONT + e + 6.35 + 26.0, z)), HILITE)
+          for x, z in pts]
+    v = scene(ax, [railp(ZL)] + car + [ap] + sc, (450, 480), (520, 500),
               MM=iso_matrix(58, 18), focus=car + [ap] + sc)
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            axis3(ax, v, (sx * 25, AS.PLATE_FRONT + 90, MZ + sy * 38),
-                  (sx * 25, AS.PLATE_FRONT, MZ + sy * 38))
-    tag(ax, 820, 650, "Arm plate 160 sq", 1, hi=True)
-    tag(ax, 820, 602, "M5 × 12 socket cap", 4, hi=True)
-    body(ax, "Set the plate central in its slots for now. You will want the travel later, when hand-eye\n"
-             "calibration says the arm wants to sit a few millimetres off where the drawing put it.")
+    for x, z in pts:
+        axis3(ax, v, (x, AS.PLATE_FRONT + e + 50.0, z), (x, AS.PLATE_FRONT, z))
+    tag(ax, 800, 690, "Arm plate Rev B, 160 × 160 × 6.35", 1, hi=True)
+    tag(ax, 800, 642, "M5 × 10 flat head, ISO 10642", 4, hi=True)
+    tool(ax, 800, 574, "3 mm hex")
+    body(ax, "The XL plate has four tapped M5 holes at its corners, 100.6 apart along the mast and 60 across: "
+             "the arm plate's countersunk\nholes land on them. Rev A's edge slots met no hole in the real "
+             "plate. Order the Rev B file (arm_plate_revB.dxf) with\nthe M3 and M4 holes TAPPED and the four "
+             "M5 holes COUNTERSUNK 90° on the arm side: SendCutSend's drawing sizes are already in the file.")
     save(fig, ax, pdf, "18")
 
 
@@ -653,32 +719,38 @@ def arm_bench(q, y, z=MZ, x=0.0):
 @page
 def s19(pdf):
     fig, ax = new_page(19, "The arm, last",
-                       "Four M4 × 10 into the base. Its own power brick.")
+                       "Its G base onto the plate: four M3 × 35 through the base's outer corner holes.")
     car = AS.carriage(0.0)
-    ap = Part(AS.along_py(P.arm_plate(), (0, AS.PLATE_FRONT, MZ)), ALU)
-    y0 = AS.PLATE_FRONT + Fr.ARM_PLATE_T + Fr.MOUNT_OFF + 70
-    arm = arm_bench(Fr.TIGHT_Q, y0)
-    sc = [Part(AS.along_py(P.socket_cap(4, 10), (36 * math.cos(a), AS.PLATE_FRONT + 40,
-                                                 MZ + 36 * math.sin(a))), HILITE)
-          for a in (0.6, 2.2, 3.7, 5.3)]
-    v = scene(ax, [railp(ZL)] + car + [ap] + arm + sc, (450, 500), (540, 500),
-              MM=iso_matrix(34, 24), focus=car + [ap] + arm)
-    tag(ax, 806, 672, "myCobot 280 Pi", 1, hi=True)
-    tag(ax, 806, 624, "M4 × 10 socket cap", 4, hi=True)
-    tag(ax, 806, 576, "SIDE mounted: J1 horizontal")
-    body(ax, "Power the arm from its OWN brick, never from the 24 V bus. Confirm it answers over TCP\n"
-             "before any coordinated motion. Folded as tightly as it goes without hitting itself it is\n"
-             "162.6 mm long, and that number decides the cabinet. See step 22.")
+    ap = Part(AS.place(P.arm_plate(), AS.Z, AS.X, AS.Y, (0, AS.PLATE_FRONT, MZ)), ALU)
+    e = 70.0
+    y0 = AS.PLATE_FRONT + Fr.ARM_PLATE_T + Fr.MOUNT_OFF + e
+    q = list(Fr.TIGHT_Q); q[0] = 180.0           # folded, swung clear of the corner screws
+    arm = arm_bench(tuple(q), y0)
+    # G base local (x, y) -> bench (z, x); its top face is at local z = +2
+    pts = [(gy, MZ + gx) for gx, gy in P.ARM_GBASE_HOLES]
+    sc = [Part(AS.along_py(P.socket_cap(3, 35), (bx, y0 + 2.0 + 40.0, bz)), HILITE) for bx, bz in pts]
+    v = scene(ax, [railp(ZL)] + car + [ap] + arm + sc, (430, 470), (560, 540),
+              MM=iso_matrix(40, 24), focus=car + [ap] + arm + sc)
+    for bx, bz in pts:
+        axis3(ax, v, (bx, y0 + 90.0, bz), (bx, AS.PLATE_FRONT, bz))
+    tag(ax, 806, 690, "myCobot 280 Pi on its G base", 1, hi=True)
+    tag(ax, 806, 642, "M3 × 35 socket cap", 4, hi=True)
+    tag(ax, 806, 594, "SIDE mounted: J1 horizontal")
+    tool(ax, 806, 526, "2.5 mm hex, long")
+    body(ax, "The G base's four outer holes are Ø 3.5 straight through its 32 mm; the arm plate has M3 taps "
+             "under them. Unpowered,\nJ1 turns by hand: swing the folded arm clear of each corner in turn. "
+             "Without the G base, the arm bolts to the four M4 taps\non the 44 mm square and sits 30 mm closer "
+             "to the plate. Power it from its OWN brick, never the 24 V bus, and confirm\nit answers over TCP "
+             "before any coordinated motion. Folded for every Z move: J2 −110, J3 −80, J4 −140, J5 −90.")
     save(fig, ax, pdf, "19")
-
 
 @page
 def s20(pdf):
     fig, ax = new_page(20, "Before you trust it",
                        "The safety circuit, and the checks that catch the usual faults.")
     rows = [("E-stop wired, both channels", "Two M22-K01 blocks into the G9SE-201. It cross-monitors them; one is not enough."),
-            ("13/14 feeds motion only", "24 V to the controller and the Z brake. Sensing and lighting stay alive."),
-            ("E-stop mid-move", "Motion stops, brake grips, relay refuses to reset until released."),
+            ("Two contacts, two jobs", "13-14 feeds the controller, 23-24 the Z brake (wiring pages). Sensing and lighting stay alive."),
+            ("E-stop mid-move", "Motion stops, brake grips, no restart until the head is pulled up AND reset is pressed."),
             ("Power-cut test", "Pull the plug mid-travel. The mast must hold, not fall."),
             ("Limit test", "Trip each switch by hand with the axis moving toward it."),
             ("Backlash check", "Jog Z up, then down, to the same commanded point. Measure the difference.")]
@@ -725,7 +797,7 @@ def locator(ax, cx, cy, w=118.0, mark=None):
 def s21(pdf):
     fig, ax = new_page(21, "The cabinet the gantry lands on",
                        "1397 × 559 × 1829, 40-series V-slot, five rail levels.")
-    cab_scene(ax, [], (420, 480), (560, 600))
+    cab_scene(ax, [], (420, 468), (560, 560))
     rows = [("4 × 1829", "uprights"),
             ("13 × 1317", "width rails: 5 front, 5 back, 3 under the tray's rear edge"),
             ("11 × 479", "depth rails (were 377 at 457 deep)"),
@@ -772,7 +844,7 @@ def s22(pdf):
     ax.text(x0, yb + hb + 56, "PLAN SECTION  ·  front of the cabinet at the left  ·  mm",
             fontsize=9.5, color=DIM)
     cols = [Fr.clearances(d) for d in (457.0, 533.0, 559.0)]
-    tbl = [("Cabinet depth", "457  (Rev A)", "533", "559  (Rev D)")]
+    tbl = [("Cabinet depth", "457  (Rev A)", "533", "559  (Rev E)")]
     for lab, k in (("Arm J1 axis, from the front", "j1_y"),
                    ("Folded arm clears the tray by", "transit"),
                    ("Flange reaches forward to", "flange_front"),
@@ -790,36 +862,37 @@ def s22(pdf):
                     color="#b91c1c" if neg else INK, fontweight="bold" if i == 0 else "normal")
     body(ax, "The arm crosses a tray plane every time it changes tier, and the shortest fold it can reach\n"
              "without one link touching another is 162.6 mm, set by its own shoulder. At 457 deep it would\n"
-             "overlap the tray by 79 mm. Measured on Elephant Robotics' mesh, collision checked.")
+             f"overlap the tray by {-cols[0]['transit']:.0f} mm. Measured on Elephant Robotics' mesh, collision checked.")
     save(fig, ax, pdf, "22")
 
 
 @page
 def s23(pdf):
     fig, ax = new_page(23, "X rail onto the rear uprights",
-                       "Cut to 1397. Four 90° brackets. This one must be level.")
+                       "Cut to 1397. Two bent brackets at each end. This one must be level.")
     rail = Part(Fr.x_rail(), HILITE)
-    bk = []
-    for x in (2.0, Fr.W - 22.0):
-        for top in (True, False):
-            z = Fr.RAIL_Z + (80.0 if top else 0.0)
-            m = P.corner_bracket(40, 5, 20)
-            m = rot(m, rx=math.pi / 2) if top else rot(m, rx=-math.pi / 2)
-            V, F = m
-            m = (V - V.min(0), F)
-            yb_ = Fr.RAIL_Y + 2.0
-            bk.append(Part(mv(m, x, yb_, z if top else z - 40.0), HILITE))
-    cab_scene(ax, [rail] + bk, (440, 520), (620, 440), az=214, el=24, trays=False,
-              zlo=1560.0)
-    ax.text(440, 300, "seen from BEHIND the cabinet", ha="center", fontsize=9, color=DIM)
-    locator(ax, 1000, 300, mark=(1560, 1829))
-    tag(ax, 790, 700, "C-Beam, cut to 1397", 1, hi=True)
-    tag(ax, 790, 652, "90° corner bracket", 4, hi=True)
-    tag(ax, 790, 604, "M5 × 10 + T-nut", 8, hi=True)
-    body(ax, "Against the FRONT faces of the rear uprights, channel facing forward, bottom edge at 1709.\n"
-             "Brackets on the rail's top and bottom faces at each end, beyond the carriage's travel.\n"
-             "Level it with a spirit level on the top face: tilt here becomes a height error across the\n"
-             f"{Fr.X_TRAVEL:.0f} mm of travel.")
+    br = [Part(m, (0.33, 0.52, 0.80) if nm == "bracket" else STEEL)
+          for nm, m in Fr.x_rail_brackets(explode=0.0)]
+    brx = [Part(m, (0.33, 0.52, 0.80) if nm == "bracket" else STEEL)
+           for nm, m in Fr.x_rail_brackets(explode=9.0)]
+    cab = Part(Fr.cabinet(1560.0, Fr.H, 0.0, Fr.W, 330.0, Fr.D), ALU, lw=0.45)
+    v = scene(ax, [cab, rail] + br, (560, 655), (900, 190), MM=iso_matrix(200, 24),
+              focus=np.array([[0.0, 330.0, 1600.0], [Fr.W, Fr.D, Fr.H]]), clip=(24, 560, 1128, 772))
+    ax.text(40, 750, "from the front, above", fontsize=8.6, color=DIM, zorder=320)
+    cabL = Part(Fr.cabinet(1610.0, Fr.H, 0.0, 170.0, 430.0, Fr.D), ALU, lw=0.45)
+    cabR = Part(Fr.cabinet(1610.0, Fr.H, Fr.W - 170.0, Fr.W, 430.0, Fr.D), ALU, lw=0.45)
+    inset(ax, 40, 196, 520, 350, [cabL, rail] + brx, iso_matrix(150, 22),
+          focus=np.array([[0.0, 440.0, 1640.0], [130.0, Fr.D, Fr.H]]),
+          label="LEFT end, from the front-right: top bracket just inboard of the depth rail")
+    inset(ax, 590, 196, 520, 350, [cabR, rail] + brx, iso_matrix(210, 22),
+          focus=np.array([[Fr.W - 130.0, 440.0, 1640.0], [Fr.W, Fr.D, Fr.H]]),
+          label="RIGHT end, from the front-left: the same, mirrored")
+    body(ax, "The rail's last 40 mm at each end sit UNDER the top depth rails, so nothing can bolt to its top "
+             "face there. TOP bracket: leg on the rail's top face just inboard,\n2 × M5 into T-nuts in the "
+             "front top groove; leg up the top back rail's front face, 2 × M5 into slot-8 T-nuts. BOTTOM "
+             "bracket: under the rail, 2 × M5 in the front\nbottom groove; leg down the rear upright, 2 × M5 "
+             "into its slot. All M5 × 10. Level the top face before the last screw: tilt becomes height "
+             f"error across {Fr.X_TRAVEL:.0f} mm of travel.", fs=9.4)
     save(fig, ax, pdf, "23")
 
 
@@ -830,10 +903,11 @@ def s24(pdf):
     pr = Fr.gantry_parts(x=700.0, z=1300.0, hi="mast")
     cab_scene(ax, pr, (420, 500), (560, 540), az=-36, el=16, trays=False)
     tag(ax, 790, 700, "C-Beam mast, 1500, Z drive built", 1, hi=True)
-    tag(ax, 790, 652, "M5 × 10 + T-nut, mast back to plate", 6, hi=True)
-    body(ax, "Six bolts, not four: they are all that stops the mast pitching forward, and the moment arm\n"
-             "is 1.5 m. Top at 1789, foot at 289. Check plumb both ways with the carriage mid-rail, then\n"
-             "at each end. If plumb changes across the travel, the rail is not level.")
+    tag(ax, 790, 652, "M5 × 10 low profile + T-nut", 6, hi=True)
+    body(ax, "Six bolts through the X plate's holes at (±30, −30 / 0 / +30), heads on the rail side: low profile "
+             "heads are 1.5 mm and the gap\nto the rail is 2.5. T-nuts in the mast's two outer back grooves. Top "
+             "at 1789, foot at 289. Check plumb both ways with the carriage\nmid-rail, then at each end. If "
+             "plumb changes across the travel, the rail is not level.")
     save(fig, ax, pdf, "24")
 
 
@@ -857,7 +931,7 @@ def s25(pdf):
                 ls=(0, (3, 3)), zorder=200)
         ax.text(648, p0[1] + dy, lab, fontsize=9.4, color=INK, va="center", zorder=201)
     tag(ax, 830, 690, "Braked NEMA 23 + coupler", 1, hi=True)
-    body(ax, "Seen from the right-hand side, front of the cabinet to the right. The top collar finishes\n"
+    body(ax, "Seen from the right-hand side, front of the cabinet to the LEFT. The top collar finishes\n"
              f"{top_cab - top_mast - 19.5:.1f} mm under the cabinet's top: a motor up there would stand "
              "proud of it. The screw\nhangs from the top bearings, so the coupler at the foot only ever "
              "carries torque.")
@@ -890,7 +964,7 @@ def s27(pdf):
     fig, ax = new_page(27, "Commissioned",
                        "Working envelope, and the six checks before you walk away.")
     pr = Fr.gantry_parts(x=700.0, z=560.0, q=(-90, -40, -55, -85, 0, 0))
-    cab_scene(ax, pr, (288, 520), (450, 560), az=34, el=18)
+    cab_scene(ax, pr, (300, 462), (470, 540), az=214, el=18)
     c = Fr.clearances()
     rows = [("X travel", f"{Fr.X_TRAVEL:.0f}, motor plate to idler"),
             ("Z travel", "1350 usable; tiers at 345, 1005, 1437"),
@@ -918,9 +992,81 @@ def s27(pdf):
     save(fig, ax, pdf, "27")
 
 
+# ================================================================ wiring
+import wiring_pages as WR
+_MS = sys.modules[__name__]
+
+
+import tools_page as TL
+
+COVER_PNG = os.environ.get("GANTRY_COVER",
+                           os.path.join(os.path.dirname(os.path.abspath(__file__)), "cover", "cover.png"))
+
+
+@page
+def p_cover(pdf):
+    """Full-bleed render on top, title block underneath."""
+    fig = plt.figure(figsize=(11.5, 9.0), facecolor="white")
+    ax = fig.add_axes([0, 0, 1, 1]); ax.axis("off")
+    ax.set_xlim(0, 1150); ax.set_ylim(0, 900)
+    if os.path.exists(COVER_PNG):
+        img = plt.imread(COVER_PNG)
+        h, w = img.shape[:2]
+        H = 1150.0 * h / w
+        ax.imshow(img, extent=(0, 1150, 900 - H, 900), zorder=1, interpolation="lanczos")
+        y0 = 900 - H
+    else:
+        ax.add_patch(Rectangle((0, 190), 1150, 710, facecolor="#e8edf0", edgecolor="none"))
+        ax.text(575, 545, "cover render not found:\n" + COVER_PNG, ha="center", va="center", color=DIM)
+        y0 = 190
+    ax.set_aspect("auto")
+    t = ax.text(48, y0 - 50, "Maag", fontsize=34, fontweight="bold", family=TITLE_FONT, color=INK, va="center")
+    fig.canvas.draw()
+    bb = t.get_window_extent().transformed(ax.transData.inverted())
+    ax.text(bb.x1 + 18, y0 - 47, "Modular Agentic Autonomous Greenhouse", fontsize=14, fontweight="medium",
+            family=TITLE_FONT, color=INK, va="center")
+    ax.text(50, y0 - 100, f"Gantry assembly instructions, {REV}.  The X/Z gantry and the myCobot 280 arm "
+                          "for the 1397 × 559 × 1829 cabinet.", fontsize=12.5, color=DIM, va="center")
+    ax.text(1102, y0 - 46, "27 steps  ·  tools  ·  wiring", fontsize=11, color=INK, ha="right", va="center")
+    ax.text(1102, 26, "Rendered from the same models the steps are drawn from: Elephant Robotics' arm and "
+                      "gripper meshes, OpenBuilds' C-Beam parts.", fontsize=7.6, color=DIM, ha="right")
+    pdf.savefig(fig); fig.savefig(f"{OUT}/d_000_cover.png", dpi=130); plt.close(fig)
+
+
+@page
+def p_tools(pdf):
+    TL.page_tools(_MS, pdf)
+
+
+@page
+def w1(pdf):
+    WR.page_power(_MS, pdf)
+
+
+@page
+def w2(pdf):
+    WR.page_motion(_MS, pdf)
+
+
+def _order():
+    """Wiring goes between the controller (16) and first motion (17)."""
+    names = [f.__name__ for f in PAGES]
+    for nm in ("w1", "w2"):
+        f = PAGES.pop(names.index(nm)); names.remove(nm)
+        PAGES.insert(names.index("s17"), f); names.insert(names.index("s17"), nm)
+    f = PAGES.pop(names.index("p_tools")); names.remove("p_tools")
+    k = names.index("p_inv2") + 1
+    PAGES.insert(k, f); names.insert(k, "p_tools")
+    f = PAGES.pop(names.index("p_cover")); names.remove("p_cover")
+    PAGES.insert(0, f); names.insert(0, "p_cover")
+
+
+_order()
+
+
 if __name__ == "__main__":
     only = sys.argv[1:]
-    path = f"{OUT}/Gantry_Assembly_Instructions_RevD.pdf"
+    path = f"{OUT}/Gantry_Assembly_Instructions_RevE.pdf"
     if only:
         class _N:
             def savefig(self, *a, **k): pass

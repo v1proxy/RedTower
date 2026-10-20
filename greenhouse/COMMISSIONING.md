@@ -2,7 +2,7 @@
 
 The order to bring the stack up on the real hardware. Each step names the tool that proves it
 and what a pass looks like. Do not skip ahead: every step leans on the ones before it.
-Mechanical build and wiring are in the Herb Tower Design Basis; this covers the software.
+Mechanical build and wiring are in the Maag Design Basis; this covers the software.
 
 ## 1. Network and broker
 

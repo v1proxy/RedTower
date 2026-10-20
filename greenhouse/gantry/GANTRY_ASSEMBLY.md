@@ -1,46 +1,68 @@
-# Herb Tower: gantry assembly
+# Maag: gantry assembly
 
-**Gantry Rev D · 2026-10-20 · all dimensions mm**
+Maag is the Modular Agentic Autonomous Greenhouse (the project was called Herb Tower
+up to design 0.2.0).
 
-Read alongside the 29-page booklet `Gantry_Assembly_Instructions_RevD.pdf`
-(step numbers below are the booklet's) and `HerbTower_Gantry_BOM_RevB.xlsx`.
-Steps 1 to 20 happen on a bench. Steps 21 to 27 put it in the cabinet.
+**Gantry Rev E · design 0.3.0 · 2026-10-20 · all dimensions mm**
+
+Read alongside the booklet `Gantry_Assembly_Instructions_RevE.pdf` (step
+numbers below are the booklet's) and `Maag_Gantry_BOM_RevC.xlsx`.
+Steps 1 to 20 happen on a bench. Steps 21 to 27 put it in the cabinet. The
+booklet now opens with a rendered cover, the parts, the fasteners and a tools
+page, and carries two wiring pages between steps 16 and 17.
 
 ---
 
 ## What changed, and why
 
-**Rev C → Rev D: the gantry mechanics, redrawn from how C-Beam hardware
-actually goes together.**
+**Rev D → Rev E: the drawings were mirror images, and the OpenBuilds parts
+are now OpenBuilds' own geometry.**
 
-| Rev C drew | Correct | Consequence |
+Every Rev D view was drawn with a left-handed projection, so each one was the
+mirror image of the real assembly: what the page showed on the left is on the
+right. The renderer's view matrix is fixed and every page was re-checked. If you
+marked up a Rev D page, re-read it in Rev E.
+
+The OpenBuilds hardware is now modelled from bd_warehouse's transcription of
+OpenBuilds' drawings rather than from photos:
+
+| Rev D drew | Rev E (OpenBuilds' drawings) | Consequence |
 |---|---|---|
-| Wheels on the beam's front-face grooves, 60 apart | Wheels **straddle** the 80 mm beam and ride the grooves on its **top and bottom** faces, **100.6** apart | Every carriage drawing redone |
-| Plate 16 mm off the beam | Screw, plate 6, spacer 6, wheel 10.23, **nyloc**: plate back **1.1 mm** off the beam | Transit clearance at 559 deep is **22.8 mm**, not 25 |
-| Wheel screws M5 × 27, no nut | **M5 × 30 + M5 nyloc**: 27 never reaches the nyloc's nylon ring | BOM C05 changed, C06 added |
-| X motor mid-rail, belt loose in front of the rail, two idlers | Motor at the rail's **left end**, belt **inside the channel**, width along the pulley axis, **one** idler at the far end | Carriage can travel; D03 qty 2 → 1 |
-| Pulley 8 mm bore | **6.35 mm**, to match the X motor's shaft | BOM D02 |
-| Motor screws from the plate side | **From the motor side**: NEMA 23 flanges are drilled through; the plate's motor holes are tapped M5 | |
-| Thrust bearing at each screw end | **Both at the top end plate**, one each side, locked by collars: the screw hangs; the coupler carries only torque | BOM D15 end plate + D16 collars added |
-| Mast foot at 309 | **289**: at 309 the top collar was 0.5 mm under the cabinet top | |
+| Wheels on a diagonal of the plate | **Fixed** wheels on one edge (5.1 holes), **eccentrics** on the other (7.2 holes) | Steps 1 to 4 redone |
+| Eccentric 8 mm hex | **10 mm** hex, 2.5 mm boss into the 7.2 hole | Thin **10 mm** spanner, BOM C03 note |
+| Stack: plate, spacer, wheel | Plate 6, spacer 6, **precision shim 1**, wheel 11, nyloc; plate **2.5** off the beam | BOM C07 shims ×8; each carriage is **8.5** deep, not 7.115 |
+| Plate with a centre window | XL plate as drawn: counterbored wheel holes, tapped M5 grid, nut recess, no window | |
+| Nut block on two M5 × 12 | Block 34 × 33 × 12 on **two 6 mm spacers**, M5 × 25 low profile, hex nuts in its pockets | BOM C04 spacers 4 → 6 |
+| End plate 40 × 80 × 6 | **C-Beam End Mount 80 × 50 × 12**, 16.1 bearing recess, M5 × 25 into the end taps | BOM D15 |
+| Low profile heads 2.8 tall | **1.5**: that is what fits the 2.5 mm gap to the beam | Do not substitute DIN 7984 |
+| Cast corner brackets on the rail's top face at each end | The top depth rails sit on that face. **Bent 5052 brackets**, TOP and BOTTOM at each end | SendCutSend, BOM X03, X04 |
+| Arm plate Rev A: radial slots | **Rev B**: tapped M3 for the G base, tapped M4 on the 44 square, countersunk M5 to the XL plate | `arm_plate_revB.dxf`, BOM R03 |
+| No reset button | The G9SE-201 is wired for **manual reset**: an NO button T31 to T32, 24 V on T33 | BOM S07 |
+| 13/14 fed the controller and the brake | **13-14** the controller, **23-24** the brake coil, low side through the controller's MOSFET 1 | Wiring pages |
 
-**Rev B → Rev C: the cabinet is 559 deep, not 457.** The arm crosses a tray
-plane on every tier change. The shortest fold it can reach without one link
-touching another is **162.6 mm** long (set by its own shoulder housing,
-found by collision-checking 83,607 poses on Elephant Robotics' mesh). At
-457 deep it overlaps the tray by 79 mm. Booklet step 22 has the table.
+**Numbers that moved with the carriage stack.** J1 axis 385.65 from the front
+(was 388.4); the folded arm clears the tray line by **20.0** (was 22.8); X travel
+**1086** (carriage centre 163.5 to 1249.75). `design/params.py` carries
+`CARR_STACK = 8.5` and `TRANSIT_CLEAR = 20.0`, and `solve.py` still passes the
+559 reference build with 0.05 mm to spare: there is no slack left in the depth.
+
+**Rev C → Rev D** fixed the C-Beam mechanics (wheels straddle the beam, belt in
+the channel, screw hung from the top). **Rev B → Rev C** made the cabinet 559 deep
+(booklet step 22 has the table).
 
 ---
 
 ## Before you start
 
-**Tools.** 2, 2.5, 3 and 4 mm hex keys; a thin 8 mm spanner for the
-eccentrics; a 5.2 mm drill; an M5 tap; a spirit level; a miter saw with a
-non-ferrous blade; a multimeter; a ferrule crimper.
+**Tools** (booklet tools page): ball-end hex keys 2, 2.5 (one long), 3 and 4;
+thin 8 × 10 open spanner; 5.5 nut driver; drill, 5.2 bit and centre punch;
+M5 tap and wrench; hacksaw and mitre box or a mitre saw with a non-ferrous
+blade; 600 mm spirit level; calipers; tape; multimeter; ferrule crimper;
+2.5 and 3.5 flat terminal screwdrivers.
 
-**Check on arrival:** the X motor's shaft is 6.35 mm (it decides the pulley
-bore and the coupler); the C-Beam is `LR-C-S` (silver); the wheel screws are
-30 mm, not 27.
+**Check on arrival:** the X motor's shaft is 6.35 mm; the C-Beam is `LR-C-S`;
+the wheel screws are 30 mm low profile with 1.5 mm heads; the eccentrics are
+10 mm hex.
 
 **Cut the X rail to 1397.** The Z mast keeps its full 1500.
 
@@ -48,121 +70,110 @@ bore and the coupler); the C-Beam is `LR-C-S` (silver); the wheel screws are
 
 ## Carriages (steps 1 to 5)
 
-1. The XL plate's two **5.1** holes on one diagonal take the fixed wheels;
-   the two **7.2** holes take the eccentric spacers.
-2. Fixed wheels: M5 × 30 low profile through the plate, 6 mm spacer, wheel,
-   nyloc. Snug, not torqued.
-3. Eccentrics: the spacer's round boss drops into the 7.2 hole and its 8 mm
-   hex is the spacer. Wheel, nyloc. Set both at their **loosest**.
-4. Slide the carriage onto the rail from the end: the wheels straddle the
-   beam and ride its top and bottom grooves. **Set preload** with a thin
-   8 mm spanner on each hex, from the side, between plate and wheel: just
-   grips the groove, then back off to light finger drag. Lock the nylocs,
-   re-check, run the full length by hand.
-5. Build the second carriage the same way, on the Z mast.
+1. Fixed wheels on one edge of the XL plate (outer two 5.1 holes), eccentrics
+   on the other (outer two 7.2 holes). On the X carriage the fixed edge goes UP.
+2. Fixed wheels: M5 × 30 low profile in the counterbore, plate, 6 mm spacer,
+   1 mm shim, wheel, nyloc. Snug.
+3. Eccentrics: boss into the 7.2 hole, the 10 mm hex is the spacer, then shim,
+   wheel, nyloc. Set both at their loosest.
+4. Slide on from the end. Preload with a thin 10 mm spanner: just grips, back
+   off to light finger drag, lock, re-check, run the length by hand.
+5. Build the second carriage on the mast, then slide it off again for step 11.
 
 ## X drive (steps 6 to 10)
 
-6. **Motor onto its plate.** Four M5 × 10 **from the motor side**, heads on
-   the back of the flange, threads into the plate. Tap the plate's motor
-   holes M5 first if they are plain.
-7. **Pulley onto the shaft, now.** Boss toward the motor; the toothed hub
-   finishes 22 to 32 mm behind the plate. First grub screw on the shaft flat.
-   After step 8 these grubs are inside the rail's channel and out of reach.
-8. **Motor assembly onto the rail's left end**, flush with the end, plate
-   on the two front lips: four M5 × 10 into T-nuts in the lip grooves. The
-   pulley goes into the channel.
-9. **Idler at the far end.** Drill 5.2 through the web, 50 from the end, at
-   mid-height. M5 × 40 from the back; then in the channel: washer, idler,
-   washer, nyloc (snug, the idler must spin).
-10. **Belt and clamps.** Two clamp blocks on the back of the X carriage
-    reach into the channel. Clamp one end, run the belt left round the
-    pulley, back along the bottom of the channel, round the idler, into the
-    second clamp. Tension: a low clear note when plucked.
+6. Motor onto its plate: four M5 × 10 from the motor side. Tap the plate M5 if plain.
+7. Pulley on the shaft now; boss toward the motor; first grub on the flat.
+8. Motor assembly on the rail's left end, plate on the front lips, four
+   M5 × 10 into T-nuts.
+9. Idler: drill 5.2 through the web 50 from the end; M5 × 40, washer, idler,
+   washer, nyloc.
+10. Belt in the channel, teeth in; both ends in clamps on the carriage back
+    (M5 × 25 low profile).
 
 ## Z drive (steps 11 to 14)
 
-11. Nut block on the back of the Z carriage, bore along the mast, two
-    M5 × 12 from the front. Do not crush the anti-backlash spring.
-12. Thread the lead screw through the nut along the channel centreline.
-    Turn it by hand end to end.
-13. **Top end:** end plate into the mast's end taps (4 × M5 × 12), a thrust
-    bearing each side of it, a lock collar each side. The screw hangs here.
-14. **Foot:** motor plate across the mast end, braked NEMA 23 outside,
-    coupler inside with a 2 mm gap between the shaft ends. Test the brake
-    before coupling: 24 V releases, no power grips.
+11. Nut block on the back of the Z carriage, carriage off the mast: two 6 mm
+    spacers, two M5 × 25 low profile from the front, hex nuts in the block's pockets.
+12. Lead screw through the nut by hand.
+13. Top: C-Beam End Mount on the mast end (four M5 × 25 low profile), one thrust
+    bearing in its recess with a collar above, one underneath with a collar below.
+14. Foot: motor plate, braked NEMA 23 outside, coupler inside, 2 mm shaft gap.
+    Test the brake before coupling.
 
-## Electronics, first motion, safety, arm (steps 15 to 20)
+## Electronics, wiring, first motion, arm (steps 15 to 20)
 
-15. Limit switches in the rail's **back** top groove (the front one is the
-    wheels'). Trip 5 to 10 mm before the hard stop. **Normally closed**, in
-    series per axis. Same on the mast.
-16. Controller on M3 standoffs, off the frame.
-17. Driver current, jog 5 mm, calibrate steps/mm, home, run full travel ten
-    times.
-18. Arm plate onto the Z carriage, four M5 × 12, central in its slots.
-19. Arm onto the plate, four M4 × 10, **side mounted** (J1 horizontal). Own
-    power brick. Confirm TCP before coordinated motion.
-20. Safety circuit: E-stop both channels into the G9SE-201, 13/14 feeds
-    motion only. E-stop mid-move, power-cut, limit and backlash tests.
+15. Limit switches in the back top groove, NC, min and max in series per axis.
+16. Controller on M3 standoffs on its panel; board ground off the frame.
+    **Wiring pages:** power and safety relay; controller, motors, brake, limits.
+17. First motion: driver current (X 1.5 A, Z 1.8 A), jog, steps/mm (X 80,
+    Z 400 at 16 µsteps), home.
+18. Arm plate: four M5 × 10 flat head into the XL plate's tapped holes, flush.
+19. Arm on its G base: four M3 × 35 into the plate's M3 taps. Side mounted, own
+    brick, TCP check first.
+20. Safety: both E-stop channels, 13-14 controller, 23-24 brake, manual reset,
+    E-stop, power-cut, limit and backlash tests.
 
 ## Into the cabinet (steps 21 to 27)
 
-21. The cabinet is **1397 × 559 × 1829**. Nothing of the frame sits behind
-    the tray line at y = 203.
-22. Why it is 559 deep (table: 457 / 533 / 559).
-23. X rail against the front faces of the rear uprights, channel forward,
-    bottom edge at 1709; brackets on its top and bottom faces at each end.
-    **Level it**: tilt becomes height error across the 1126 mm of travel.
-24. X carriage and X drive on, then hang the mast: six bolts into the
-    mast's back face. Top at **1789**, foot at **289**. Check plumb both
-    ways at mid-rail and at each end.
-25. Z drive in place: top collar 20.5 under the cabinet top; motor bottom
-    at 164.
-26. Z carriage, arm plate, arm. **Fold before the first Z move**: J2 −110,
-    J3 −80, J4 −140, J5 −90. Collision checked.
-27. Commission (below).
+21. The cabinet: 1397 × 559 × 1829.
+22. Why it is 559 deep.
+23. X rail on the rear uprights with two bent brackets at each end: TOP
+    (leg on the rail's top face just inboard, leg up the top back rail) and
+    BOTTOM (under the rail, leg down the upright). All M5 × 10. **Level it.**
+24. Hang the mast: six M5 × 10 low profile through the X plate at
+    (±30, −30 / 0 / +30) into T-nuts in the mast's outer back grooves. Top
+    1789, foot 289. Plumb both ways.
+25. Z drive in place, seen from the right with the front to the left.
+26. Z carriage, arm plate, arm. Fold before the first Z move: J2 −110,
+    J3 −80, J4 −140, J5 −90.
+27. Commission.
 
 ### Envelope
 
 | | |
 |---|---|
-| X travel | 1126, carriage centre 163.5 to 1290 (motor plate to idler) |
+| X travel | 1086, carriage centre 163.5 to 1249.75 |
 | Z travel | 1350 usable; tiers at 345, 1005, 1437 |
-| Flange reach | 292.6 from J1, forward to y = 96 |
-| With the gripper | forward to y = 6: the whole 203 mm tray |
-| Folded transit | 162.6 long, 22.8 clear of the tray line |
+| J1 axis | 385.65 from the front |
+| Flange reach | 292.6 from J1, forward to y = 93 |
+| With the gripper | forward to y = 3: the whole 203 mm tray |
+| Folded transit | 162.6 long, 20.0 clear of the tray line |
 | Working height | 263, inside the 341 tier opening |
-
-The arm's ±150 lateral reach covers the full tray width from anywhere in
-that X travel.
 
 ### Commissioning checks
 
 - [ ] Home, power-cycle, home again: same zero.
 - [ ] Fold the arm, run Z full travel: nothing touches.
-- [ ] E-stop mid-move: motion stops, brake grips, no reset until released.
+- [ ] E-stop mid-move: motion stops, brake grips, no restart until reset.
 - [ ] Pull the plug mid-travel: the mast holds.
 - [ ] Each tier: the arm reaches the back row of pots.
 - [ ] Hand-eye calibrate at the tier it works at.
 
-The mast is a 1.5 m cantilever off four V wheels: expect 1 to 2 mm of
-forward lean at the foot. If worse, gang a second XL plate onto the X
-carriage.
-
 ---
+
+## SendCutSend parts
+
+`greenhouse/sendcutsend/make_gantry_revE.py` writes the cut files from the same
+`parts.py` the booklet draws:
+
+| file | material | ops |
+|---|---|---|
+| `arm_plate_revB.dxf` | 6061-T6 0.250 | tap M3 ×4 (2.60 drawn), tap M4 ×4 (3.41), countersink M5 90° ×4 on the arm side (5.00 drawn) |
+| `rail_bracket_top.dxf` | 5052-H32 0.125 | flat 40 × 69.38, bend 90° at 37.19 from leg A, ×2 |
+| `rail_bracket_bottom.dxf` | 5052-H32 0.125 | flat 40 × 84.38, bend 90° at 37.19 from leg A, ×2 |
+
+The `_bends.dxf` files show the bend line for reference only; upload the plain ones.
 
 ## Where the geometry comes from
 
 | | |
 |---|---|
-| `parts.py` | every part at real dimensions, with sources |
-| `assy.py` | the carriage, X drive and Z drive sub-assemblies, in one place |
+| `parts.py` | every part at real dimensions; OpenBuilds parts from bd_warehouse's models of OpenBuilds' drawings |
+| `assy.py` | the carriage, X drive and Z drive sub-assemblies |
 | `frame.py` | the cabinet, the gantry's place in it, `clearances()`, `cut_report()` |
 | `arm280.py`, `dae.py` | the 280 Pi from Elephant Robotics' URDF and meshes |
 | `collide.py` | link-pair self-collision; how the fold was found |
-| `kit3d.py` | modelling, and a z-buffered, hidden-line renderer |
-| `make_steps3.py` | the booklet |
-
-The booklet and the cabinet model both build from `assy.py`, so they cannot
-disagree. Re-run `python3 make_steps3.py` after any change.
+| `kit3d.py`, `earcut.py` | modelling, constrained triangulation and the hidden-line renderer |
+| `make_steps4.py`, `wiring_pages.py`, `tools_page.py` | the Rev E booklet |
+| `cover/` | the cover scene (`cover_scene.py`) and its Blender render script |

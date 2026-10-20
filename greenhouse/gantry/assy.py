@@ -10,10 +10,12 @@ before it is hung):
         mouth y = 40. The carriage is on the +y side.
     z   height, 0 .. 80. MIDZ = 40 is the beam's centreline.
 
-The carriage stack, front to back, as OpenBuilds designed it:
-    screw head | plate 6 | spacer 6 | wheel 10.23 | nyloc
-with the wheel's mid-plane on the top/bottom grooves 10 mm behind the front
-face, so the plate's back sits 1.115 mm proud of the beam.
+The carriage stack, outside in, as OpenBuilds designed it:
+    low profile screw | plate 6 | spacer 6 (or eccentric) | shim 1 | wheel 11 | nyloc
+with the wheel's mid-plane on the side-face grooves 10 mm behind the mouth,
+so the plate's back sits 2.5 mm proud of the beam. Fixed wheels on one
+side of the plate, eccentrics on the other: that is how the XL plate is
+drilled.
 """
 import math
 
@@ -26,12 +28,15 @@ from kit3d import (Part, merge, mv, rot, box, cylinder, ALU, ALU_D, STEEL,
 FRONT = 40.0
 MIDZ = 40.0
 GROOVE_Y = FRONT - P.GROOVE_BACK                 # 30
-WHEEL_Y0 = GROOVE_Y - P.WHEEL_W / 2              # 24.885
-SPACER_Y0 = GROOVE_Y + P.WHEEL_W / 2             # 35.115
-PLATE_BACK = SPACER_Y0 + P.SPACER_T              # 41.115
-PLATE_FRONT = PLATE_BACK + P.PLATE_T             # 47.115
+WHEEL_Y0 = GROOVE_Y - P.WHEEL_W / 2              # 24.5
+SHIM_Y0 = GROOVE_Y + P.WHEEL_W / 2               # 35.5
+SPACER_Y0 = SHIM_Y0 + P.SHIM_T                   # 36.5
+PLATE_BACK = SPACER_Y0 + P.SPACER_T              # 42.5
+PLATE_FRONT = PLATE_BACK + P.PLATE_T             # 48.5
+CB_DEPTH = 1.6                                   # plate counterbores / recess
 CHANNEL_FLOOR = FRONT - (P.CB_D - P.CB_T)        # 20
-SCREW_Y = (CHANNEL_FLOOR + FRONT) / 2            # 30, channel centreline
+NB_Y = PLATE_BACK - P.SPACER_T - P.NB_T / 2      # 30.5, nut block centre
+SCREW_Y = NB_Y                                   # lead screw axis
 
 BELT_TOOTH_R = 20 * P.GT2_PITCH / math.pi / 2 - 0.254   # pulley tooth tips
 BELT_Y0 = 22.5                                   # belt band, y 22.5 .. 31.5
@@ -77,18 +82,20 @@ def rail(L):
 
 
 # ---------------------------------------------------------------- carriage
-WHEELS = [(-1, -1, False), (1, 1, False), (1, -1, True), (-1, 1, True)]
+# (along, across, eccentric): the XL plate's 5.1 fixed mounts are all on
+# +across, its 7.2 eccentric mounts all on -across. On the X rail +across is
+# up, so the fixed wheels carry the load and the eccentrics preload from below.
+WHEELS = [(-1, 1, False), (1, 1, False), (-1, -1, True), (1, -1, True)]
 
 
 def carriage(x=0.0, explode=0.0, hi=None, show=("plate", "fixed", "ecc"),
              clamp_holes=False, nuts=True):
     """XL plate with four wheel stacks, centred at x. `explode` pulls the
-    screws out to +y and the spacers, wheels and nuts back to -y."""
+    screws out to +y and the spacers, shims, wheels and nuts back to -y."""
     out = []
     e = explode
     if "plate" in show:
-        out.append(Part(along_py(P.gantry_plate(clamp_holes),
-                                 (x, PLATE_BACK, MIDZ)),
+        out.append(Part(along_py(P.gantry_plate(), (x, PLATE_BACK, MIDZ)),
                         HILITE if hi == "plate" else STEEL))
     for sx, sy, ecc in WHEELS:
         grp = "ecc" if ecc else "fixed"
@@ -101,10 +108,12 @@ def carriage(x=0.0, explode=0.0, hi=None, show=("plate", "fixed", "ecc"),
         else:
             sp = along_py(P.plain_spacer(), (wx, SPACER_Y0 - e * 0.8, wz))
         out.append(Part(sp, HILITE if h else ALU_D))
+        out.append(Part(along_py(P.shim(), (wx, SHIM_Y0 - e * 1.25, wz)),
+                        HILITE if h else STEEL))
         out.append(Part(along_py(P.solid_v_wheel(), (wx, WHEEL_Y0 - e * 1.7, wz)),
                         HILITE if h else POM))
-        out.append(Part(along_py(P.socket_cap(5, 27, low_profile=True),
-                                 (wx, PLATE_FRONT + e * 1.2, wz)),
+        out.append(Part(along_py(P.socket_cap(5, 30, low_profile=True),
+                                 (wx, PLATE_FRONT - CB_DEPTH + e * 1.2, wz)),
                         HILITE if h else STEEL))
         if nuts:
             out.append(Part(along_ny(P.nyloc(), (wx, WHEEL_Y0 - e * 2.6, wz)),
@@ -197,26 +206,31 @@ def x_belt(L, carriage_x=None, hi=False):
     if carriage_x is None:
         return [Part(P.ribbon(pts, BELT_Y0, closed=True), c, lw=0.3)]
     zt = MIDZ + r1                         # top run height (near-equal radii)
-    a = (carriage_x - 32.0 + 6.0, zt)      # ends finish inside the clamps
-    b = (carriage_x + 32.0 - 6.0, zt)
+    inner = CLAMP_X - P.CLAMP_L / 2 + 3.0  # ends finish inside the clamps
+    a = (carriage_x - inner, zt)
+    b = (carriage_x + inner, zt)
     path = np.vstack([[a], pts[t1:], pts[:t0 + 1], [b]])
     return [Part(P.ribbon(path, BELT_Y0, closed=False), c, lw=0.3)]
 
 
+CLAMP_X = 20.0      # clamp centres, from the carriage centre
+
+
 def x_clamps(cx, explode=0.0, hi=False, screws=True):
     """Two clamp blocks on the back of the X carriage, in the channel, each
-    gripping one end of the top run; two M5 x 10 each through the plate."""
+    gripping one end of the top run. Each takes two M5 x 25 low profile
+    through the plate's existing holes at (+/-10, +10) and (+/-30, +10)."""
     out = []
     e = explode
     c = HILITE if hi else ALU_D
     for sx in (-1, 1):
         blk = place(P.belt_clamp(), X, NY, Z,
-                    (cx + sx * 32.0 - 11.0, PLATE_BACK - e * 0.8, MIDZ + 4.0))
+                    (cx + sx * CLAMP_X - P.CLAMP_L / 2, PLATE_BACK - e * 0.8, MIDZ + 4.0))
         out.append(Part(blk, c))
         if screws:
-            for dx in (-5, 5):
-                out.append(Part(along_py(P.socket_cap(5, 10),
-                                         (cx + sx * 32.0 + dx, PLATE_FRONT + e, MIDZ + 9.0)),
+            for dx in (-10, 10):
+                out.append(Part(along_py(P.socket_cap(5, 25, low_profile=True),
+                                         (cx + sx * CLAMP_X + dx, PLATE_FRONT + e, MIDZ + 10.0)),
                                 HILITE if hi else STEEL))
     return out
 
@@ -231,60 +245,72 @@ def z_screw(L_mast, hi=False):
                  HILITE if hi else STEEL)]
 
 
-def z_nut(cx, explode=0.0, hi=False, screws=True):
-    """Anti-backlash nut on the Z carriage's back, around the screw, bore
-    along x; two M5 x 12 through the plate into its top face."""
-    c = HILITE if hi else BRASS
-    nb = place(P.nut_block(), Z, Y, X, (cx - 5.5, SCREW_Y - explode * 0.6, MIDZ))
+def z_nut(cx, explode=0.0, hi=False, screws=True, nuts=True, spacers=True):
+    """OpenBuilds anti-backlash nut block on the Z carriage's back, in the
+    mast's channel, screw bore along x. Two M5 x 25 low profile from the
+    plate's face through its nut holes at (-10, +/-10), through two 6 mm
+    spacers and the block, into M5 nuts in the block's pockets."""
+    c = HILITE if hi else BLACK
+    e = explode
+    bx = cx - 10.0 + P.NB_HOLE_OFF            # block centre along the mast
+    nb = place(P.nut_block(), Z, X, Y, (bx, NB_Y - e * 1.0, MIDZ))
     out = [Part(nb, c)]
-    if screws:
-        for dz in (-13, 13):
-            out.append(Part(along_py(P.socket_cap(5, 12),
-                                     (cx, PLATE_FRONT + explode, MIDZ + dz)),
+    for dz in (-10.0, 10.0):
+        if spacers:
+            out.append(Part(along_py(P.plain_spacer(), (cx - 10.0, SPACER_Y0 - e * 0.5, MIDZ + dz)),
+                            HILITE if hi else ALU_D))
+        if screws:
+            out.append(Part(along_py(P.socket_cap(5, 25, low_profile=True),
+                                     (cx - 10.0, PLATE_FRONT - CB_DEPTH + e * 0.9, MIDZ + dz)),
+                            HILITE if hi else STEEL))
+        if nuts:
+            out.append(Part(along_ny(P.hex_nut(), (cx - 10.0, NB_Y - P.NB_T / 2 - e * 1.6 + 4.7, MIDZ + dz)),
                             HILITE if hi else STEEL))
     return out
 
 
+TAPS = [(10.0, 30.0), (10.0, 50.0), (10.0, 10.0), (10.0, 70.0), (30.0, 10.0), (30.0, 70.0)]
+# (bench y, bench z) of the C-Beam's six M5 end taps
+
+
 def z_end_plate(at_x, foot, hi=False, screws=True):
-    """Plate across a mast end, bolted into the profile's end-face taps.
-    Foot: the NEMA 23 motor plate (BOM D14), facing -x. Top: a C-Beam end
-    mount, facing +x. The 96 mm side runs across the beam's 80 mm height."""
+    """Foot: the NEMA 23 motor plate (BOM D14) across the mast end, facing
+    -x, four M5 x 12 into the end taps. Top: the OpenBuilds C-Beam End Mount,
+    four M5 x 25 low profile into the end taps (web pair and flange pair)."""
     c = HILITE if hi else ALU
     if foot:
         m = place(P.motor_mount_plate(), Y, Z, NX, (at_x, SCREW_Y, MIDZ))
-        sx_out = at_x - 6.0
-    else:
-        # section-sized: a full motor plate here would hit the X carriage
-        m = place(P.cbeam_end_plate(), Y, Z, X, (at_x, SCREW_Y, MIDZ))
-        sx_out = at_x + 6.0
+        out = [Part(m, c)]
+        if screws:
+            for ty, tz in ((10.0, 10.0), (10.0, 70.0), (30.0, 10.0), (30.0, 70.0)):
+                out.append(Part(place(P.socket_cap(5, 12), Y, Z, NX, (at_x - 6.0, ty, tz)),
+                                HILITE if hi else STEEL))
+        return out
+    m = place(P.cbeam_end_mount(), NZ, Y, X, (at_x, 0.0, MIDZ))
     out = [Part(m, c)]
     if screws:
-        for oy, oz in ((-20.0, 10.0), (-20.0, 70.0), (0.0, 10.0), (0.0, 70.0)):
-            scr = P.socket_cap(5, 12)
-            if foot:
-                g = place(scr, Y, Z, NX, (sx_out, SCREW_Y + oy, oz))
-            else:
-                g = place(scr, Y, Z, X, (sx_out, SCREW_Y + oy, oz))
-            out.append(Part(g, HILITE if hi else STEEL))
+        for ty, tz in ((10.0, 30.0), (10.0, 50.0), (30.0, 10.0), (30.0, 70.0)):
+            out.append(Part(place(P.socket_cap(5, 25, low_profile=True), Y, Z, X,
+                                  (at_x + P.EM_T - 1.55, ty, tz)), HILITE if hi else STEEL))
     return out
 
 
 def z_top_bearings(L_mast, hi=False):
-    """Two thrust bearings clamping the top end plate, each held by an 8 mm
-    lock collar, so the screw HANGS from the top and the coupler at the foot
-    only ever carries torque."""
+    """Two 8 mm thrust bearings and two lock collars at the top: one bearing
+    seated in the End Mount's recess with its collar above, one under the
+    mount with its collar below, so the screw HANGS from the top and the
+    coupler at the foot only ever carries torque."""
     c = HILITE if hi else STEEL
-    xp = L_mast                     # plate x L .. L + 6
-    out = [Part(along_nx(P.thrust_bearing(), (xp, SCREW_Y, MIDZ)), c),
-           Part(along_px(P.thrust_bearing(), (xp + 6.0, SCREW_Y, MIDZ)), c),
-           Part(along_nx(_collar(), (xp - 5.5, SCREW_Y, MIDZ)), c),
-           Part(along_px(_collar(), (xp + 11.5, SCREW_Y, MIDZ)), c)]
+    rec = L_mast + P.EM_T - P.BEARING_RECESS[1]          # recess floor
+    out = [Part(along_px(P.thrust_bearing(), (rec, SCREW_Y, MIDZ)), c),
+           Part(along_px(P.lock_collar(), (rec + 5.0, SCREW_Y, MIDZ)), c),
+           Part(along_nx(P.thrust_bearing(), (L_mast, SCREW_Y, MIDZ)), c),
+           Part(along_nx(P.lock_collar(), (L_mast - 5.0, SCREW_Y, MIDZ)), c)]
     return out
 
 
 def _collar():
-    from kit3d import ring as _ring
-    return _ring(8.0, 4.0, 8.0)
+    return P.lock_collar()
 
 
 def z_motor(hi=False, coupler=True):

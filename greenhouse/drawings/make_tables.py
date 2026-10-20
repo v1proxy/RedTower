@@ -109,7 +109,7 @@ c5 = {(i, 3): {"drop": WARN, "add": OK, "decide": DIM, "revise": DIM}.get(r[3], 
       for i, r in enumerate(t5)}
 
 fig = plt.figure(figsize=(13.4, 11.0), facecolor="#FBFCFA")
-fig.suptitle("Herb Tower  ·  bracket and fastener schedule  ·  Rev 5",
+fig.suptitle("Maag  ·  bracket and fastener schedule  ·  Rev 5",
              fontsize=15, fontweight="bold", color=INK, x=.045, ha="left", y=.988)
 fig.text(.045, .972,
          "27 horizontal members, 54 end joints. The 30 brackets already delivered cover 30 of them; the other 24 hold on the end tap and the M8 alone.\n"

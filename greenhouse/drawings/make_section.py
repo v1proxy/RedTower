@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Herb Tower: cross section and long elevation, with the arm to real kinematics.
+"""Maag: cross section and long elevation, with the arm to real kinematics.
 
 Frame numbers come from brackets.py, tray depth from make_dxf_rev4.py, and the
 arm from Elephant Robotics' published DH table for the myCobot 280:
@@ -44,7 +44,7 @@ POTS = {TIERS[0]: 7, TIERS[1]: 10, TIERS[2]: 10}
 HEADROOM = {TIERS[i]: (LEVELS[i + 2] - TIERS[i]) for i in range(3)}
 
 fig = plt.figure(figsize=(17.0, 12.2), facecolor="white")
-fig.suptitle("Herb Tower   section and elevation   1397 × 559 × 1829 mm",
+fig.suptitle("Maag   section and elevation   1397 × 559 × 1829 mm",
              x=0.5, y=0.975, fontsize=16, fontweight="bold", color=INK)
 fig.text(0.5, 0.951, "Arm drawn to the published myCobot 280 DH parameters. "
          "The gantry runs the long side; the arm reaches across the tray depth.",

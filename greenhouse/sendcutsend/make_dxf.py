@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Flat patterns for the Herb Tower drip trays, sized to SendCutSend's real limits.
+"""Flat patterns for the Maag drip trays, sized to SendCutSend's real limits.
 
 5052 aluminium 0.063 in, BENT, caps out at a 30 x 44 in flat blank and a 44 in bend
 length. The one-piece 1317 mm tray in BOM Rev E is 51.85 in long, so it is simply not
@@ -17,6 +17,7 @@ material (0.255 in flat / 0.303 in formed, effective bend radius 0.035 in at 90 
 So a flange of outside height H contributes (H - BD/2) to the flat length, and a
 blank with two opposed flanges unfolds to (W + 2H - 2*BD).
 """
+import os
 import math
 
 T   = 1.6002          # 0.063 in
@@ -174,7 +175,7 @@ for name, d, (x0, x1, y0, y1), bends, qty in PARTS:
     fits = short <= MAXFLAT[0] + 1e-6 and long_ <= MAXFLAT[1] + 1e-6
     bend_ok = max(bends) <= MAXBEND
     ok &= fits and bend_ok
-    open(f"/home/claude/greenhouse/sendcutsend/{name.split('_x')[0]}.dxf", "w").write(d.dumps())
+    open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{name.split('_x')[0]}.dxf"), "w").write(d.dumps())
     print(f"{name:22} {w:9.2f} x {l:9.2f} {short/25.4:6.2f} x {long_/25.4:6.2f} "
           f"{'yes' if fits else 'NO':>11}  {max(bends):7.1f} mm = {max(bends)/25.4:5.2f} in "
           f"{'ok' if bend_ok else 'OVER'}")

@@ -127,7 +127,7 @@ def render(ax, scene, title, sub="", width=1500):
 
 
 fig = plt.figure(figsize=(13.4, 15.2), facecolor="#FBFCFA")
-fig.suptitle("Herb Tower  ·  drip trays mounted on the 4040 frame",
+fig.suptitle("Maag  ·  drip trays mounted on the 4040 frame",
              fontsize=15, fontweight="bold", color=INK, x=.045, ha="left", y=.985)
 fig.text(.045, .962,
          "Isometric, 30°.  Grey = 80/20 40-4040 and 20-2020 profile.  Blue = 5052 aluminium "

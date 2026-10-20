@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the Herb Tower from the real 3D model: cut-away section, elevation, iso.
+"""Render Maag from the real 3D model: cut-away section, elevation, iso.
 
 This replaces the hand-drawn section. Every line here comes from geometry in
 tower3d.py, which is built from brackets.py's member table, the BOM dimensions
@@ -67,7 +67,7 @@ parts = build()
 ntri = sum(len(t) for _, _, t, _ in parts)
 
 fig = plt.figure(figsize=(17.4, 11.0), facecolor="white")
-fig.suptitle("Herb Tower   rendered from the 3D model   1397 × 559 × 1829 mm",
+fig.suptitle("Maag   rendered from the 3D model   1397 × 559 × 1829 mm",
              x=0.5, y=0.972, fontsize=16, fontweight="bold", color=INK)
 fig.text(0.5, 0.947,
          f"{ntri:,} triangles. Frame from the member table in brackets.py; "

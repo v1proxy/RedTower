@@ -99,7 +99,7 @@ class Design:
         e = self.env
         L = []
         a = L.append
-        a(f"Herb Tower  ·  design {self.version}  ·  preset \"{e.name}\"")
+        a(f"Maag  ·  design {self.version}  ·  preset \"{e.name}\"")
         a("=" * 72)
         a(f"Envelope        {e.width:.0f} W x {e.depth:.0f} D x {e.height:.0f} H mm"
           f"   ·  {e.series}{e.series} T-slot")

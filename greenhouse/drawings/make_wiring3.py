@@ -15,7 +15,7 @@ fig, ax = sheet(22.4, 15.0, (0, X1), (0, Y1),
                 "safety inputs", "E-03")
 ax.plot([COL - 12, COL - 12], [70, Y1 - 16], color=RULE, lw=1.0, zorder=0)
 
-ax.text(22, Y1 - 20, "Herb Tower  ·  utility node and water path",
+ax.text(22, Y1 - 20, "Maag  ·  utility node and water path",
         fontsize=18, fontweight="bold", color=INK, va="top")
 ax.text(22, Y1 - 46,
         "Every interlock on this sheet runs locally on the node. Home Assistant can "

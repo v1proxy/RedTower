@@ -1,4 +1,4 @@
-"""The Herb Tower cabinet, and where the gantry lands on it.
+"""The Maag cabinet, and where the gantry lands on it.
 
 Everything here is the reference ("m") build out of `design/params.py`:
 1397 wide, 457 deep, 1829 tall, 40-series V-slot, five rail levels.
@@ -22,8 +22,8 @@ SER = 40.0                      # 4040 V-slot
 #
 # DEPTH. Rev A had D = 457 and it does not work: see clearances(). The
 # tightest fold the real 280 mesh can reach is 162.6 mm long, measured, so
-# the corridor has to swallow 162.6 mm of arm plus the 88.35 mm carriage
-# stack behind it before the tray line. 559 gives 25 mm of daylight.
+# the corridor has to swallow 162.6 mm of arm plus the gantry stack behind
+# it before the tray line. 559 gives 20 mm of daylight (Rev E stack).
 D = 559.0
 D_REV_A = 457.0
 SPAN_X = W - 2 * SER            # 1317 clear between the uprights
@@ -45,14 +45,15 @@ MOUNT_OFF = 30.0
 SCREW_Y = None   # set below, once MAST_Y0 is known                # g_base origin to the arm's bottom mounting face
 
 # Depth build-up, front face to the arm's J1 axis. Each carriage stack is
-# plate 6 plus the 1.115 its back stands off the beam (spacer + half a
-# wheel, less the 10 mm the groove sits behind the face): P.CARR_STACK.
+# plate 6 plus the 2.5 its back stands off the beam (spacer 6 + shim 1 + half
+# an 11 mm wheel, less the 10 mm the groove sits behind the mouth): P.CARR_STACK.
+AS_FRONT = 40.0
 MAST_Y1 = RAIL_Y - P.CARR_STACK            # mast back face, on the X plate
 MAST_Y0 = MAST_Y1 - P.CB_D                 # mast mouth
 ZCARR_Y = MAST_Y0 - P.CARR_STACK           # Z carriage plate front face
 ARMPL_Y = ZCARR_Y - ARM_PLATE_T            # arm plate front face
 J1_Y = ARMPL_Y - MOUNT_OFF                 # J1 axis origin
-SCREW_Y = MAST_Y0 + 10.0                   # channel centreline
+SCREW_Y = MAST_Y0 + (AS_FRONT - 30.5)        # lead screw axis, 9.5 behind the mouth
 CARR_T = P.PLATE_T
 
 
@@ -96,7 +97,7 @@ def _band(a, b, lo, hi):
     return (a2, b2) if b2 - a2 > 1e-6 else None
 
 
-def cabinet(z0=0.0, z1=H, x0=0.0, x1=W):
+def cabinet(z0=0.0, z1=H, x0=0.0, x1=W, y0=0.0, y1=D):
     """The bare 4040 cabinet: 4 uprights, 13 width rails, 11 depth rails.
 
     The bounds TRIM the members rather than clipping triangles, so a detail
@@ -109,8 +110,9 @@ def cabinet(z0=0.0, z1=H, x0=0.0, x1=W):
     for x in (0.0, W - SER):
         c = _band(x, x + SER, x0, x1)
         if up and c:
-            out.append(mv(vslot(up[1] - up[0]), x, 0.0, up[0]))
-            out.append(mv(vslot(up[1] - up[0]), x, D - SER, up[0]))
+            for yy in (0.0, D - SER):
+                if _band(yy, yy + SER, y0, y1):
+                    out.append(mv(vslot(up[1] - up[0]), x, yy, up[0]))
     # width rails: front, back, and the three carrying the tray's rear edge.
     # Nothing of the frame sits behind y = TRAY_D, or the arm cannot pass it.
     wx = _band(SER, W - SER, x0, x1)
@@ -119,15 +121,17 @@ def cabinet(z0=0.0, z1=H, x0=0.0, x1=W):
             continue
         ys = [0.0, D - SER] + ([TRAY_D - SER] if z in TIERS else [])
         for y in ys:
-            out.append(mv(vslot(wx[1] - wx[0], axis="x"), wx[0], y, z))
+            if _band(y, y + SER, y0, y1):
+                out.append(mv(vslot(wx[1] - wx[0], axis="x"), wx[0], y, z))
     # depth rails at every level, both sides, plus one in the base mid-span
+    wy = _band(SER, D - SER, y0, y1)
     for z in LEVELS:
-        if not _band(z, z + SER, z0, z1):
+        if not (wy and _band(z, z + SER, z0, z1)):
             continue
         xs = [0.0, W - SER] + ([W / 2 - SER / 2] if z == 0.0 else [])
         for x in xs:
             if _band(x, x + SER, x0, x1):
-                out.append(mv(vslot(SPAN_Y, axis="y"), x, SER, z))
+                out.append(mv(vslot(wy[1] - wy[0], axis="y"), x, wy[0], z))
     return merge(*out) if out else (np.zeros((0, 3)), np.zeros((0, 3), int))
 
 
@@ -153,6 +157,39 @@ def x_rail(length=RAIL_L):
     """
     m = xform(P.cbeam(length), _basis((0, -1, 0), (0, 0, 1), (1, 0, 0)))
     return mv(m, 0.0, RAIL_Y, RAIL_Z)
+
+
+def x_rail_brackets(screws=True, explode=0.0):
+    """The four SendCutSend brackets, placed, with their screws and T-nuts.
+    Returns a list of (name, mesh) so pages can colour them."""
+    out = []
+    for x0 in RB_TOP_X:
+        V, F = P.rail_bracket("top")
+        out.append(("bracket", (np.c_[x0 + V[:, 0], RAIL_Y + 40.0 + V[:, 1],
+                                      RAIL_Z + P.CB_H + V[:, 2] + explode], F)))
+        if screws:
+            for hx in P.RB_KIND["top"][2]:
+                sc = P.socket_cap(5, 10)
+                out.append(("screw", mv(sc, x0 + hx, RAIL_Y + 40.0 - P.RB_HOLE_A,
+                                        RAIL_Z + P.CB_H + P.RB_T + 2.2 * explode)))
+            for hx, hz in P.RB_KIND["top"][3]:
+                sc = rot(P.socket_cap(5, 10), rx=math.pi / 2)        # head toward -y
+                out.append(("screw", mv(sc, x0 + hx, RAIL_Y + 40.0 - P.RB_T - 2.2 * explode,
+                                        RAIL_Z + P.CB_H + hz + explode)))
+    for x0 in RB_BOT_X:
+        V, F = P.rail_bracket("bottom")
+        out.append(("bracket", (np.c_[x0 + P.RB_W - V[:, 0], RAIL_Y + 40.0 + V[:, 1],
+                                      RAIL_Z - V[:, 2] - explode], F)))
+        if screws:
+            for hx in P.RB_KIND["bottom"][2]:
+                sc = rot(P.socket_cap(5, 10), rx=math.pi)             # head down
+                out.append(("screw", mv(sc, x0 + P.RB_W - hx, RAIL_Y + 40.0 - P.RB_HOLE_A,
+                                        RAIL_Z - P.RB_T - 2.2 * explode)))
+            for hx, hz in P.RB_KIND["bottom"][3]:
+                sc = rot(P.socket_cap(5, 10), rx=math.pi / 2)
+                out.append(("screw", mv(sc, x0 + P.RB_W - hx, RAIL_Y + 40.0 - P.RB_T - 2.2 * explode,
+                                        RAIL_Z - hz - explode)))
+    return out
 
 
 def z_mast(length=MAST_L):
@@ -211,9 +248,19 @@ def _map(parts, fn):
             for p in parts]
 
 
-X_MIN = P.MMP_L + P.PLATE / 2 + 5.0                     # clear of the X motor plate
-X_MAX = min(RAIL_L - 50.0 - 9.0 - 43.0 - 5.0,          # clamps clear of the idler
-            W - SER - P.CB_H / 2)                       # mast clear of the side rails
+# X rail brackets (SendCutSend, parts.rail_bracket): a TOP one at each end,
+# on the rail's top face just inboard of the top depth rail (which sits on
+# the rail's last 40 mm), leg B up the top back width rail; a BOTTOM one at
+# each end under the rail, leg B down the rear upright.
+RB_TOP_X = (SER, W - SER - P.RB_W)                       # 40 and 1317
+RB_BOT_X = (0.0, W - SER)                                # on the uprights
+WHEEL_REACH = P.WH_X / 2 + P.WHEEL_R                     # 62.25 from the centre
+
+X_MIN = max(P.MMP_L + P.PLATE / 2 + 5.0,                 # clear of the X motor plate
+            RB_TOP_X[0] + P.RB_W + WHEEL_REACH + 5.0)    # wheels clear of the top bracket
+X_MAX = min(RAIL_L - 50.0 - 9.0 - 34.0 - 5.0,           # clamps clear of the idler
+            RB_TOP_X[1] - WHEEL_REACH - 5.0,             # wheels clear of the top bracket
+            W - SER - P.CB_H / 2)                        # mast clear of the side rails
 X_TRAVEL = X_MAX - X_MIN
 
 
@@ -234,6 +281,8 @@ def gantry_parts(x=698.5, z=700.0, q=None, grid=0.0, hi=None,
     out = []
     if rail:
         out.append(Part(x_rail(), col("rail", ALU)))
+        for nm, m in x_rail_brackets(screws=(hi == "brackets")):
+            out.append(Part(m, col("brackets", ALU_D) if nm == "bracket" else STEEL))
         out += _map(AS.carriage(x, clamp_holes=True), _bench_to_xrail)
         if xdrive:
             out += _map(AS.x_motor_plate() + AS.x_motor() + AS.x_pulley()

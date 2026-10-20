@@ -246,7 +246,7 @@ def sheet(w_in, h_in, xlim, ylim, title, subtitle, sheet_no, rev="E"):
             zorder=8)
     ax.plot([bx + bw - 86, bx + bw - 86], [by, by + bh - 20], color=INK,
             lw=0.8, zorder=8)
-    ax.text(bx + 7, by + bh - 10, "RED TOWER  ·  HERB TOWER", fontsize=8.6,
+    ax.text(bx + 7, by + bh - 10, "RED TOWER  ·  MAAG", fontsize=8.6,
             fontweight="bold", va="center", color=INK, zorder=8)
     ax.text(bx + 7, by + bh - 34, title, fontsize=10.4, fontweight="bold",
             va="center", color=INK, zorder=8)

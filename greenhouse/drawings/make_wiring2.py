@@ -16,7 +16,7 @@ fig, ax = sheet(22.4, 15.0, (0, X1), (0, Y1),
                 "typical", "E-02")
 ax.plot([COL - 12, COL - 12], [70, Y1 - 16], color=RULE, lw=1.0, zorder=0)
 
-ax.text(22, Y1 - 20, "Herb Tower  ·  network and tier-node wiring",
+ax.text(22, Y1 - 20, "Maag  ·  network and tier-node wiring",
         fontsize=18, fontweight="bold", color=INK, va="top")
 ax.text(22, Y1 - 46,
         "Tiers A, B and C run identical hardware and the same ESPHome packages. "
