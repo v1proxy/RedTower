@@ -156,8 +156,8 @@ legend(ax, COL, Y1 - 36, [
 note(ax, COL, Y1 - 112,
      "WHERE THE ARM ACTUALLY SITS\n\n"
      "The gantry runs along the LONG face of the\n"
-     "cabinet, 1397 mm wide, not across the 457 mm\n"
-     "depth. Trays are 203 mm deep in a 457 mm\n"
+     "cabinet, 1397 mm wide, not across the 559 mm\n"
+     "depth. Trays are 203 mm deep in a 559 mm\n"
      "cabinet, which leaves a 254 mm corridor for the\n"
      "carriage, the plate and the arm base.\n\n"
      "Joint 1 must sit at least 177 mm behind the front\n"
@@ -196,7 +196,7 @@ note(ax, COL, 232,
      "• The two spare TMC2209 channels are an\n"
      "  obvious home for a future tray shuttle.", fs=7.5)
 
-out = "/home/claude/outputs/wiring_E04_motion.png"
-os.makedirs("/home/claude/outputs", exist_ok=True)
+out = "wiring_E04_motion.png"
+os.makedirs(".", exist_ok=True)
 fig.savefig(out, dpi=150, facecolor="white")
 print("saved", out)

@@ -20,7 +20,7 @@ sys.path.insert(0, "/home/claude/greenhouse/sendcutsend")
 from unfold import unfold, MAXFLAT, MAXBEND, MITRE_GAP
 
 N = 41.0                 # 40 mm upright + 1 mm clearance
-WT, WP = 203.0, 457.0
+WT, WP = 203.0, 559.0
 XF1 = 1397.0
 MID = (660.0, 700.0)
 LAP, TON, INS = 40.0, 40.0, 3.5

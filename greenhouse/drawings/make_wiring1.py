@@ -336,7 +336,7 @@ note(ax, COL, 232,
      "supply, so a 24 V fault leaves compute and\n"
      "telemetry running.", fs=7.5)
 
-out = "/home/claude/outputs/wiring_E01_power.png"
-os.makedirs("/home/claude/outputs", exist_ok=True)
+out = "wiring_E01_power.png"
+os.makedirs(".", exist_ok=True)
 fig.savefig(out, dpi=150, facecolor="white")
 print("saved", out)

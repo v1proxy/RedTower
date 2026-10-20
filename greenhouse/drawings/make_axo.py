@@ -225,6 +225,6 @@ axD.text(0, -0.06, "The uphill piece sits on top, so runoff crosses the seam dow
          transform=axD.transAxes, fontsize=7.6, color=LINE, va="top", linespacing=1.5)
 
 fig.text(.955, .016, "Rev E  ·  2026-10-10", fontsize=7.5, color=LINE, ha="right")
-fig.savefig("/home/claude/greenhouse/drawings/tray_axonometric.png", dpi=150,
+fig.savefig("tray_axonometric.png", dpi=150,
             facecolor="#FBFCFA")
 print("ok")

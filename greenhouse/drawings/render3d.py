@@ -16,7 +16,7 @@ import math
 import numpy as np
 
 C30, S30 = math.cos(math.radians(30)), math.sin(math.radians(30))
-YREF = 457.0           # mirror depth: the viewer stands in front of the cabinet
+YREF = 559.0           # mirror depth: the viewer stands in front of the cabinet
 
 
 def proj(x, y, z):

@@ -19,8 +19,10 @@ from params import (Envelope, DesignError, POT, POT_GAP, POT_EDGE, MODULES,
                     W_MIN, W_MAX, D_MIN, D_MAX, H_MIN, H_MAX,
                     SPAN_MAX_2040, SPAN_MAX_4040,
                     ADC_CH, ADC_MAX_PER_BUS, PROBES_MAX_PER_TIER,
-                    ARM_REACH, ARM_BASE_DIA, ARM_STOWED_H, ARM_PLATE_T,
-                    GANTRY_CARRIAGE_D, CORRIDOR_MIN)
+                    ARM_REACH, ARM_GRIPPER, ARM_BASE_DIA, ARM_EXTENDED_H,
+                    ARM_FOLD_L, ARM_WORK_H, ARM_MOUNT_OFF, ARM_PLATE_T,
+                    ARM_SETBACK, GANTRY_CARRIAGE_D, TRANSIT_CLEAR,
+                    CORRIDOR_MIN, CORRIDOR_MIN_ARM, CORRIDOR_MIN_GANTRY)
 
 # Stack above a pot rim that is not plant: LED bar, its mount, and the gap that
 # keeps the canopy out of the diodes.
@@ -167,15 +169,14 @@ def solve(env: Envelope, version: str = "0.0.0") -> Design:
 
     # --- depth: corridor first, tray gets the rest ------------------------
     if env.has("gantry"):
-        corridor = max(CORRIDOR_MIN,
-                       GANTRY_CARRIAGE_D + ARM_PLATE_T + ARM_BASE_DIA + 18.0)
+        corridor = CORRIDOR_MIN_ARM if env.has("arm") else CORRIDOR_MIN_GANTRY
         tray_depth = env.depth - corridor
         if tray_depth < 150.0:
             raise DesignError(
                 f"A gantry needs a {corridor:.0f} mm corridor, which leaves only "
                 f"{tray_depth:.0f} mm of tray in a {env.depth:.0f} mm cabinet. "
                 f"Either go at least {corridor + 150:.0f} mm deep or drop the "
-                f"'gantry' module.")
+                f"'{'arm' if env.has('arm') else 'gantry'}' module.")
     else:
         corridor = 0.0
         tray_depth = env.depth - 30.0
@@ -261,27 +262,53 @@ def solve(env: Envelope, version: str = "0.0.0") -> Design:
             raise DesignError(
                 "The 'arm' module needs the 'gantry' module: the arm has a "
                 f"{ARM_REACH:.0f} mm reach and has to be carried to each plant.")
-        j1 = tray_depth + GANTRY_CARRIAGE_D + ARM_PLATE_T + ARM_BASE_DIA / 2
+        # Side mounted: the arm plate bolts flat to the Z carriage and the
+        # arm bolts flat to the plate, so J1 is horizontal and the base
+        # radius no longer eats into the reach.
+        j1 = env.depth - ARM_SETBACK
         reach_front = j1 - ARM_REACH
         # pots are pushed to the BACK of the tray, nearest the arm
         row_front = tray_depth - pot["size"] - POT_EDGE
-        margin = row_front - reach_front
+        # The gripper reaches past the flange, and it is the gripper that
+        # has to arrive at the leaf.
+        grip_front = reach_front - ARM_GRIPPER
+        margin = row_front - grip_front
         if margin < 0:
             warn.append(
                 f"The arm cannot reach the front of the pot row: J1 sits "
-                f"{j1:.0f} mm back, its {ARM_REACH:.0f} mm reach stops at "
-                f"y={reach_front:.0f} mm, and the pots start at y={row_front:.0f} mm. "
+                f"{j1:.0f} mm back, flange plus gripper stops at "
+                f"y={grip_front:.0f} mm, and the pots start at y={row_front:.0f} mm. "
                 f"Short by {-margin:.0f} mm. Push the pots further back, go "
                 f"shallower, or accept that the arm works the back of each pot only.")
+        elif row_front < reach_front:
+            warn.append(
+                f"The flange alone stops at y={reach_front:.0f} mm and the pot row "
+                f"starts at y={row_front:.0f} mm, so the front {reach_front - row_front:.0f} mm "
+                f"of each pot is gripper-only reach. Fine for picking, not for "
+                f"anything that needs the flange itself over the pot.")
         dy = j1 - (tray_depth - pot["size"] / 2 - POT_EDGE)
         half = math.sqrt(max(0.0, ARM_REACH ** 2 - dy ** 2))
         travel = max(0.0, usable_width - 2 * half)
+        # The check that matters: the arm crosses a tray plane on every tier
+        # change, and even folded as tightly as it can go without one link
+        # hitting another it is ARM_FOLD_L long. If that overlaps the tray, the arm cannot change
+        # tier at all, and no amount of shimming fixes it.
+        transit = (j1 - ARM_FOLD_L) - tray_depth
+        if transit < 0:
+            raise DesignError(
+                f"The folded arm overlaps the tray by {-transit:.0f} mm, so it "
+                f"cannot change tier. J1 sits {j1:.0f} mm from the front and the "
+                f"tightest fold that does not hit itself is still {ARM_FOLD_L:.0f} mm "
+                f"long, reaching y={j1 - ARM_FOLD_L:.0f} mm against a tray line at "
+                f"y={tray_depth:.0f} mm. Go at least "
+                f"{env.depth - transit + TRANSIT_CLEAR:.0f} mm deep, or cut the "
+                f"trays back to {j1 - ARM_FOLD_L - TRANSIT_CLEAR:.0f} mm.")
         for t in tiers:
-            if t.headroom < ARM_STOWED_H:
+            if t.headroom < ARM_WORK_H:
                 warn.append(
-                    f"Tier {t.label} has {t.headroom:.0f} mm of headroom and the arm "
-                    f"is {ARM_STOWED_H:.0f} mm tall stowed, so it has to travel "
-                    f"folded and unfold only once the mast has it at the tier.")
+                    f"Tier {t.label} has {t.headroom:.0f} mm of headroom and the "
+                    f"arm needs {ARM_WORK_H:.0f} mm across it to work, so it can "
+                    f"reach into this tier but not raise the wrist inside it.")
                 break
 
     # --- systems -----------------------------------------------------------

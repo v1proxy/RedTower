@@ -23,3 +23,6 @@ __pycache__/
 
 # Superseded by git history
 *.revD-backup
+
+# generated booklet pages
+greenhouse/gantry/build/

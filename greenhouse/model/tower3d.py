@@ -20,14 +20,18 @@ sys.path.insert(0, HERE)
 from brackets import W, D, H, SER, LEVELS, TIERS, SHELF, MID, members   # noqa: E402
 from dae import load as dae_load                                        # noqa: E402
 
-MESH_DIR = "/mnt/user-data/uploads/greenhouse-esphome/mycobot_mesh"
+MESH_DIR = os.environ.get("MYCOBOT_MESH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "mycobot_mesh"))
 TRAY_D, UPSTAND, SHEET = 203.0, 25.0, 1.6
 POT = 114.3            # G085, 4.5 in square
 POT_H = 127.0
 PLATE_T = 6.35
 ZCOL = (40.0, 80.0)    # C-Beam, modelled as its bounding section
-Y_PLATE = 150.0
-Y_J1 = Y_PLATE + PLATE_T + 30.0
+# J1 is anchored to the design rule, not to a number typed into this file:
+# ARM_SETBACK in design/params.py is the arm plate, both carriage plates, the
+# mast, the X rail, the rear upright and the arm's own 30 mm mount offset.
+ARM_SETBACK = 168.35
+Y_J1 = D - ARM_SETBACK
+Y_PLATE = Y_J1 - PLATE_T - 30.0
 
 ALU, STEEL, SHEETC, DARK = (0.78, 0.80, 0.81), (0.55, 0.58, 0.60), \
                            (0.86, 0.88, 0.88), (0.30, 0.32, 0.33)

@@ -14,6 +14,136 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.2.0 – 2026-10-20
+
+**The reference build changed depth: 1397 × 457 × 1829 becomes 1397 × 559 × 1829.**
+Anyone who has cut extrusion to the 0.1.x cut list needs eleven new depth
+members. Nothing else about an existing build is wrong.
+
+This is the first revision drawn from the real robot. Up to 0.1.3 the myCobot
+280 Pi was a cylinder with datasheet numbers attached. 0.2.0 loads Elephant
+Robotics' own `mycobot_280_pi.urdf` and its eight link meshes and poses them
+through the URDF chain, and four of those numbers turned out to be wrong.
+
+### The blocking one
+
+The arm crosses a tray plane every time it changes tier. Folded as tightly as
+its joint limits allow it is **162.6 mm** long, and behind it sits 88.35 mm of
+carriage stack plus the X rail and the rear upright. In a 457 mm cabinet the
+folded arm **overlaps the tray by 77 mm**, so it cannot change tier at all.
+
+At 559 it clears by 22.8 mm. The alternative, if the floor space is not
+available, is to cut the trays back from 203 to 127 deep and keep 457, which
+costs 37 percent of the growing area. `solve.py` now refuses the impossible
+case outright instead of warning about the wrong thing.
+
+### Gantry Rev D: the mechanics redrawn as C-Beam hardware actually works
+
+- **Carriages.** The wheels straddle the 80 mm beam and ride the grooves on
+  its top and bottom faces, 100.6 mm apart (Rev C had them on the front
+  face, which a V-wheel cannot do). Stack: M5 × 30 low profile, plate,
+  6 mm spacer, wheel, **nyloc**. The plate's back sits 1.115 mm off the
+  beam, so each carriage adds 7.115 to the stack-up, and the transit
+  clearance at 559 is **22.8 mm**, not the 25 first quoted.
+- **X drive.** Motor at the X rail's left end on the front lips; GT2 belt
+  inside the rail's channel, width along the pulley axis, teeth in; one
+  idler at the far end on an M5 × 40 through the web; both belt ends
+  clamped to the back of the X carriage. Rev C had the motor mid-rail,
+  where the carriage could not pass it.
+- **Z drive.** The screw hangs from a top end plate between two thrust
+  bearings locked by collars; the coupler at the foot carries only torque.
+- **Mast foot 309 → 289.** At 309 the top collar finished 0.5 mm under the
+  cabinet's top plane.
+- **X travel** is 1126 mm (163.5 to 1290), set by the motor plate and the
+  idler. The arm's ±150 lateral reach still covers the whole tray width.
+- `greenhouse/gantry/assy.py`: one module for the sub-assemblies, used by
+  both the booklet and the cabinet model, so they cannot disagree.
+- Gantry BOM Rev B ($2,186.07): C05 wheel screws 27 → 30 mm; C06 M5
+  nylocs added; D02 pulley bore 8 → 6.35; D03 idlers 2 → 1; D15 mast-top
+  end plate and D16 lock collars added; motor-plate motor holes tapped M5.
+- `design/params.py`: `CARR_STACK = 7.115`, `ARM_SETBACK` 170.58,
+  `TRANSIT_CLEAR` 22.5.
+
+### Changed
+
+- **Frame depth 457 → 559.** Eleven depth members 377 → 479. Uprights, width
+  members, tray width, tier heights and pot count are all unchanged: still
+  4 × 1829, 13 × 1317, and still 17 sticks of 2000 mm.
+- **Base drip pan 1317 × 377 → 1317 × 479** (G014). It spans the full frame
+  depth, so it is the one sheet-metal part the change touches. **The growing
+  trays are unchanged** at 1317 × 203 (G013).
+- `design/params.py`: arm constants replaced with measured ones.
+  `ARM_REACH` 280 → **292.6** (flange, radial from J1), plus `ARM_GRIPPER`
+  90. `ARM_STOWED_H = 437` was wrong in kind, not just in value: 437 mm is
+  the arm **extended**. It is now `ARM_EXTENDED_H`, joined by `ARM_FOLD_L`
+  162.6, `ARM_WORK_H` 263 and `ARM_TIGHT_Q`. New `CORRIDOR_MIN_ARM` (356)
+  and `CORRIDOR_MIN_GANTRY` (160.35) replace the single 230.
+- `design/solve.py`: the arm is **side mounted**, so J1 is horizontal and the
+  base radius no longer eats 80 mm of reach. J1 is now derived as
+  `depth − ARM_SETBACK`. The headroom-vs-stowed warning is replaced by a
+  transit check that raises `DesignError`, and reach is checked against the
+  gripper rather than the bare flange.
+- `greenhouse/drawings/brackets.py`, `make_axo5.py`, `make_section.py`,
+  `render3d.py`, `make_wiring4.py`, `greenhouse/model/tower3d.py` and
+  `make_views.py`: depth propagated, and `tower3d.py`'s hand-typed
+  `Y_PLATE = 150` replaced by the design rule, which had the mast sitting
+  inside the tray footprint.
+- Generators no longer write to hard-coded `/home/claude/...` paths; they
+  write next to themselves and take the mesh directory from `$MYCOBOT_MESH`.
+
+### Added
+
+- `greenhouse/gantry/`: the gantry subsystem. `dae.py` (COLLADA reader),
+  `arm280.py` (the URDF chain), `collide.py` (link-pair self-collision),
+  `parts.py`, `assy.py`, `frame.py` (the cabinet, `clearances()`,
+  `cut_report()`), `kit3d.py` (modelling and the renderer) and
+  `make_steps3.py`, which generates the 29-page assembly booklet.
+- `Gantry_Assembly_Instructions_RevD.pdf`, `GANTRY_ASSEMBLY.md`, and the
+  gantry BOM: `build_gantry_bom_revB.py` and its spreadsheet.
+- `greenhouse/build_bom_revF.py`: Rev E with the three structural lines
+  corrected. It still needs `greenhouse_BOM_revC.xlsx` beside it to run.
+
+### Fixed
+
+- **The fold is collision checked.** The first shortest fold found,
+  J2 −135 / J3 −150 / J4 −150, sits inside the joint limits and drives J4
+  through the base. `greenhouse/gantry/collide.py` voxel-checks every link
+  pair two or more apart in the chain on the real meshes; ranking 83,607
+  poses by length and checking in order gives J2 −110 / J3 −80 / J4 −140 /
+  J5 −90, confirmed on the full 226,670-face mesh. It is also 162.6 mm,
+  because the length is set by the shoulder housing, so the depth decision
+  stands.
+- **Renderer rewritten.** Fills come from a real per-pixel z-buffer
+  (vectorised scanline, smooth crease-aware shading) and every edge is
+  hidden-line tested against it. The old depth-sliced
+  painter's algorithm drew a slice's edges over every face in that slice,
+  so anything within one slice depth (28 mm on a cabinet page) showed
+  through. Neither step now depends on face winding, which matters because
+  the CAD arm meshes are open shells.
+- `extrude()` and `revolve()` emitted caps and walls with separate vertex
+  copies, so a gantry plate was twelve disconnected open sheets and some
+  rendered hollow. `weld()` joins them into closed solids.
+- The arm is drawn from Elephant's full-resolution mesh. The vertex
+  clustering used before left the links lumpy.
+- The axonometric view matrix had world +Z pointing **down** the page. Every
+  generated axonometric was vertically inverted.
+- Z motor moves from the top of the mast to the foot: the mast top is at 1809
+  and a 76 mm NEMA 23 above it stands 56 mm proud of the cabinet. A NEMA 23
+  is also 56.4 mm square and the C-Beam channel is 20 mm deep, so it was
+  never going inside the channel either.
+- The X rail must be **cut to 1397**. 0.1.x said both C-Beams were used at
+  their full 1500.
+
+### Still open
+
+- The mast is a 1500 mm cantilever off four V wheels. Expect 1 to 2 mm of
+  forward lean at the bottom, so hand-eye calibration is per tier. If it
+  measures worse, a second XL gantry plate ganged onto the X carriage (+$18,
+  not in gantry BOM Rev A) doubles the pitch stiffness.
+- `make_dxf_rev4.py` carries the new pan width but needs `ezdxf`; regenerate
+  the base-pan DXF before ordering G014.
+- G016, the LED bar, is still unresolved: both sourced options are dead.
+
 ## 0.1.3 – 2026-10-18
 
 No design change. No generated output changes.

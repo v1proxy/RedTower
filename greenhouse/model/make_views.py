@@ -67,7 +67,7 @@ parts = build()
 ntri = sum(len(t) for _, _, t, _ in parts)
 
 fig = plt.figure(figsize=(17.4, 11.0), facecolor="white")
-fig.suptitle("Herb Tower   rendered from the 3D model   1397 × 457 × 1829 mm",
+fig.suptitle("Herb Tower   rendered from the 3D model   1397 × 559 × 1829 mm",
              x=0.5, y=0.972, fontsize=16, fontweight="bold", color=INK)
 fig.text(0.5, 0.947,
          f"{ntri:,} triangles. Frame from the member table in brackets.py; "
@@ -95,11 +95,12 @@ fig.text(0.035, 0.038,
          f"{head[TIERS[0]]:.0f}, {head[TIERS[1]]:.0f} and {head[TIERS[2]]:.0f} mm of headroom.  "
          f"Trays {TRAY_D:.0f} mm deep in a {D:.0f} mm cabinet, leaving a "
          f"{D - TRAY_D:.0f} mm gantry corridor.\n"
-         f"Arm joint 1 at {Y_J1:.0f} mm behind the front face; the arm is 437 mm tall "
-         "stowed, which exceeds the 431 and 392 mm headroom of the upper two tiers, "
-         "so it travels folded.",
+         f"Arm joint 1 at {Y_J1:.0f} mm behind the front face, side mounted so J1 is "
+         "horizontal.  437 mm is the arm EXTENDED, not stowed: folded as tightly as\n"
+         "its joint limits allow it is 162.6 mm long, which is what has to clear the "
+         "tray line on every tier change.  It does, by 25 mm.",
          fontsize=9.5, color=DIM, va="top")
 
-out = "/home/claude/outputs/tower_views.png"
+out = "tower_views.png"
 fig.savefig(out, dpi=155, facecolor="white", bbox_inches="tight")
 print("saved", out, f"({ntri:,} triangles)")

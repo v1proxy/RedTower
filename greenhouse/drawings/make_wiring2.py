@@ -236,7 +236,7 @@ note(ax, COL, 180,
      "• Conformal coat the ADS1115 boards before they\n"
      "  go anywhere near the trays (G050).", fs=7.6)
 
-out = "/home/claude/outputs/wiring_E02_network.png"
-os.makedirs("/home/claude/outputs", exist_ok=True)
+out = "wiring_E02_network.png"
+os.makedirs(".", exist_ok=True)
 fig.savefig(out, dpi=150, facecolor="white")
 print("saved", out)

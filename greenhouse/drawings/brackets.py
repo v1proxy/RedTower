@@ -24,12 +24,12 @@ live inside the slot where they take no room at all.
 
 That rule has one consequence: level 0 sits on the floor, so there is nothing below
 it to bolt to, and its eight perimeter joints get no gusset. They do not need one.
-The base pan is 1397 x 457 of 1.6 mm sheet with a 25 mm upstand on every edge,
+The base pan is 1397 x 559 of 1.6 mm sheet with a 25 mm upstand on every edge,
 bolted down at sixteen points. That is a shear diaphragm, and it braces the bottom
 of the cabinet better than eight gussets would.
 """
 
-W, D, H = 1397.0, 457.0, 1829.0
+W, D, H = 1397.0, 559.0, 1829.0   # 0.2.0: depth 457 -> 559, see CHANGELOG
 SER = 40.0
 LEVELS = [0.0, 304.8, 965.2, 1397.0, 1789.0]
 TIERS = LEVELS[1:4]

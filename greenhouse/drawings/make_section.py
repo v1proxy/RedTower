@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle, FancyArrowPatch, Arc, Polygon
 
 # ---- frame, from brackets.py ----------------------------------------------
-W, D, H = 1397.0, 457.0, 1829.0
+W, D, H = 1397.0, 559.0, 1829.0
 SER = 40.0
 LEVELS = [0.0, 304.8, 965.2, 1397.0, 1789.0]
 TIERS = LEVELS[1:4]
@@ -44,7 +44,7 @@ POTS = {TIERS[0]: 7, TIERS[1]: 10, TIERS[2]: 10}
 HEADROOM = {TIERS[i]: (LEVELS[i + 2] - TIERS[i]) for i in range(3)}
 
 fig = plt.figure(figsize=(17.0, 12.2), facecolor="white")
-fig.suptitle("Herb Tower   section and elevation   1397 × 457 × 1829 mm",
+fig.suptitle("Herb Tower   section and elevation   1397 × 559 × 1829 mm",
              x=0.5, y=0.975, fontsize=16, fontweight="bold", color=INK)
 fig.text(0.5, 0.951, "Arm drawn to the published myCobot 280 DH parameters. "
          "The gantry runs the long side; the arm reaches across the tray depth.",
@@ -76,7 +76,7 @@ axS.add_patch(Rectangle((SER, LEVELS[0] + SER), D - 2 * SER, 3.0,
                         facecolor="#dfe7e3", edgecolor=INK, lw=1.0, zorder=4))
 axS.add_patch(Rectangle((D - SER - 25, SER), 3, 25, facecolor="#dfe7e3",
                         edgecolor=INK, lw=1.0, zorder=4))
-axS.text(D / 2, SER + 14, "base pan, full 457 depth", fontsize=8.5,
+axS.text(D / 2, SER + 14, "base pan, full 559 depth", fontsize=8.5,
          color=DIM, ha="center")
 
 # trays and plants
@@ -248,7 +248,7 @@ fig.text(0.045, 0.030,
          "position within the cabinet is an assumption: drawn at the back, gantry in front.",
          fontsize=9.5, color=DIM, va="top")
 
-fig.savefig("/home/claude/outputs/greenhouse_section.png", dpi=160,
+fig.savefig("greenhouse_section.png", dpi=160,
             facecolor="white", bbox_inches="tight")
 print(f"corridor {CORRIDOR:.0f}  J1 at {Y_J1:.2f}  needs >= {Y_REQ:.0f}  "
       f"back edge {D - Y_J1:.0f} away  headroom {dict((int(k), int(v)) for k, v in HEADROOM.items())}")

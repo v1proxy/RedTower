@@ -228,7 +228,7 @@ note(ax, COL, 244,
      "four switch entities are marked internal: true,\n"
      "so they are not exposed to the API at all.", fs=7.5)
 
-out = "/home/claude/outputs/wiring_E03_utility.png"
-os.makedirs("/home/claude/outputs", exist_ok=True)
+out = "wiring_E03_utility.png"
+os.makedirs(".", exist_ok=True)
 fig.savefig(out, dpi=150, facecolor="white")
 print("saved", out)

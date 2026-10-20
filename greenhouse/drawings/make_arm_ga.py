@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """myCobot 280 Pi general arrangement, rendered from the official meshes.
 
@@ -16,7 +17,7 @@ from matplotlib.collections import PolyCollection
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dae import load
 
-MESH = "/mnt/user-data/uploads/greenhouse-esphome/mycobot_mesh"
+MESH = os.environ.get("MYCOBOT_MESH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "mycobot_mesh"))
 URDF = os.path.join(MESH, "mycobot_280_pi.urdf")
 
 INK, DIM, ACC, BLU = "#1d2326", "#5b6770", "#c2410c", "#1d4ed8"
@@ -161,6 +162,6 @@ fig.text(0.035, 0.035,
          "radius, not the sum of the links.",
          fontsize=9.5, color=DIM, va="top")
 
-out = "/home/claude/outputs/mycobot280_ga.png"
+out = "mycobot280_ga.png"
 fig.savefig(out, dpi=165, facecolor="white", bbox_inches="tight")
 print("saved", out)

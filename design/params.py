@@ -17,6 +17,7 @@ DESIGN_VERSION = open(__file__.rsplit("/", 2)[0] + "/VERSION").read().strip() \
 # --------------------------------------------------------------------- limits
 W_MIN, W_MAX = 600.0, 3000.0        # closet bay to a full room wall
 D_MIN, D_MAX = 300.0, 760.0         # a tray shallower than 300 will not hold a 4.5 in pot
+#   with the arm module, the floor is CORRIDOR_MIN_ARM + a 4.5 in pot tray: 503
 H_MIN, H_MAX = 900.0, 2600.0        # a bench-top unit up to something you still reach the top of
 
 # 4040 T-slot carrying a loaded tray: beyond this span the shelf sags enough to
@@ -29,13 +30,52 @@ ADC_CH = 4
 ADC_MAX_PER_BUS = 4
 PROBES_MAX_PER_TIER = ADC_CH * ADC_MAX_PER_BUS      # 16
 
-# The arm's own geometry, from the Elephant Robotics URDF.
-ARM_REACH = 280.0          # published working radius
-ARM_BASE_DIA = 160.0       # measured across the base of the mesh
-ARM_STOWED_H = 437.0       # measured, folded
+# The arm's own geometry. Every number below is MEASURED off Elephant
+# Robotics' own mycobot_280_pi.urdf and its eight link meshes, posed through
+# the URDF chain (see greenhouse/model/arm280.py). Up to 0.1.3 these were
+# quoted from the datasheet and two of them were wrong in ways that only a
+# real mesh could show.
+ARM_REACH = 292.6          # flange, radial from the J1 axis. Datasheet says 280.
+ARM_GRIPPER = 90.0         # the adaptive gripper adds this beyond the flange
+ARM_BASE_DIA = 160.0       # across the base of the mesh
+ARM_EXTENDED_H = 437.1     # straight out. 0.1.3 called this "stowed". It is not.
+ARM_FOLD_L = 162.6         # shortest COLLISION-FREE fold, from the J1 origin.
+                           # Set by the shoulder housing: no fold gets under it.
+ARM_WORK_H = 263.0         # across the arm, working a tier
+ARM_MOUNT_OFF = 30.0       # J1 origin to the bottom mounting face
+ARM_TIGHT_Q = (0, -110, -80, -140, -90, 0)   # the pose ARM_FOLD_L belongs to.
+# Collision checked link against link. (0,-135,-150,-150,0,0) looks tighter and
+# is inside the joint limits, and it drives J4 through the base.
 ARM_PLATE_T = 6.35         # G071, 0.250 in
-GANTRY_CARRIAGE_D = 70.0   # XLarge C-Beam carriage + wheels, back of plate to rail face
-CORRIDOR_MIN = 230.0       # carriage + plate + arm base + working clearance
+
+# The gantry stack behind the arm, front face to back, all of it in the
+# corridor: arm plate, Z carriage, C-Beam mast, X carriage, X rail.
+#
+# A C-Beam carriage's wheels straddle the beam and ride the grooves on its
+# top and bottom faces, 10 mm behind the front face. Plate 6, spacer 6 and
+# half a 10.23 wheel put the plate's back 1.115 proud of the beam, so each
+# carriage adds 7.115, not the bare 6 of the plate (0.2.0 first cut).
+CARRIAGE_T = 6.0           # XL C-Beam gantry plate
+CARR_STACK = 7.115         # beam face to the plate's front face
+MAST_D = 40.0              # C-Beam 40 x 80, depth
+RAIL_D = 40.0              # the X rail, same section
+REAR_POST = 40.0           # the rear uprights the X rail bolts to
+GANTRY_CARRIAGE_D = 70.0   # retained for old callers
+
+# Front of the arm plate to the front of the rear uprights.
+GANTRY_STACK = ARM_PLATE_T + CARR_STACK + MAST_D + CARR_STACK + RAIL_D   # 100.58
+# J1 axis to the back of the cabinet.
+ARM_SETBACK = GANTRY_STACK + REAR_POST + ARM_MOUNT_OFF                   # 170.58
+
+TRANSIT_CLEAR = 22.5       # folded arm to the tray line, crossing a tier.
+                           # The reference build has 22.8.
+# The arm crosses a tray plane on every tier change, so the corridor has to
+# swallow the folded arm AND the whole stack behind it. This is the number
+# that forced the reference build from 457 deep to 559 at 0.2.0.
+CORRIDOR_MIN_ARM = (ARM_FOLD_L + ARM_MOUNT_OFF + GANTRY_STACK
+                    + REAR_POST + TRANSIT_CLEAR)          # 355.68
+CORRIDOR_MIN_GANTRY = GANTRY_STACK + REAR_POST + 22.0     # 162.58, no arm
+CORRIDOR_MIN = CORRIDOR_MIN_ARM                            # back-compatible name
 
 MODULES = ("gantry", "arm", "climate")
 
@@ -48,7 +88,7 @@ class Envelope:
 
     # --- the space -------------------------------------------------------
     width: float = 1397.0            # outside width of the frame, mm
-    depth: float = 457.0             # outside depth, mm
+    depth: float = 559.0             # outside depth, mm
     height: float = 1829.0           # outside height, mm
 
     # --- growing ---------------------------------------------------------
@@ -124,7 +164,7 @@ PRESETS: dict[str, Envelope] = {
     ),
     "m": Envelope(
         name="m",
-        width=1397.0, depth=457.0, height=1829.0,
+        width=1397.0, depth=559.0, height=1829.0,
         tiers=3, pot_size="4.5in", tall_bottom_tier=True,
         plant_height=190.0, bottom_tier_bonus=250.0, bottom_tier_pot="1gal",
         modules=("gantry", "arm", "climate"),

@@ -266,7 +266,7 @@ fig.text(0.045, 0.030,
          "the arm's reach puts a real moment on this joint.",
          fontsize=9.5, color=DIM, va="top")
 
-fig.savefig("/home/claude/outputs/arm_plate_gantry_mount.png", dpi=170,
+fig.savefig("arm_plate_gantry_mount.png", dpi=170,
             facecolor="white", bbox_inches="tight")
 print("webs:", round(WEB_BORE, 2), round(WEB_RAD, 2), round(GAP_SLOTS, 2),
       "edge margin:", round(EDGE_MARGIN, 2))
