@@ -14,6 +14,19 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.4.1 – 2026-10-21
+
+**Fixed: the tray and base pan DXFs crossed themselves at every corner where two
+lips meet**, and SendCutSend's checker rejected them ("unexpected entity types").
+`greenhouse/sendcutsend/unfold.py` built each corner relief from two overrun cuts
+that crossed at the bend intersection, and at the notches' inside corners it gave
+each lip the other lip's mitre edge. Now an outside corner gets a round relief of
+radius 2 centred on the bend intersection, an inside corner a 2.5 mitre slot with a
+round root, and every outline is one simple closed loop (9 to 16 crossings per
+part before, none now). Flat sizes, holes, drains and bend lines are unchanged.
+All four sheet DXFs regenerated; SendCutSend accepts them as uploaded, 5052 H32
+0.063 in with every bend 90 degrees up.
+
 ## 0.4.0 – 2026-10-20
 
 **Frame Rev A: the first assembly booklet for the cabinet itself**, in the house

@@ -6,10 +6,13 @@ hand-tracing outlines was where the mistakes were going to come from. So the out
 generated: give it the floor polygon and say which edges get a 25 mm lip, and it emits
 the flange strips, the bend lines and the relief at every corner where two lips meet.
 
-Relief rule, the same one SendCutSend already accepted on Rev 1 and Rev 2: both cut
-edges overrun the bend intersection into the floor and are joined by an arc of radius R,
-so the root is radiused rather than knife sharp. Generalised here to corners that are
-not 90 degrees, which is what the 45 degree chamfers need.
+Relief rule (0.4.1): where two lips meet at an outside corner, a round relief of radius
+R centred on the bend intersection, so the root is radiused rather than knife sharp; at
+an inside corner the two lips are mitred apart with a gap and the mitre's root is the
+same kind of round end. The outline is one simple loop either way. Up to 0.4.0 the
+relief joined two overrun cuts that crossed at the corner, and the inside-corner mitre
+edges were swapped, so the outlines crossed themselves; SendCutSend's checker flags that
+as "unexpected entity types".
 """
 import math
 
@@ -91,40 +94,43 @@ class Dxf:
         return "\n".join(o) + "\n"
 
 
-def relief(P, a, b, r=R):
-    """Arc joining two cut edges that leave P along unit directions a and b."""
-    v = unit((a[0] + b[0], a[1] + b[1]))
-    half = math.acos(max(-1.0, min(1.0, a[0] * v[0] + a[1] * v[1])))
-    C = add(P, v, -r / math.sin(half))
-    da = (C[0] - P[0]) * a[0] + (C[1] - P[1]) * a[1]
-    db = (C[0] - P[0]) * b[0] + (C[1] - P[1]) * b[1]
-    ta, tb = add(P, a, da), add(P, b, db)
-    aa = math.degrees(math.atan2(ta[1] - C[1], ta[0] - C[0])) % 360
-    ab = math.degrees(math.atan2(tb[1] - C[1], tb[0] - C[0])) % 360
-    lo, hi = (aa, ab) if (ab - aa) % 360 <= 180 else (ab, aa)
-    return ta, tb, (C, r, lo, hi)
+def round_relief(V, a, b, bis, r):
+    """Arc of radius r centred on the corner V, from V + a*r to V + b*r (a, b unit),
+    the way round that passes through -bis: through the floor, never through the
+    empty corner. The outline stays a simple loop (0.4.1: the older relief joined
+    two overruns that crossed at V, which SendCutSend's checker rejects)."""
+    aa = math.degrees(math.atan2(a[1], a[0])) % 360
+    ab = math.degrees(math.atan2(b[1], b[0])) % 360
+    am = math.degrees(math.atan2(-bis[1], -bis[0])) % 360
+    s, e = (aa, ab) if (am - aa) % 360 < (ab - aa) % 360 else (ab, aa)
+    return add(V, a, r), add(V, b, r), (V, r, s, e)
 
 
-def mitre(V, n0, n1, g=MITRE_GAP):
+def mitre(V, n0, n1, d0, d1, g=MITRE_GAP):
     """Two lips meeting at a re-entrant corner overlap in the flat pattern.
 
-    A 90 degree inside corner is the one case where flange strips collide, so each is
-    cut back to a 45 degree mitre with a gap between them. After forming, the two
-    upstands close on that mitre and the joint gets the same silicone bead as every
-    other corner.
+    Each is cut back to the bisector with a gap g between them. After forming, the
+    two upstands close on that mitre and the joint gets the same silicone bead as
+    every other corner. Returns, for the lip before V and the lip after it, the
+    mitre edge's point on the bend line (inner), on the lip's free edge (outer), and
+    its tangent point on the round root at V (base).
+
+    Each lip keeps the side of the bisector its own bend line is on: the lip before
+    V the side of -d0, the lip after it the side of +d1. (Up to 0.4.0 the sides were
+    picked from the normals, which swapped them: the two mitre edges crossed.)
     """
     bis = unit((n0[0] + n1[0], n0[1] + n1[1]))
     perp = (-bis[1], bis[0])
     out = []
-    for n in (n0, n1):
-        pk = perp if (perp[0] * n[0] + perp[1] * n[1]) > 0 else (-perp[0], -perp[1])
+    for n, toward in ((n0, (-d0[0], -d0[1])), (n1, d1)):
+        pk = perp if (perp[0] * toward[0] + perp[1] * toward[1]) > 0 else (-perp[0], -perp[1])
         off = (g / 2.0) * (pk[0] * n[0] + pk[1] * n[1])
         bn = bis[0] * n[0] + bis[1] * n[1]
         base = add(V, pk, g / 2.0)
         inner = add(base, bis, -off / bn)
         outer = add(base, bis, (F - off) / bn)
-        out.append((inner, outer))
-    return out
+        out.append((inner, outer, base, pk))
+    return out, bis
 
 
 def unfold(poly, flanged, holes=(), drain=None, trim=5.0):
@@ -149,18 +155,16 @@ def unfold(poly, flanged, holes=(), drain=None, trim=5.0):
             cross = d[prev][0] * d[i][1] - d[prev][1] * d[i][0]
             if flanged[prev] and cross < -1e-9:
                 # re-entrant corner: mitre the two lips apart
-                (in0, out0), (in1, out1) = mitre(P, nrm[prev], nrm[i])
+                ((in0, out0, b0, k0), (in1, out1, b1, k1)), bis = mitre(P, nrm[prev], nrm[i], d[prev], d[i])
                 mit[i] = (in0, in1)
-                ta, tb, arc = relief(P, unit((in0[0] - P[0], in0[1] - P[1])),
-                                     unit((in1[0] - P[0], in1[1] - P[1])))
-                path.append(("L", out0, in0))
-                path.append(("L", in0, ta))
+                _, _, arc = round_relief(P, k0, k1, bis, MITRE_GAP / 2.0)
+                path.append(("L", out0, b0))
                 path.append(("A", arc))
-                path.append(("L", tb, in1))
-                path.append(("L", in1, out1))
+                path.append(("L", b1, out1))
                 start = out1
             elif flanged[prev]:
-                ta, tb, arc = relief(P, nrm[prev], nrm[i])
+                bis = unit((nrm[prev][0] + nrm[i][0], nrm[prev][1] + nrm[i][1]))
+                ta, tb, arc = round_relief(P, nrm[prev], nrm[i], bis, R)
                 path.append(("L", add(P, nrm[prev], F), ta))
                 path.append(("A", arc))
                 path.append(("L", tb, start))
@@ -168,7 +172,7 @@ def unfold(poly, flanged, holes=(), drain=None, trim=5.0):
                 path.append(("L", P, start))
             crossn = d[i][0] * d[nxt][1] - d[i][1] * d[nxt][0]
             if flanged[nxt] and crossn < -1e-9:
-                (jn0, jout0), _ = mitre(Q, nrm[i], nrm[nxt])
+                ((jn0, jout0, _, _), _), _ = mitre(Q, nrm[i], nrm[nxt], d[i], d[nxt])
                 end = jout0
             path.append(("L", start, end))
             if not flanged[nxt]:
@@ -198,12 +202,12 @@ def unfold(poly, flanged, holes=(), drain=None, trim=5.0):
         crossp = d[prev][0] * d[i][1] - d[prev][1] * d[i][0]
         crossn = d[i][0] * d[nxt][1] - d[i][1] * d[nxt][0]
         if flanged[prev] and crossp < -1e-9:
-            (_, _), (i1, _) = mitre(P, nrm[prev], nrm[i])
+            (_, (i1, _, _, _)), _ = mitre(P, nrm[prev], nrm[i], d[prev], d[i])
             p = add(i1, d[i], trim)
         else:
             p = add(P, d[i], trim if flanged[prev] else R)
         if flanged[nxt] and crossn < -1e-9:
-            (i0, _), _ = mitre(Q, nrm[i], nrm[nxt])
+            ((i0, _, _, _), _), _ = mitre(Q, nrm[i], nrm[nxt], d[i], d[nxt])
             q = add(i0, d[i], -trim)
         else:
             q = add(Q, d[i], -(trim if flanged[nxt] else R))
