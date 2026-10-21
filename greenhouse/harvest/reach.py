@@ -38,9 +38,21 @@ HI = np.array([l[1] for l in A.LIMITS])
 J1_Z = (368.0, 1718.0)                 # the arm's J1 height over the Z travel
 
 
+def full_meshes():
+    """True when the arm's own CAD (Elephant's .dae link meshes) is on disk:
+    MYCOBOT_MESH, or mycobot_mesh/ next to the repo."""
+    d = os.environ.get("MYCOBOT_MESH")
+    if d and os.path.isdir(d):
+        A.MESH_DIR = d
+    return os.path.exists(os.path.join(A.MESH_DIR, "G_base.dae"))
+
+
 def load_meshes():
-    """Preload the arm's link meshes from MAAG_ARM_NPZ, if given. Returns False
-    when no arm meshes can be found."""
+    """The arm's link meshes: the full CAD when it is on disk (drawings use it
+    undecimated), else the decimated copy in MAAG_ARM_NPZ. Returns False when
+    neither can be found."""
+    if full_meshes():
+        return True
     npz = os.environ.get("MAAG_ARM_NPZ")
     if npz and os.path.exists(npz):
         d = np.load(npz)
@@ -209,7 +221,7 @@ def feeder_boxes(f):
             yc, zc = (ys[i] + ys[i + 1]) / 2, (zs[j] + zs[j + 1]) / 2
             if any(o[0] < yc < o[1] and o[2] < zc < o[3] for o in f.openings):
                 continue
-            out[f"panel#{k}"] = [(P0, ys[i], zs[j]), (P1, ys[i + 1], zs[j + 1])]
+            out[f"panel#{k}"] = [(P0, ys[i], zs[j]), (P1 + f.BACK, ys[i + 1], zs[j + 1])]   # and the back plate
             k += 1
     # the feeder's own walls and lid, from outside
     wb, wo = W + f.wb, W + f.w_out
@@ -217,6 +229,13 @@ def feeder_boxes(f):
         out[f"feeder floor#{kk}"] = [(wb, a, f.vf), (wo, b, f.vf + f.FLOOR + f.TRAY_H)]   # tray rims and below
         out[f"feeder walls#{kk}a"] = [(wb, a, f.vf), (wo, a + f.WALL, f.vt)]
         out[f"feeder walls#{kk}b"] = [(wb, b - f.WALL, f.vf), (wo, b, f.vt)]
+    sw, mg = f.reed_switch()
+    for nm, m in (("reed switch", sw), ("reed magnet", mg)):
+        V = m[0]
+        out[nm] = [(W + V[:, 0].min(), V[:, 1].min(), V[:, 2].min()), (W + V[:, 0].max(), V[:, 1].max(), V[:, 2].max())]
+    for kind, (w, u, v), M, L in f.screws():
+        if kind == "m4":                                   # the button heads inside, over the openings
+            out[f"M4 head#{u:.0f}"] = [(W + w, u - 3.8, v - 3.8), (W + w + 2.2, u + 3.8, v + 3.8)]
     for s in np.linspace(0, 1, 6)[:-1]:
         w0 = f.wb + s * f.DEPTH
         w1 = f.wb + (s + 0.2) * f.DEPTH
@@ -236,6 +255,12 @@ def tray_boxes():
             "tier A rails#back": [(40, 519, GF.LEVELS[1]), (GF.W - 40, 559, GF.LEVELS[1] + 40)]}
 
 
+LIFT = float(os.environ.get("REACH_LIFT", 30.0))      # the through leg, over the release: under the 45° lid
+SEEDS = int(os.environ.get("REACH_SEEDS", 30))
+RNGS = [int(r) for r in os.environ.get("REACH_RNGS", "0,1,2").split(",")]
+ONLY = [x for x in os.environ.get("REACH_ONLY", "").split(",") if x]   # solve these compartments only
+
+
 def solve_feeder(f, report=print):
     """Pre-pose inside, out through the opening high, down to the release: for
     each compartment. Every leg is solved from many starts; the three poses kept
@@ -244,15 +269,19 @@ def solve_feeder(f, report=print):
     sc = Scene(GF.X_MAX, feeder_boxes(f), z_ref=f.rail_v + 230)
     out = {}
     for k, nm in enumerate(f.NAMES):
+        if ONLY and nm not in ONLY:
+            continue
         a, b, v0, v1 = f.openings[k]
         y = (a + b) / 2
         x_rel = W + f.wb + 41.0                  # 41 past the panel's outer face: over the tray's back third
         z_rel = f.vf + f.FLOOR + f.TRAY_H + 28.0      # 28 over the tray's rim: the jaws clear it by 10
-        z_hi = z_rel + 60.0
+        z_hi = z_rel + LIFT
         legs = [("inside", (W - 22.0, y, z_hi)), ("through", (x_rel, y, z_hi)), ("release", (x_rel, y, z_rel))]
         cands = []
         for leg, tgt in legs:
-            sols = ik(sc, tgt, (1, 0, 0), seeds=20, rng=k)
+            sols = []
+            for r in RNGS:                       # several independent sets of starts, pooled
+                sols += ik(sc, tgt, (1, 0, 0), seeds=SEEDS, rng=k + 100 * r)
             inside = (lambda tl: W - tl[:, 0].max()) if leg != "inside" else None
             ok = []
             for v in sols:

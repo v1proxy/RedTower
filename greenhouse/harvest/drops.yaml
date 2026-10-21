@@ -3,48 +3,49 @@
 # release_xyz is the point between the jaws; joints_deg are J1..J6 for the myCobot 280 Pi;
 # carriage_x and j1_z place the gantry. Margins are the clearances found, mm, with the snip's real body.
 # Commissioning converts carriage_x and j1_z to machine coordinates (robot.yaml) by jogging to them.
+tool: provisional, the Herb Snip's first printed body (snip_print_v1), no D405: re-solve with the housing version
 feeder:
   side: right
   tier: B
   lid_switch: in series with the door reeds (safety chain): the arm has no power while the lid is open
   leaves:
     - leg: inside
-      release_xyz: [1375.0, 285.0, 1129.0]
+      release_xyz: [1375.0, 285.0, 1100.0]
       carriage_x: 1249.75
-      j1_z: 1296.2
-      joints_deg: [-84.1, -107.4, -40.3, 147.8, 84.1, 177.9]
-      margins: {side rail below: 114.3, side rail above: 99.5, back post: 146.9, plants (y < 210): 12.6, plants below (y < 210): 165.4, tier rails: 129.5, panel: 28.7, feeder floor: 79.7, feeder walls: 32.1, lid: 61.2, gantry: 30.0}
+      j1_z: 915.9
+      joints_deg: [124.9, -121.0, -4.2, 125.1, -124.9, 40.6]
+      margins: {side rail below: 37.7, side rail above: 281.7, back post: 146.3, plants (y < 210): 19.2, plants below (y < 210): 12.6, tier rails: 23.9, panel: 26.4, feeder floor: 44.8, feeder walls: 30.0, reed switch: 101.8, reed magnet: 105.3, M4 head: 76.6, lid: 64.5, gantry: 30.0}
     - leg: through
-      release_xyz: [1444.7, 285.0, 1129.0]
+      release_xyz: [1444.7, 285.0, 1100.0]
       carriage_x: 1249.75
-      j1_z: 1303.2
-      joints_deg: [-60.6, -109.0, -36.4, 145.4, 60.6, 170.7]
-      margins: {side rail below: 107.5, side rail above: 94.6, back post: 141.5, plants (y < 210): 12.6, plants below (y < 210): 165.8, tier rails: 133.4, panel: 25.7, feeder floor: 77.0, feeder walls: 28.1, lid: 22.4, gantry: 30.0, servo inside: 17.3}
+      j1_z: 926.0
+      joints_deg: [104.3, -104.4, -43.6, 148.0, -104.3, 8.8]
+      margins: {side rail below: 28.3, side rail above: 285.0, back post: 146.3, plants (y < 210): 8.9, plants below (y < 210): 12.8, tier rails: 25.7, panel: 24.5, feeder floor: 44.4, feeder walls: 28.0, reed switch: 98.2, reed magnet: 97.3, M4 head: 77.7, lid: 23.3, gantry: 30.0, servo inside: 17.3}
     - leg: release
-      release_xyz: [1444.7, 285.0, 1069.0]
+      release_xyz: [1444.7, 285.0, 1070.0]
       carriage_x: 1249.75
-      j1_z: 1243.5
-      joints_deg: [-60.6, -108.3, -37.6, 145.9, 60.6, 180.0]
-      margins: {side rail below: 54.8, side rail above: 140.2, back post: 142.3, plants (y < 210): 12.6, plants below (y < 210): 107.3, tier rails: 76.3, panel: 25.0, feeder floor: 19.0, feeder walls: 29.4, lid: 76.6, gantry: 30.0, servo inside: 17.3}
+      j1_z: 892.7
+      joints_deg: [103.8, -105.3, -38.1, 143.3, -103.8, -27.7]
+      margins: {side rail below: 32.0, side rail above: 289.6, back post: 146.3, plants (y < 210): 8.1, plants below (y < 210): 12.8, tier rails: 35.0, panel: 24.3, feeder floor: 14.0, feeder walls: 26.7, reed switch: 127.7, reed magnet: 124.5, M4 head: 107.6, lid: 37.2, gantry: 30.0, servo inside: 17.3}
   veggies:
     - leg: inside
-      release_xyz: [1375.0, 376.0, 1129.0]
+      release_xyz: [1375.0, 376.0, 1100.0]
       carriage_x: 1249.75
-      j1_z: 1335.8
-      joints_deg: [58.9, 113.9, -17.8, 83.9, -121.1, 40.2]
-      margins: {side rail below: 108.5, side rail above: 75.2, back post: 127.3, plants (y < 210): 12.6, plants below (y < 210): 176.9, tier rails: 147.1, panel: 26.4, feeder floor: 74.0, feeder walls: 30.1, lid: 55.6, gantry: 6.6}
+      j1_z: 1297.5
+      joints_deg: [-85.3, -101.5, -8.1, -70.4, 94.7, -162.9]
+      margins: {side rail below: 82.4, side rail above: 98.7, back post: 116.6, plants (y < 210): 12.8, plants below (y < 210): 139.9, tier rails: 114.6, panel: 27.1, feeder floor: 47.6, feeder walls: 30.7, reed switch: 73.7, reed magnet: 71.8, M4 head: 83.0, lid: 66.8, gantry: 16.4}
     - leg: through
-      release_xyz: [1444.7, 376.0, 1129.0]
+      release_xyz: [1444.7, 376.0, 1100.0]
       carriage_x: 1249.75
-      j1_z: 1319.3
-      joints_deg: [77.1, 132.3, -50.7, 98.5, -102.9, -17.5]
-      margins: {side rail below: 99.2, side rail above: 81.3, back post: 80.4, plants (y < 210): 12.9, plants below (y < 210): 176.5, tier rails: 126.6, panel: 24.9, feeder floor: 75.5, feeder walls: 27.5, lid: 21.2, gantry: 25.2, servo inside: 17.3}
+      j1_z: 1299.2
+      joints_deg: [-65.7, -96.3, -19.7, -64.0, 114.3, -164.5]
+      margins: {side rail below: 65.1, side rail above: 97.5, back post: 105.2, plants (y < 210): 12.8, plants below (y < 210): 141.4, tier rails: 116.1, panel: 24.3, feeder floor: 43.7, feeder walls: 27.7, reed switch: 71.9, reed magnet: 64.2, M4 head: 76.9, lid: 23.2, gantry: 30.0, servo inside: 17.3}
     - leg: release
-      release_xyz: [1444.7, 376.0, 1069.0]
+      release_xyz: [1444.7, 376.0, 1070.0]
       carriage_x: 1249.75
-      j1_z: 1254.7
-      joints_deg: [76.7, 135.6, -57.2, 101.6, -103.3, -10.1]
-      margins: {side rail below: 51.5, side rail above: 131.1, back post: 80.7, plants (y < 210): 12.7, plants below (y < 210): 127.8, tier rails: 91.1, panel: 25.6, feeder floor: 16.9, feeder walls: 28.2, lid: 71.9, gantry: 25.3, servo inside: 17.3}
+      j1_z: 1268.2
+      joints_deg: [-65.6, -94.1, -24.2, -61.7, 114.4, -173.2]
+      margins: {side rail below: 46.7, side rail above: 120.1, back post: 107.0, plants (y < 210): 12.9, plants below (y < 210): 118.1, tier rails: 97.3, panel: 24.5, feeder floor: 17.5, feeder walls: 28.6, reed switch: 103.5, reed magnet: 95.9, M4 head: 92.2, lid: 40.0, gantry: 30.0, servo inside: 17.3}
 dead_leaf_tray:
   # five drops along the tray, left to right: rotate through them so it fills evenly
   drop1:

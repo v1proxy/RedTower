@@ -2,10 +2,13 @@
 
 Maag is the Modular Agentic Autonomous Greenhouse.
 
-**Enclosure Rev A · design 0.6.0 · 2026-10-21 · all dimensions mm**
+**Enclosure Rev A · design 0.6.1 · 2026-10-21 · all dimensions mm**
 
-0.6.0 adds the harvest feeder's openings and holes to the right panel (see
-`greenhouse/harvest/HARVEST.md`); nothing else on the enclosure changes.
+0.6.0 added the harvest feeder's openings and holes to the right panel (see
+`greenhouse/harvest/HARVEST.md`). 0.6.1 hangs the two exhaust fans inside,
+under the top panel, with a grill on each side; moves the tier A cable gland
+down from 900 to 780, clear of the feeder's new skirt; and moves the feeder's
+switch-cable hole with its switch.
 
 Read alongside the booklet `Maag_Enclosure_Assembly_Instructions_RevA.pdf` (step
 numbers below are the booklet's). It opens with the Maag cover render, an
@@ -39,9 +42,9 @@ so body text falls back to DejaVu Sans there).
 | Hinges | Two McMaster 1658A15 piano hinges (304 SS, 1 1/2 in open, 0.042 leaf) per door, 1 ft each. Frame leaf on a 3.0 clear PC spacer into drop-in M3 T-nuts in the post's front slot; door leaf on VHB 4905 |
 | Catch and seal | Cup magnets Ø16 × 4.5 on the front rails' slot lines (bottom pair F0 and F1, top pair F3 and F4), steel discs on the doors; Frost King V25BK EPDM weatherstrip on the post and rail lands |
 | Centre | The right door of each pair carries a 40 wide astragal behind the left door's edge: open the left door first |
-| Air | Two Noctua NF-F12 exhaust fans outside on the top panel, blowing up; passive intake low on the right through a 120 grill and a DEMCiflex magnetic filter |
+| Air | Two Noctua NF-F12 exhaust fans hung inside under the top panel at x 420 and 977, 310 from the front, blowing up and out; a grill under each fan and one on the panel's outer face over it; passive intake low on the right through a 120 grill and a DEMCiflex magnetic filter |
 | Water, power, data | Humidifier duct through a printed collar (right, tier A bay); three PG21 glands (right, back edge); the drain riser outside the left panel on five P-clips, each branch through a grommet |
-| Harvest feeder | On the right panel at tier B: two 80 × 160 openings for the arm, four Ø10 holes for its well nuts, a Ø8 hole for its lid switch. Its four M5 holes on tier B's rail line carry ordinary panel screws until the feeder goes on (greenhouse/harvest) |
+| Harvest feeder | On the right panel at tier B: two 80 × 160 openings for the arm, four Ø10 holes for its well nuts, a Ø8 hole for its lid switch's cable (u 432, v 1192). Its four M5 holes on tier B's rail line carry ordinary panel screws until the feeder goes on (greenhouse/harvest) |
 | Safety | A reed switch per door (7939WG, BOM G047) in the door chain; two anti-tip kits into wall studs through B4 |
 
 ## Why it is built this way
@@ -67,8 +70,15 @@ disc need (4.5 + 1.0 leaves 0.13 of air). The weatherstrip, 6.35 thick, is only
 squeezed 11 % at that gap, deliberately: a hard seal would push the doors off
 their magnets.
 
-**Fans outside.** Inside the top they would hang 25 into the corridor, where the
-gantry's mast top reaches 1811.5. Outside, nothing new enters the gantry's space.
+**Fans inside, over the folded arm.** Hung under the top panel they reach 25 +
+1.6 of grill + the M4 heads down into the top bay, to 1802.9. At y 310 their
+footprints (y 250 to 370) stay in front of the gantry's mast and X drive, which
+never come forward of y 388, so nothing on the gantry passes under
+them. The arm, folded for travel with J1 at the top of its stroke, tops out at
+1763.0 in that band: 39.9 under the fans' lowest point, over the whole X
+travel (`fan_clearance()`). The screws go in from inside, heads under the inner
+grill and nylocs on the outer one, which keeps the heads 5.6 higher than the
+other way round. Outside the cabinet only the two grills show.
 
 **The riser moves off the post.** The left panel's strip and screws run on FL's
 left face, where the frame booklet zip-tied the riser. It now hangs on five
@@ -87,7 +97,8 @@ under its tier's rail. Each branch ends up 8 shorter: trim it.
 | Panel screw, M5 × 16 | stack 7.9, reaches 8.1 below the face: 3.8 past the lips, 4.1 short of the slot floor |
 | Batten screw, M5 × 20 | stack 9.9, 5.9 past the lips, 2.1 short of the floor |
 | P-clip and anti-tip screws, M5 × 16 | 3.4 and 3.0 past the lips |
-| M4 through-bolts past their nylocs | fans (M4 × 40) 3.6, grill (M4 × 16) 4.6, collar (M4 × 16) 3.2 |
+| M4 through-bolts past their nylocs | fans (M4 × 40, two grills) 2.0, grill (M4 × 16) 4.6, collar (M4 × 16) 3.2 |
+| Fans inside, over the gantry and the folded arm | heads at 1802.9; gantry: nothing under a fan; the arm folded at the top of its travel 1763.0: 39.9 clear |
 | Door gap | hinge stack 5.63; magnet + disc 5.5; astragal 2.13 clear of the rails, 0.5 under the left door |
 | Door swing | 152° on every door before it meets the post or the side panel |
 | Tape | 28.7 m of panel strip (buy three 50 ft rolls), 8.9 m of weatherstrip (two 17 ft rolls) |
@@ -119,7 +130,7 @@ sheet DXFs.
 | 3M VHB 4905, 1/2 in | 1 roll | |
 | Cup magnet Ø16 × 4.5, M3 countersunk; steel disc Ø16 × 1, adhesive | 8 + 8 | |
 | Door pull, 96 mm centres | 4 | |
-| Fan grill NA-FG1-12 Sx2 | 1 more pack (G024 has one) | Noctua |
+| Fan grill NA-FG1-12 Sx2 | 2 more packs (G024 has one): five grills, two per fan and the intake's | Noctua |
 | Cable gland PG21, nylon, with locknut | 3 | |
 | Rubber grommet, 7/8 in hole, 5/8 in bore, 1/8 in panel | 3 | |
 | Cushioned P-clip, 5/8 in | 5 | |

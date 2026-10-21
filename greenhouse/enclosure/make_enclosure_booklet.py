@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maag enclosure: assembly instructions, Enclosure Rev A (design 0.6.0).
+"""Maag enclosure: assembly instructions, Enclosure Rev A (design 0.6.1).
 
 Every drawing is generated from enclosure.py on top of cabinet.py, so a page,
 a DXF and the frame they fit cannot disagree.
@@ -30,7 +30,7 @@ import cabinet as C                                                    # noqa: E
 import enclosure as E                                                  # noqa: E402
 
 REV = "Enclosure Rev A"
-DESIGN = "0.6.0"
+DESIGN = "0.6.1"
 OUT = os.environ.get("ENCLOSURE_OUT", os.path.join(_HERE, "build"))
 
 import make_frame_booklet as FB                                        # noqa: E402
@@ -105,6 +105,14 @@ def _fast(face, only=None):
 
 
 @functools.lru_cache(maxsize=None)
+def _fan_clear():
+    try:
+        return f"{E.fan_clearance()['clear, heads to the highest']:.0f}"
+    except Exception:                                       # the arm's meshes are not on this machine
+        return "38"
+
+
+@functools.lru_cache(maxsize=None)
 def _fan():
     return E.fan_mesh()
 
@@ -130,14 +138,18 @@ def right_kit(on_panel=True, explode=0.0):
     return out
 
 
-def top_kit(explode=0.0, z_base=None):
+def top_kit(explode=0.0):
+    """The fans as they hang under the top panel, one grill under each fan and
+    one on the panel's outer face over it; moved up with the panel by `explode`."""
     out = []
     fm, bo = _fan()
-    zb = C.H + E.OUT if z_base is None else z_base
+    z_in = C.H + E.TAPE                                  # the top panel's inner face
     for x, y in E.FANS:
-        out.append(("fan", mv(fm, x, y, zb + explode)))
-        out.append(("fan", mv(bo, x, y, zb + explode)))
-        out.append(("grill", mv(E.grill_mesh(), x, y, zb + E.FAN_T + explode * 1.7)))
+        zf = z_in - E.FAN_T + explode                    # inlet down, outlet (the struts) against the panel
+        out.append(("fan", mv(fm, x, y, zf)))
+        out.append(("fan", mv(bo, x, y, zf)))
+        out.append(("grill", mv(E.grill_mesh(), x, y, zf - 1.6)))
+        out.append(("grill", mv(E.grill_mesh(), x, y, C.H + E.OUT + explode)))
     return out
 
 
@@ -541,7 +553,7 @@ def p_overview(pdf):
         q = v1((350.0, -E.GAP_F - 5, z))
         ax.text(q[0], q[1], txt, fontsize=9.2, fontweight="bold", color=INK, ha="center", va="center", zorder=330,
                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none"))
-    lab(ax, v1, (E.FANS[0][0], E.FANS[0][1], C.H + 40), "exhaust fans", dx=110, dy=-34)
+    lab(ax, v1, (E.FANS[0][0], E.FANS[0][1], C.H + E.OUT + 2), "exhaust fans, under the top", dx=110, dy=-34)
     lab(ax, v2, (E.W / 2, C.D + E.OUT, E.SEAMS_V[1]), "seam batten", dx=150, dy=30)
     lab(ax, v2, (E.W / 2, C.D + E.OUT, E.SEAMS_V[0]), "seam batten", dx=150, dy=-20)
     lab(ax, v2, (C.W + E.OUT, E.INTAKE[0], E.INTAKE[1]), "filtered intake", dx=-80, dy=-40, ha="right")
@@ -598,7 +610,7 @@ def p_parts(pdf):
              ("Piano hinge, 1 ft", "8", hinge, STEEL),
              ("Cup magnet Ø16, M3", "8", cup, STEEL),
              ("Exhaust fan NF-F12", "2", merge(fm, bo), BLACKPART),
-             ("Fan grill NA-FG1-12", "3", E.grill_mesh(), BLACKPART),
+             ("Fan grill NA-FG1-12", "5", E.grill_mesh(), BLACKPART),
              ("Dust filter 120", "1", merge(rim, fmesh), BLACKPART),
              ("Duct collar, printed", "1", E.collar_mesh(), WHITEP),
              ("Cable gland PG21", "3", E.gland_mesh(), BLACKPART),
@@ -795,7 +807,7 @@ def p_faces2(pdf):
                       "under F4. F2 carries\nthe split, so its slot holds nothing.", fs=8.8, color=INK)
     ax._body_y = 60.0
     body(ax, f"Top: {len(E.screws('top'))} T-nuts, none on the post ends (no slot there); the two green ones hold the "
-             "anti-tip brackets. Fans at x 420 and 977, 340 back from the\nfront: over the corridor, clear of the "
+             "anti-tip brackets. Fans at x 420 and 977, 310 back from the\nfront, hung inside: over the folded arm, clear of the "
              "gantry's mast. Front: the doors meet 3 apart at the middle; the right door's astragal covers the gap.",
          fs=9.0)
     save(fig, ax, pdf, "00f_faces2")
@@ -1184,35 +1196,50 @@ def s11(pdf):
 @page
 def s12(pdf):
     fig, ax = new_page(12, "Top panel  ·  fans on the bench",
-                       "Two exhaust fans on the outer face, blowing up and out, a grill over each.")
+                       "The panel inner face up on two boards: a grill under it, a fan and a grill on it, at each hole.")
     pm = _flat_panel("top")
-    base = Part(pm, FROST, lw=0.45, ang=30, ghost=True)
+    face, u0, v0, u1, v1 = E.panels()["top"]
+    Lv = v1 - v0
+    # turned over: the inner face up, the front edge at the back of the bench
+    flip = lambda m: mv(rot(m, rx=math.pi), 0, Lv, E.T_PANEL)            # noqa: E731
+    base = Part(flip(pm), FROST, lw=0.45, ang=30, ghost=True)
     kit = []
     ex = 70.0
     fm, bo = _fan()
     for x, y in E.FANS:
-        y_ = y - 2.0
-        kit.append(Part(mv(fm, x, y_, E.T_PANEL + ex), HILITE, lw=0.3, ang=30))
-        kit.append(Part(mv(bo, x, y_, E.T_PANEL + ex), HILITE, lw=0.3, ang=30))
-        kit.append(Part(mv(E.grill_mesh(), x, y_, E.T_PANEL + E.FAN_T + ex * 1.8), HILITE, lw=0.3, ang=30))
+        xl, yl = x - u0, Lv - (y - v0)
+        fan_dn = lambda m: mv(rot(m, rx=math.pi), xl, yl, E.T_PANEL + E.FAN_T + ex)    # noqa: E731  outlet down
+        kit.append(Part(fan_dn(fm), HILITE, lw=0.3, ang=30))
+        kit.append(Part(fan_dn(bo), HILITE, lw=0.3, ang=30))
+        kit.append(Part(mv(E.grill_mesh(), xl, yl, E.T_PANEL + E.FAN_T + ex * 1.8), HILITE, lw=0.3, ang=30))
+        kit.append(Part(mv(E.grill_mesh(), xl, yl, -1.6 - ex * 0.8), HILITE, lw=0.3, ang=30))
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                px_, py_ = xl + sx * E.FAN_PITCH / 2, yl + sy * E.FAN_PITCH / 2
+                kit.append(Part(mv(C.button_head(4, 40), px_, py_, E.T_PANEL + E.FAN_T + 1.6 + ex * 2.5), STEEL,
+                                lw=0.3, ang=30))
     MMv = view(206, 40)
     v = scene(ax, [base] + kit, (340, 470), (600, 560), MM=MMv, px=1.6, clip=(24, 150, 660, 772))
     for x, y in E.FANS:
+        xl, yl = x - u0, Lv - (y - v0)
         for sx in (-1, 1):
             for sy in (-1, 1):
-                p = (x + sx * E.FAN_PITCH / 2, y - 2 + sy * E.FAN_PITCH / 2)
-                axis3(ax, v, (p[0], p[1], -20), (p[0], p[1], E.T_PANEL + E.FAN_T + ex * 1.8 + 20))
-    q = v((700.0, 0.0, 0.0))
-    ax.text(q[0], q[1] - 18, "front edge", fontsize=8.6, color=DIM, ha="center", zorder=320)
+                p = (xl + sx * E.FAN_PITCH / 2, yl + sy * E.FAN_PITCH / 2)
+                axis3(ax, v, (p[0], p[1], -1.6 - ex * 0.8 - 20), (p[0], p[1], E.T_PANEL + E.FAN_T + ex * 2.5 + 30))
+    q = v((700.0, Lv, E.T_PANEL))
+    ax.text(q[0], q[1] + 14, "front edge", fontsize=8.6, color=DIM, ha="center", zorder=320)
     tag(ax, 690, 712, "Noctua NF-F12 PWM, label side down", 2, hi=True)
-    tag(ax, 690, 664, "Fan grill NA-FG1-12", 2, hi=True)
+    tag(ax, 690, 664, "Fan grill NA-FG1-12, one under, one on", 4, hi=True)
     tag(ax, 690, 616, "M4 × 40 + washers + nyloc", 8, hi=True)
     tool(ax, 690, 560, "2.5 mm hex  ·  7 mm spanner")
-    note(ax, 690, 520, "Air leaves upward: the fan's label (the\noutlet side's struts) faces the grill.\nLead each "
-                       "cable to the back right, into\nthe cabinet through the nearest gland.", fs=9.2, color=INK)
-    body(ax, "Through-bolt each fan: screw, washer, grill tab, fan's corner flange, the panel, washer and nyloc on "
-             "the inside. Snug, not tight: the fan's frame is\nplastic. Both fans run off the tier C node's exhaust "
-             "output (BOM G022), in parallel. The fans sit outside so nothing new hangs into the gantry's\ncorridor.")
+    note(ax, 690, 520, "Air leaves upward, out of the cabinet:\nthe fan's label (the outlet side's\nstruts) faces "
+                       "the panel. Lead each\ncable to the back right, along B4, to\nthe tier C node.", fs=9.2,
+         color=INK)
+    body(ax, "Turn the panel inner face up on two boards, the boards clear of the holes. Drop each screw from above "
+             "through a washer, the grill's tab, the fan's corner\nflange and the panel; under it, the outer grill's "
+             "tab, a washer and the nyloc. Snug, not tight: the fan's frame is plastic. Both fans run off the tier C\n"
+             f"node's exhaust output (BOM G022), in parallel. They hang 25 under the panel, {_fan_clear()} over the arm folded at "
+             "the top of its travel; the gantry's mast never passes under them.")
     save(fig, ax, pdf, "12")
 
 
@@ -1242,8 +1269,8 @@ def s13(pdf):
     tool(ax, 700, 466, "3 mm hex  ·  step ladder  ·  stud finder")
     note(ax, 700, 428, "The silicone at the post tops (step 2)\nmust have skinned. No screw goes into\na post end: "
                        "the corner screws sit\n60 in, on the rails.", fs=9.2, color=INK)
-    body(ax, "The top's strips run on each top rail's inner land. Lift the panel up with its front edge to the front "
-             "(the fans nearer the front than the back), centre\nit, screw it as at step 4. The two brackets go on "
+    body(ax, "The top's strips run on each top rail's inner land. Lift the panel up, fans down, with its front edge to the front "
+             "(the fans nearer the front than\nthe back), centre it, screw it as at step 4. The two brackets go on "
              f"B4's line at x {E.ANTITIP_U[0]:.0f} and {E.ANTITIP_U[1]:.0f}, in place of two panel screws; their "
              "cables run to wall brackets screwed into\nstuds, pulled taut. The cabinet is 1.85 m tall and only "
              "0.56 deep: this is not optional.")

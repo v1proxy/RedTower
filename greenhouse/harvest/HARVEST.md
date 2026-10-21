@@ -2,7 +2,11 @@
 
 Maag is the Modular Agentic Autonomous Greenhouse.
 
-**Harvest Rev A · design 0.6.0 · 2026-10-21 · all dimensions mm**
+**Harvest Rev B · design 0.6.1 · 2026-10-21 · all dimensions mm**
+
+Rev B reshapes the feeder (taller and shallower, a 45° lid flush with the walls,
+a finger scoop to lift it, a sloped skirt underneath) and prints each
+compartment in three parts. The dead-leaf tray is unchanged.
 
 Where the Herb Snip puts what it cuts. Dead leaves go **down**, into a tray in
 the base bay that slides out of the bottom-left door. Leaves and veggies go
@@ -10,7 +14,7 @@ the base bay that slides out of the bottom-left door. Leaves and veggies go
 tier B, built after the side feeders of a bird cage: the arm fills it from the
 inside, you empty it from the outside, and the doors stay shut.
 
-Read alongside the booklet `Maag_Harvest_Assembly_Instructions_RevA.pdf` (step
+Read alongside the booklet `Maag_Harvest_Assembly_Instructions_RevB.pdf` (step
 numbers below are the booklet's). It starts from the finished enclosure
 (Enclosure Rev A, step 18).
 
@@ -26,8 +30,9 @@ python greenhouse/enclosure/make_enclosure_files.py  # the right panel, with the
 ```
 
 `reach.py` and the booklet's arm pages need two meshes that are not in the repo:
-the myCobot 280 Pi's links (`MAAG_ARM_NPZ`, a decimated .npz, or `MYCOBOT_MESH`,
-Elephant Robotics' .dae folder) and the Herb Snip's printed body
+the myCobot 280 Pi's links (`MYCOBOT_MESH`, Elephant Robotics' .dae folder,
+which the booklet draws undecimated as the gantry booklet does; `MAAG_ARM_NPZ`, a
+decimated .npz, is enough for the checks) and the Herb Snip's printed body
 (`SNIP_STL`, `snip_body.stl`). The printed parts need `manifold3d`.
 
 ---
@@ -39,11 +44,11 @@ Elephant Robotics' .dae folder) and the Herb Snip's printed body
 | Dead-leaf tray | 5052 0.063 bent by SendCutSend: 457 × 480 × 50 outside, about 10.5 L. The two side walls end in rims that turn outward: the tray **hangs by its rims** on the rails |
 | Guide rails | Two 5052 0.063 C-channels, 544 long, bolted to the base pan with the pan's own bolts at x 150 and x 650, front and back (M8 × 12 become M8 × 16). A tab at the back of each web is the stop |
 | Handle | Printed, bolted to the tray's front wall with three M5 × 10 into nylocs sunk in hex pockets. It stands 172 up off the wall: a 120 × 42 slot the whole hand goes through, a rounded bar over it |
-| Feeder | Two printed modules side by side, leaves (front) and veggies (back), 152.4 wide, 170 deep, 250 tall each, on the right panel's outside at tier B. Each has its own lift-out printed tray |
+| Feeder | Two printed compartments side by side, leaves (front) and veggies (back), 152.4 wide, 132 deep, 307 tall from the skirt's foot to the hinge, on the right panel's outside at tier B. Each is three prints: a **basin** (floor, back plate on the rail line, the walls' lower 85), a **hood** (back plate with the arm's opening, the walls under the lid) that drops into the basin's 1.5 × 4 lip, and a **skirt**, a hollow wedge taped under the floor whose slope runs back down to the panel. Each has its own lift-out printed tray, 108 × 142 × 124, 1.7 L |
 | Arm openings | One 80 × 160 opening per compartment, through the right panel and the module's back plate, corners R25 |
-| Lid | One clear 4.5 polycarbonate lid over both (SendCutSend, the doors' sheet), 304.8 × 206.3, falling 30° away from the panel, on one 1 ft McMaster 1658A15 piano hinge on VHB. Lifted, it turns 122° and leans on the panel |
-| Fixing | Two M5 × 20 per module into the T-nuts in tier B's side rail (the panel's own screw line), two M4 × 20 into rubber well nuts set in the panel above the openings |
-| Safety | A reed switch on the lid (7939WG, as on the doors) in series with the door chain: lid open, the safety relay cuts the gantry and the arm |
+| Lid | One clear 4.5 polycarbonate lid over both (SendCutSend, the doors' sheet), 304.8 × 173.6, falling 45° away from the panel, on one 1 ft McMaster 1658A15 piano hinge on VHB. Its lower edge is flush with the walls' outer faces, against a ridge on the outer wall's top; a finger scoop 28 wide in the outer wall, at the divider, lifts it. Lifted, it turns 138° and leans on the panel |
+| Fixing | Two M5 × 20 per basin into the T-nuts in tier B's side rail (the panel's own screw line), two M4 × 20 per hood into rubber well nuts set in the panel above the openings; the skirts on VHB |
+| Safety | A reed switch for the lid (7939WG, as on the doors) on the veggies hood's back plate, under the hinge, its magnet on the lid's underside; in series with the door chain: lid open, the safety relay cuts the gantry and the arm |
 | Parametric | `Feeder(side="right", tier="B")`. The modular cabinet's left-hand feeder is `side="left"`: every part mirrors about x = 698.5 |
 
 ## Why it is built this way
@@ -63,11 +68,29 @@ bottom flanges sit round the pan's own bolts, so nothing is drilled.
 **Only the left door.** The tray, 457 wide plus rims, clears the right door's
 astragal by 37, so the bottom-left door alone lets it out.
 
-**Printed modules, two of them.** The bird-feeder shape (an inclined lid, a sill,
-deep trays) is easy to print and awkward to bend: SendCutSend's boxes stop at
-5 in walls. Two modules of 152.4 make exactly the 12 in hinge, each fits the
-P2S's 256 bed standing on its floor, and the two walls where they meet are the
-leaves / veggies divider.
+**Printed compartments, two of them, in three parts each.** The bird-feeder
+shape (an inclined lid, a sill, deep trays) is easy to print and awkward to
+bend: SendCutSend's boxes stop at 5 in walls. Two compartments of 152.4 make
+exactly the 12 in hinge, and the two walls where they meet are the leaves /
+veggies divider. At 307 tall a compartment no longer fits the P2S's 256 bed in
+one piece, so it splits where the work splits: the basin takes the rail screws
+and the weight, the hood carries the opening, the well nuts and the hinge, and
+the skirt only closes the shape. The joint sits 15 over the rail line, under the
+openings' sills, and the basin's lip keeps it from showing a gap.
+
+**A flush lid at 45°.** The lid's square-cut lower edge would leave a notch at
+the outer wall; instead the wall's outer face runs up to the lid's top face in a
+small ridge, and the lid's end sits against it with 0.5 to spare. Opening, the
+lid's end slides along the ridge's face (it moves along its own normal), so the
+ridge never holds it. A 28 × 14 scoop in the outer wall under the lid's edge
+takes a fingertip.
+
+**The switch sits on the back plate, under the hinge.** The trays lift straight
+up 169 before they can come out over the outer wall, so anything above a tray is
+in its way. The back plate's top band, between the M4 heads and under the
+hinge's fixed leaf, is outside that column; the trays start 2 in front of the
+switch. Its magnet rides on the lid's underside 2 in front of it, and moves 15
+away by the time the lid is 20° open.
 
 **The openings are sized to the snip, not the arm.** The Herb Snip's printed body
 is wide only for its first 60 along the tool axis (the servo); past that it is a
@@ -96,23 +119,28 @@ grips the panel when its screw is turned.
 | Side play, each side | 1.5 |
 | Rail bolt M8 × 16: stack, reach, spare to the slot floor | 4.8, 11.2, 1.05 (the pan's UP piece, the same) |
 | Feeder M5 × 20: stack, past the lips, spare | 11.9, 3.8, 4.1 (every panel screw, the same) |
-| Opening's sill over tier B's rail; tray rim over the sill | 9.8; 26.0 |
+| Opening's sill over tier B's rail; tray rim over the sill | 9.8; 27.0 |
 | Feeder to the next thing on the panel's outside | 48.7 (a panel screw on the back post) |
-| Open lid's top edge under the gland above it | 157.5 |
-| Reed switch to its magnet, lid down | 5.0 (works to 32) |
-| Module, print bed 256 | 152.4 × 170 × 250 |
+| Open lid's top edge under the gland above it | 184.2 |
+| Reed switch to its magnet, lid down | 2.0 (the 7939WG works to 32) |
+| Hood, basin, skirt, print bed 256 | 132 × 152.4 × 222; 132 × 152.4 × 89; 65 × 152.4 × 132 (on its back) |
+| Lid flush with the walls' outer face | 0.35 (its 0.5 gap to the ridge) |
+| Trays lift clear of the outer wall; of the switch | 169 up; 2.0 |
+| Lid and hinge leaf against the printed parts, closed | 0.000 cm³ |
 
 Drop poses (`drops.yaml`), the tightest gap at each, mm, with the arm's own
-meshes and the snip's printed body:
+CAD meshes. **Provisional**: solved with the Herb Snip's first printed body,
+without its D405; the housing version replaces it when its files land.
 
 | Drop | Release point (x, y, z) | J1 height | Tightest |
 |---|---|---|---|
-| Leaves, inside, through, release | 1444.7, 285, 1069 | 1296, 1303, 1244 | 12.6 to tier B's plants (y < 210) |
-| Veggies, inside, through, release | 1444.7, 376, 1069 | 1336, 1319, 1255 | 6.6 to the carriage (inside); 12.7 |
+| Leaves, inside, through, release | 1444.7, 285, 1070 | 916, 926, 893 (the elbow under the arm) | 8.1 to tier B's plants (y < 210) |
+| Veggies, inside, through, release | 1444.7, 376, 1070 | 1298, 1299, 1268 | 12.8 to tier B's plants |
 | Dead leaves, five along the tray | x 231.5 to 568.5, y 330, z 175 | 499 | 10.9 to the carriage |
 
-The jaws release 28 over the feeder tray's rim (10 clear of it) and 55 over the
-dead-leaf tray's rim. The carriage sits at the end of its X travel (1249.75) for
+The jaws release 28 over the feeder tray's rim (10 clear of it) and pass the
+opening 30 higher: the 45° lid leaves no room for the 60 that Rev A used. Over
+the dead-leaf tray they release 55 over the rim. The carriage sits at the end of its X travel (1249.75) for
 the feeder; for the tray it moves with the drop.
 
 ## Files
@@ -123,8 +151,8 @@ the feeder; for the tray it moves with the drop.
 | `sendcutsend/deadleaf_tray.dxf` | SendCutSend | 5052 H32 0.063 in, qty 1: four wall bends 90° up, the two rim bends 90° down |
 | `sendcutsend/feeder_lid.dxf` | SendCutSend | Polycarbonate 0.177 in clear, qty 1 |
 | `print/deadleaf_handle.stl` | your printer | Flat on its back. PETG or PLA, 4 walls, 20 % gyroid |
-| `print/feeder_module_leaves.stl`, `feeder_module_veggies.stl` | your printer | Standing on the floor. The veggies one has the switch cable's hole |
-| `print/feeder_tray.stl` | your printer | Print two |
+| `print/feeder_hood_leaves.stl`, `feeder_hood_veggies.stl` | your printer | Standing on the joint face. The veggies one has the switch cable's hole |
+| `print/feeder_basin.stl`, `feeder_skirt.stl`, `feeder_tray.stl` | your printer | Print two of each. Basins and trays on their floors, skirts on their open back |
 | `drops.yaml`, `drops.json` | the Herb Snip's software | Every drop: release point, carriage x, J1 height, joint angles, margins |
 
 The right panel's two openings, four well-nut holes (10) and the switch's cable
@@ -145,9 +173,10 @@ bend-line checks.
 | M5 × 20 button head | 4 | |
 | M4 × 20 button head | 4 | |
 | Lever connector Wago 221-412; 2-core alarm cable; adhesive cable clips | 2; 3 m; 6 | |
-| Filament, PETG or PLA | about 1.5 kg | the five prints are 1.41 L if solid; the modules' 3 mm walls print solid |
+| Filament, PETG or PLA | about 2 kg | the nine prints are 1.74 L if solid; their 2 to 4 mm walls print solid |
 
-The four DIN 9021 washers and the VHB come from the enclosure's stock.
+The four DIN 9021 washers and the VHB (both hinge leaves, two strips per skirt)
+come from the enclosure's stock.
 
 ## What changed elsewhere
 

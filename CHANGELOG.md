@@ -14,6 +14,53 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.6.1 – 2026-10-21
+
+**Harvest Rev B: the side feeder reshaped, and the exhaust fans inside.** The
+feeder is taller and shallower, its lid steeper and flush with the walls, and a
+sloped panel closes the shape underneath. The booklet is now
+`Maag_Harvest_Assembly_Instructions_RevB.pdf`, 12 steps. Nothing built changes:
+neither the feeder nor the panels have been made yet.
+
+### Changed
+
+- **Feeder, taller and shallower**: 132 deep (was 170), 307 from the skirt's foot
+  to the hinge (was 250 tall). The lid falls 45° (was 30°) and is 173.6 long; its
+  lower edge sits flush with the walls' outer faces, against a small ridge on the
+  outer wall, and a 28 × 14 finger scoop in the outer wall at the divider lifts it.
+- **A sloped skirt underneath**, for looks: a hollow printed wedge per
+  compartment, taped under the floor, its slope running from the outer wall back
+  down 65 to the panel.
+- **Each compartment prints in three parts** (it no longer fits the bed in one):
+  a basin (floor, rail screws), a hood (the arm's opening, the well nuts, the
+  hinge) that drops into the basin's 1.5 × 4 lip, and the skirt. Print files:
+  `feeder_hood_leaves.stl`, `feeder_hood_veggies.stl`, `feeder_basin.stl`,
+  `feeder_skirt.stl`, `feeder_tray.stl` (two of each but the hoods). All
+  watertight.
+- **Trays 124 tall** (was 66), 108 × 142.4, 1.7 L each, with a grip slot under
+  the rim; they lift straight up 169 and out.
+- **The lid switch moves to the veggies hood's back plate**, under the hinge,
+  out of the trays' lift; its magnet on the lid's underside, 2 apart when shut.
+  The panel's cable hole moves with it, to (432, 1192).
+- **Exhaust fans inside**, hung under the top panel at y 310 (was outside at
+  y 340), a grill under each fan and one on the panel over it. Their lowest
+  point is 39.9 over the arm folded at the top of its travel; nothing on the
+  gantry passes under them. M4 × 40 from inside, 2.0 past the nylocs. Two more
+  grill packs on the buy list. Enclosure booklet step 12 redrawn.
+- **Tier A cable gland** on the right panel down from 900 to 780, clear of the
+  skirt.
+- **The arm is drawn from its own CAD**, undecimated, as in the gantry booklet:
+  the harvest booklet's arm pages had used a 1.5 mm vertex-clustered copy.
+  `reach.py` now prefers Elephant's .dae meshes when they are on disk.
+- **Drop poses re-solved** for the new feeder (`reach.py`: pooled random starts,
+  the through leg 30 over the release, the reed switch, its magnet and the M4
+  heads as obstacles): every pose clears by 8.1 or more. **Provisional**: solved
+  with the Herb Snip's first printed body, without its D405. The housing version
+  replaces it in 0.6.2, and `drops.yaml` says so in its header.
+- **New checks** in `harvest.py`: the lid and the hinge's leaf against the
+  printed parts (0), the lid's flush (0.35), the trays' lift past the switch
+  (2.0); in `enclosure.py`, `fan_clearance()`.
+
 ## 0.6.0 – 2026-10-21
 
 **Harvest Rev A: where the Herb Snip puts what it cuts**, with its own assembly

@@ -229,11 +229,12 @@ ANTITIP_U = [_split(SER + 20.0, W - SER - 20.0)[1], _split(SER + 20.0, W - SER -
 # ------------------------------------------------------------------ cutouts
 FAN_HOLE, FAN_PITCH, FAN_SQ, FAN_T = 115.0, 105.0, 120.0, 25.0     # Noctua NF-F12 PWM
 FAN_SCREW = 4.5
-FANS = [(420.0, 340.0), (977.0, 340.0)]          # top face (x, y): over the corridor, clear of the mast
+FANS = [(420.0, 310.0), (977.0, 310.0)]          # top face (x, y): hung under the panel, over the folded arm
+FAN_GRILLS = 2                                   # per fan: one on the panel's outer face, one under the fan
 INTAKE = (300.0, 170.0)                          # right face (y, z): base bay, filtered, passive
 DUCT = (300.0, 420.0)                            # right face: humidifier duct, tier A bay
 DUCT_HOLE, DUCT_PCD, DUCT_SCREW = 48.0, 66.0, 4.5
-GLANDS = [(440.0, 200.0), (440.0, 900.0), (440.0, 1600.0)]   # right face: PG21, base, A, C bays
+GLANDS = [(440.0, 200.0), (440.0, 780.0), (440.0, 1600.0)]   # right face: PG21, base, A (under the feeder), C bays
 GLAND_HOLE = 28.5
 GROMMET_HOLE = 22.2                              # 7/8 in, for 5/8 OD tube in a 1/8 panel
 DRAIN_DY = 91.0
@@ -976,7 +977,7 @@ def footprints(face):
             out.append(("grommet", ("c", u, v, 14.3)))
     f = feeder()
     if f is not None and f.face == face:
-        out.append(("feeder", ("r", f.mods[0][0], f.vf, f.mods[1][1], f.vt)))
+        out.append(("feeder", ("r", f.mods[0][0], f.v_low, f.mods[1][1], f.vt)))
     if face == "back":
         for s in SEAMS_V:
             out.append(("batten", ("r", 0.0, s - BATTEN["w"] / 2, W, s + BATTEN["w"] / 2)))
@@ -1152,10 +1153,52 @@ def m4_stacks():
     """Each through-bolted M4 against what it clamps: its tip must clear the
     nyloc's insert (5.0) by a thread or more."""
     nyloc, wash = 5.0, 0.8
-    rows = {"fan, M4 x 40": (40.0, 1.6 + FAN_T + T_PANEL + 2 * wash + nyloc),
+    rows = {"fan, M4 x 40": (40.0, 1.6 + T_PANEL + FAN_T + 1.6 + 2 * wash + nyloc),
             "intake grill, M4 x 16": (16.0, 1.6 + T_PANEL + 2 * wash + nyloc),
             "duct collar, M4 x 16": (16.0, COLLAR["flange_t"] + T_PANEL + 2 * wash + nyloc)}
     return {k: round(L - st, 2) for k, (L, st) in rows.items()}
+
+
+def fan_clearance():
+    """The fans hang inside, under the top panel, through-bolted from inside:
+    M4 x 40 heads under the inner grill, nylocs on the outer grill. Their lowest
+    point (the heads) against the highest point of the gantry and of the arm
+    folded for travel (frame.TIGHT_Q) with J1 at the top of its stroke, over the
+    whole X travel, inside each fan's footprint plus 10."""
+    gp = os.path.join(_HERE, "..", "gantry")
+    if gp not in sys.path:
+        sys.path.insert(0, gp)
+    import frame as GF
+    import arm280 as A
+    npz = os.environ.get("MAAG_ARM_NPZ")                 # decimated link meshes, if the CAD isn't here
+    if npz and os.path.exists(npz) and not os.path.exists(os.path.join(A.MESH_DIR, "G_base.dae")):
+        d = np.load(npz)
+        for _, fn, _, _ in A.LINKS:
+            A._CACHE[(fn, 0.003)] = (d["V_" + fn].astype(float), d["F_" + fn].astype(int))
+    z_in = H + TAPE                                      # the top panel's inner face
+    wash, head = 0.8, 2.2                                # M4 washer; ISO 7380 M4 head height
+    fan_low = z_in - FAN_T - 1.6                         # under the inner grill
+    head_low = fan_low - wash - head
+    hi = {"gantry": -1e9, "arm": -1e9}
+    z1 = GF.J1_Z_MAX if hasattr(GF, "J1_Z_MAX") else 1718.0
+    # everything on the carriage passes under both fans somewhere along X: take its
+    # points within a fan's y band (plus 10) at any x; the same for the fixed parts,
+    # which over-counts them
+    xc = (GF.X_MIN + GF.X_MAX) / 2
+    parts = GF.gantry_parts(xc, z1, q=GF.TIGHT_Q, grid=0.003)
+    for i, p in enumerate(parts):
+        V = p.mesh[0]
+        if len(V) == 0:
+            continue
+        for fx, fy in FANS:
+            m = np.abs(V[:, 1] - fy) < FAN_SQ / 2 + 10
+            if m.any():
+                k = "arm" if i >= len(parts) - 8 else "gantry"          # the arm's 8 links come last
+                hi[k] = max(hi[k], float(V[m, 2].max()))
+    return {"fan's underside (inner grill)": round(fan_low, 1), "M4 heads": round(head_low, 1),
+            "gantry, highest under a fan": "nothing" if hi["gantry"] < -1e8 else round(hi["gantry"], 1),
+            "folded arm, J1 at the top": round(hi["arm"], 1),
+            "clear, heads to the highest": round(head_low - max(hi.values()), 1)}
 
 
 def tape_lengths():
@@ -1196,5 +1239,6 @@ if __name__ == "__main__":
     print("branch tube change outside the frame (mm):", branch_trim())
     print("anti-tip at x", [round(u, 1) for u in ANTITIP_U])
     print("M4 tips past their nylocs:", m4_stacks())
+    print("fans inside, over the gantry and the folded arm:", fan_clearance())
     print("counts:", counts())
     print("tape:", tape_lengths(), " expansion:", expansion())
