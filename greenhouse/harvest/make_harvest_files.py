@@ -5,7 +5,7 @@
                   deadleaf_tray.dxf                     5052 H32 0.063 in, six bends
                   feeder_lid.dxf                        polycarbonate 0.177 in, clear, flat
     print/        deadleaf_handle.stl; feeder_hood_leaves.stl, feeder_hood_veggies.stl;
-                  feeder_basin.stl, feeder_skirt.stl, feeder_tray.stl (print two of each)
+                  feeder_basin.stl, feeder_tray.stl (print two of each)
 
 The right panel's openings and holes are in the enclosure's own files:
 run greenhouse/enclosure/make_enclosure_files.py after any change here.
@@ -136,20 +136,14 @@ def stls():
     s = Hv.handle_solid()
     rep["deadleaf_handle.stl"] = (csg.write_stl(_lay_handle(s), os.path.join(PRN, "deadleaf_handle.stl"),
                                                 "maag_deadleaf_handle"), s.volume())
-    import numpy as np
     for k, nm in enumerate(f.NAMES):
         # the hood stands on its joint face, as it hangs
         m = f.hood_solid(k).translate([-f.wb, -f.mods[k][0], -f.vj])
         rep[f"feeder_hood_{nm}.stl"] = (csg.write_stl(m, os.path.join(PRN, f"feeder_hood_{nm}.stl"),
                                                       f"maag_feeder_hood_{nm}"), m.volume())
-    # the two basins are the same part, and so are the two skirts
+    # the two basins are the same part
     m = f.basin_solid(0).translate([-f.wb, -f.mods[0][0], -f.vf])
     rep["feeder_basin.stl"] = (csg.write_stl(m, os.path.join(PRN, "feeder_basin.stl"), "maag_feeder_basin"), m.volume())
-    # the skirt on its open back: (w, u, v) -> (vf - v, u, w), a proper rotation
-    sk = f.skirt_solid(0)
-    R = np.array([[0, 0, -1, f.vf], [0, 1, 0, -f.mods[0][0]], [1, 0, 0, -f.wb]], float)
-    m = sk.transform(R)
-    rep["feeder_skirt.stl"] = (csg.write_stl(m, os.path.join(PRN, "feeder_skirt.stl"), "maag_feeder_skirt"), m.volume())
     w0, w1, u0, u1, v0, v1 = f.tray_box(0)
     t = f.tray_solid(0).translate([-w0, -u0, -v0])
     rep["feeder_tray.stl"] = (csg.write_stl(t, os.path.join(PRN, "feeder_tray.stl"), "maag_feeder_tray"), t.volume())

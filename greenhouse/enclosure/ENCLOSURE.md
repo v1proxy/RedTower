@@ -2,12 +2,12 @@
 
 Maag is the Modular Agentic Autonomous Greenhouse.
 
-**Enclosure Rev A · design 0.6.1 · 2026-10-21 · all dimensions mm**
+**Enclosure Rev A · design 0.6.3 · 2026-10-21 · all dimensions mm**
 
 0.6.0 added the harvest feeder's openings and holes to the right panel (see
 `greenhouse/harvest/HARVEST.md`). 0.6.1 hangs the two exhaust fans inside,
 under the top panel, with a grill on each side; moves the tier A cable gland
-down from 900 to 780, clear of the feeder's new skirt; and moves the feeder's
+down from 900 to 780, clear of the feeder's basin; and moves the feeder's
 switch-cable hole with its switch.
 
 Read alongside the booklet `Maag_Enclosure_Assembly_Instructions_RevA.pdf` (step

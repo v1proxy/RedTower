@@ -14,6 +14,29 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.6.3 – 2026-10-21
+
+**The feeder without its skirt, and the humidifier duct drawn smooth.** Nothing
+built changes: the feeder and the panels have not been made yet.
+
+### Changed
+
+- **Feeder: the sloped skirt under the floor is gone.** Each compartment is two
+  prints again, the basin and the hood; `feeder_skirt.stl` and step 9 (the
+  skirts) are removed, and the booklet is 11 steps. Seven prints, 1.55 L if
+  solid. The tier A gland stays at 780: at 900 it would touch the basin's floor.
+
+### Fixed
+
+- **Tubes and ducts no longer twist.** `kit3d.tube` picked each ring's frame
+  afresh from a reference axis, so where a path's tangent crossed that axis the
+  frame flipped and the tube between two rings wrung itself into a ribbon: the
+  humidifier duct's bend on the right panel. Ring frames are now carried along
+  the path by parallel transport. Every tube in every booklet (drain lines,
+  cables, the duct) draws the same or better.
+- **The duct follows one smooth bend**: straight off the collar's spigot, a
+  48-point curve, then down beside the panel, in place of five straight runs.
+
 ## 0.6.2 – 2026-10-21
 
 **The arm plate drawn as one solid.** A drawing fix, nothing to build differently.

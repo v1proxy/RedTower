@@ -196,18 +196,37 @@ def disc(ro, ri, h, c=(0, 0, 0), bore_off=(0.0, 0.0)):
 
 
 def tube(path, r, n=10):
-    """Sweep a circle along a 3D polyline. Used for cables and belts."""
+    """Sweep a circle along a 3D polyline. Used for cables, belts and ducts.
+
+    The ring frames are carried along the path by parallel transport (each
+    one turned from the last by the smallest rotation that takes the old
+    tangent to the new), so the rings never twist about the path: a frame
+    picked afresh at each point flips where the tangent crosses the
+    reference axis, and the tube between two flipped rings wrings itself
+    into a ribbon."""
     P = np.asarray(path, float)
     V, F = [], []
-    prev_u = None
+    prev_t = prev_u = None
     for i, p in enumerate(P):
         t = P[min(i+1, len(P)-1)] - P[max(i-1, 0)]
         ln = np.linalg.norm(t)
-        t = t/ln if ln > 1e-9 else np.array([1.0, 0, 0])
-        ref = np.array([0, 0, 1.0]) if abs(t[2]) < 0.9 else np.array([1.0, 0, 0])
-        u = np.cross(t, ref); u /= (np.linalg.norm(u) + 1e-12)
+        t = t/ln if ln > 1e-9 else (prev_t if prev_t is not None else np.array([1.0, 0, 0]))
+        if prev_u is None:
+            ref = np.array([0, 0, 1.0]) if abs(t[2]) < 0.9 else np.array([1.0, 0, 0])
+            u = np.cross(t, ref)
+        else:
+            ax = np.cross(prev_t, t)
+            sa, ca = np.linalg.norm(ax), float(np.dot(prev_t, t))
+            u = prev_u
+            if sa > 1e-12:
+                k_ = ax / sa
+                a_ = math.atan2(sa, ca)
+                u = (u * math.cos(a_) + np.cross(k_, u) * math.sin(a_)
+                     + k_ * np.dot(k_, u) * (1 - math.cos(a_)))
+            u = u - np.dot(u, t) * t
+        u /= (np.linalg.norm(u) + 1e-12)
         v = np.cross(t, u)
-        prev_u = u
+        prev_t, prev_u = t, u
         for k in range(n):
             a = 2*math.pi*k/n
             V.append(p + r*(math.cos(a)*u + math.sin(a)*v))

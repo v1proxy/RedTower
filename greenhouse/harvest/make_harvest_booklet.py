@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maag harvest: assembly instructions, Harvest Rev B (design 0.6.1).
+"""Maag harvest: assembly instructions, Harvest Rev B (design 0.6.3).
 
 The dead-leaf tray on its guide rails in the base bay, and the side feeder on
 the right panel at tier B. Every drawing comes from harvest.py on top of
@@ -35,7 +35,7 @@ import csg                                                             # noqa: E
 import reach as R                                                      # noqa: E402
 
 REV = "Harvest Rev B"
-DESIGN = "0.6.1"
+DESIGN = "0.6.3"
 OUT = os.environ.get("HARVEST_OUT", os.path.join(_HERE, "build"))
 B.configure(REV, OUT)
 
@@ -46,7 +46,7 @@ PAGES = []
 body = EB.body
 FB = EB.FB
 F = Hv.FEEDER
-NSTEPS = 12
+NSTEPS = 11
 PRINT = np.array([0.93, 0.93, 0.89])         # the printed parts
 HARV = np.array([0.80, 0.89, 0.76])          # the feeder's trays, so they read apart from the modules
 FROST, CLEARC, WHITEP, EPDM = EB.FROST, EB.CLEARC, EB.WHITEP, EB.EPDM
@@ -108,7 +108,7 @@ def pan_bolts(skip_rail=True, explode=0.0):
 
 
 def col_of(name):
-    if name.startswith(("module", "hood", "basin", "skirt")):
+    if name.startswith(("module", "hood", "basin")):
         return PRINT
     if name.startswith("tray_"):
         return HARV
@@ -212,7 +212,6 @@ def p_overview(pdf):
     lab(ax, v, (C.W + F.wb + 60, (F.mods[1][0] + F.mods[1][1]) / 2, F.vf + 40), "veggies", dx=90, dy=-10, bold=True)
     lab(ax, v, (C.W + F.wb + 90, ym, F.lid_top(90)), "clear lid on a piano hinge, flush\nwith the walls, "
         "lifts to lean on the panel", dx=-40, dy=120, ha="right")
-    lab(ax, v, (C.W + F.wb + 30, ym, F.vf - 20), "sloped skirt", dx=70, dy=-60)
     lab(ax, v, (400.0, Hv.TRAY["y0"] - 230 - 10, Hv.HANDLE["z1"] - 10), "dead-leaf tray, slid out\nby its handle",
         dx=-150, dy=40, ha="right", bold=True)
     lab(ax, v, (Hv.RAIL["web"][0], 120.0, Hv.RAIL["run"]), "two guide rails on the base pan", dx=-120, dy=-60,
@@ -229,9 +228,9 @@ def p_overview(pdf):
     body(ax, "The feeder is two printed compartments side by side on the outside of the right panel at tier B, the "
              "third shelf up from the floor, under one clear lid that\nsits flush with their walls, like the side "
              "feeders on a bird cage: the arm puts the harvest in from the inside, you take it out from the outside, "
-             "and the doors\nstay shut. A finger scoop under the lid's edge lifts it; a sloped skirt closes the shape "
-             "underneath. The tray in the base slides out of the bottom-left\ndoor alone. The modular cabinet can "
-             "put the feeder on the left: it is the same parts, mirrored.", fs=9.4)
+             "and the doors\nstay shut. A finger scoop under the lid's edge lifts it. The tray in the base slides out of the "
+             "bottom-left door alone. The modular cabinet\ncan put the feeder on the left: it is the same parts, "
+             "mirrored.", fs=9.4)
     save(fig, ax, pdf, "00a_overview")
 
 
@@ -354,7 +353,6 @@ def p_parts(pdf):
              ("Hood, leaves", "1", csg.to_mesh(f.hood_solid(0)), PRINT, (62, 30)),
              ("Hood, veggies", "1", csg.to_mesh(f.hood_solid(1)), PRINT, (62, 30)),
              ("Basin, printed", "2", csg.to_mesh(f.basin_solid(0)), PRINT, (62, 30)),
-             ("Skirt, printed", "2", csg.to_mesh(f.skirt_solid(0)), PRINT, (62, -24)),
              ("Feeder tray, printed", "2", csg.to_mesh(f.tray_solid(0)), HARV, (62, 34)),
              ("Lid, clear 4.5", "1", lid_flat, CLEARC, (30, 30)),
              ("Piano hinge, 1 ft", "1", hinge, STEEL, (30, 30)),
@@ -368,11 +366,11 @@ def p_parts(pdf):
         ax.text(cx - 60, cy - 54, nm, fontsize=8.6, color=INK, va="center")
         ax.text(cx - 60, cy - 72, f"{q}×", fontsize=9.8, color=ACCENT, fontweight="bold", va="center")
     ax.text(60, 214, "Also, no picture needed:", fontsize=9.6, fontweight="bold", color=INK)
-    rows = ["VHB 4905, 1/2 in: both hinge leaves and the two skirts (from the enclosure's roll)",
+    rows = ["VHB 4905, 1/2 in: both hinge leaves (from the enclosure's roll)",
             "Two lever connectors (Wago 221-412) and 3 m of 2-core alarm cable for the switch",
             "Six small adhesive cable clips for the switch's wire inside the cabinet",
             "Print settings: PETG or PLA, 0.2 layers, 4 walls, 20 % gyroid, no supports: hoods standing on their "
-            "joint face, basins and trays on their floors, skirts on their open back, the handle flat"]
+            "joint face, basins and trays on their floors, the handle flat"]
     for i, t in enumerate(rows):
         ax.text(60, 192 - i * 18, t, fontsize=8.6, color=INK)
     ax._body_y = 60.0
@@ -432,16 +430,16 @@ def _tools():
         (keys, "Hex keys, ball end", "2.5 · 3 · 5 mm, long series",
          "5: the rails' M8s, 2  ·  3: every M5,\n3, 7  ·  2.5: the M4s, 8", (30, 34)),
         (T.tape_measure, "Tape measure", "5 m", "the switch and the magnet, 5", (32, 26)),
-        (T.utility_knife, "Utility knife", "18 mm snap-off, and scissors", "VHB, 5, 9 and 10", (25, 30)),
-        (T.ipa_and_cloth, "Isopropyl alcohol", "and microfibre cloths", "every VHB bond, 5, 9 and 10", (25, 28)),
-        (T.flush_cutters, "Side cutters", "125 mm, flush cut", "the switch's cable, 11", (25, 40)),
+        (T.utility_knife, "Utility knife", "18 mm snap-off, and scissors", "VHB, 5 and 9", (25, 30)),
+        (T.ipa_and_cloth, "Isopropyl alcohol", "and microfibre cloths", "every VHB bond, 5 and 9", (25, 28)),
+        (T.flush_cutters, "Side cutters", "125 mm, flush cut", "the switch's cable, 10", (25, 40)),
     ]
 
 
 @page
 def p_tools(pdf):
     fig, ax = new_page(None, "Tools",
-                       f"Everything the {NSTEPS} steps need, and your printer for the nine printed parts.")
+                       f"Everything the {NSTEPS} steps need, and your printer for the seven printed parts.")
     for i, (fn, name, size, steps, (az, el)) in enumerate(_tools()):
         r, c = divmod(i, 4)
         x0, ytop = 40 + c * 270, 762 - r * 228
@@ -469,7 +467,7 @@ def _rect(ax, x, y, w, h, fc, ec=INK, lw=0.7, z=20, hatch=None, alpha=1.0):
 
 def sec_feeder(ax, ox, oy, s):
     """True-scale section through the leaves compartment, in (w, v): the side
-    rail, tape, panel, the basin, hood and skirt, the tray, the lid and hinge,
+    rail, tape, panel, the basin and hood, the tray, the lid and hinge,
     the snip's jaws at the release."""
     f = F
     X = lambda w: ox + w * s                                    # noqa: E731
@@ -480,7 +478,7 @@ def sec_feeder(ax, ox, oy, s):
         _rect(ax, X(-C.SLOT_DEPTH), Y(zl + 20 - 4.1), C.SLOT_DEPTH * s, 8.2 * s, "white", ec="none", z=11)
     _rect(ax, X(0), Y(f.rail_v + E.LINE_IN), E.TAPE * s, E.TAPE_W * s, "#33373a", ec="none", z=12)
     a0, a1 = f.openings[0][2], f.openings[0][3]
-    for v0, v1 in ((f.v_low - 10, a0), (a1, f.vt + 10)):
+    for v0, v1 in ((f.vf - 30, a0), (a1, f.vt + 10)):
         _rect(ax, X(E.TAPE), Y(v0), E.T_PANEL * s, (v1 - v0) * s, "#e6ecef", z=13)
     wb, wo, t, bk = f.wb, f.w_out, f.WALL, f.BACK
     # the basin: back plate, floor, outer wall up to the joint, its lip
@@ -497,12 +495,6 @@ def sec_feeder(ax, ox, oy, s):
     ow += [tuple(p_) for p_ in f.ridge()[:2]] + [(wo - t, float(f.lid_under(wo - t)))]
     ax.add_patch(Polygon([(X(w_), Y(v_)) for w_, v_ in ow], closed=True, facecolor=PR, edgecolor=INK, lw=0.7, zorder=14))
     ax.plot([X(wb) - 3, X(wo) + 3], [Y(f.vj)] * 2, color=DIM, lw=0.6, ls="--", zorder=15)
-    # the skirt beyond the floor, hollow
-    tri = [(wb, f.vf - f.SKIRT_DROP), (wo, f.vf), (wb, f.vf)]
-    ins = Hv._inset(tri, f.SKIRT_T)
-    ax.add_patch(Polygon([(X(w_), Y(v_)) for w_, v_ in tri], closed=True, facecolor=PR, edgecolor=INK, lw=0.7, zorder=14))
-    ax.add_patch(Polygon([(X(w_), Y(v_)) for w_, v_ in ins], closed=True, facecolor="white", edgecolor=INK, lw=0.5,
-                         zorder=14))
     # side wall beyond, in outline
     ax.plot([X(wb + bk), X(wo)], [Y(f.lid_under(wb + bk)), Y(f.lid_under(wo))], color=DIM, lw=0.6, ls=":", zorder=15)
     # tray
@@ -540,7 +532,6 @@ def sec_feeder(ax, ox, oy, s):
     ax.text(X(-20), Y(f.rail_v - 34), "frame", fontsize=8, color=DIM, ha="center", zorder=30)
     ax.text(X(wo + 8), Y(f.lid_under(wo) + 14), "lid, clear 4.5,\nflush", fontsize=8, color=INK, zorder=30)
     ax.text(X(wo + 8), Y(f.vj + 2), "hood on\nbasin", fontsize=8, color=DIM, zorder=30, va="center")
-    ax.text(X(wb + 40), Y(f.vf - 22), "skirt", fontsize=8, color=INK, zorder=30, ha="center", va="center")
     ax.text(X(-6), Y((a0 + a1) / 2), "opening", fontsize=8, color=WARN, zorder=30, rotation=90, va="center",
             ha="right")
     ax.text(X((w0 + w1) / 2), Y(v0 + 20), "tray", fontsize=8, color=INK, ha="center", zorder=30)
@@ -610,7 +601,7 @@ def p_sections(pdf):
     fig, ax = new_page(None, "In section, to scale",
                        "Through the leaves compartment, across the dead-leaf tray, and through its handle.")
     panel(ax, 40, 300, 520, 470, z=5)
-    sec_feeder(ax, 250, 393.0, 1.15)
+    sec_feeder(ax, 250, 357.5, 1.25)
     ax.text(56, 750, "the feeder at the leaves drop, from the front", fontsize=8.6, color=DIM, zorder=330)
     panel(ax, 570, 560, 540, 210, z=5)
     sec_tray(ax, 600, 610, 0.6)
@@ -640,7 +631,7 @@ def s1(pdf):
             ("Robot off", "Gantry homed and parked left, the E-stop pressed. Nothing in this booklet needs it powered."),
             ("Metal in", "From SendCutSend: guide rails L and R, the dead-leaf tray (5052, bent), the clear lid. "
              "Check the rails mirror each other."),
-            ("Printed", "Handle; the leaves and veggies hoods; two basins, two skirts, two trays: PETG or PLA, 4 walls, "
+            ("Printed", "Handle; the leaves and veggies hoods; two basins, two trays: PETG or PLA, 4 walls, "
              "20 %, no supports."),
             ("Fasteners", "Against the fasteners page: four M8 × 16, three M5 × 10 and nylocs, four M5 × 20, four M4 × 20 "
              "and well nuts."),
@@ -917,38 +908,7 @@ def s8(pdf):
 # ============================================================ 9
 @page
 def s9(pdf):
-    fig, ax = new_page(9, "Feeder  ·  the skirts",
-                       "A strip of VHB on each skirt's top, pressed up under its basin's floor, its back on the panel.")
-    f = F
-    d = _feeder(trays=False, lid=False)
-    dn = 80.0
-    parts = _right_bay()
-    for nm in f.NAMES:
-        parts.append(Part(d[f"basin_{nm}"], PRINT, lw=0.45, ang=30))
-        parts.append(Part(d[f"hood_{nm}"], PRINT, lw=0.45, ang=30))
-        parts.append(Part(mv(d[f"skirt_{nm}"], 0, 0, -dn), HILITE, lw=0.45, ang=30))
-    for name, m in _fast(d):
-        parts.append(Part(m, BLACKPART if name.startswith("wellnut") else STEEL, lw=0.25, ang=30))
-    v = scene(ax, parts, (360, 462), (600, 600), MM=view(128, -14), px=1.5,
-              focus=FB.fbox((1397, 150, 760), (1560, 500, 1240)), clip=(24, 150, 760, 772))
-    for k in (0, 1):
-        c = (C.W + f.wb + 50, (f.mods[k][0] + f.mods[k][1]) / 2)
-        axis3(ax, v, (c[0], c[1], f.vf - dn), (c[0], c[1], f.vf))
-    tag(ax, 790, 700, "Skirt, printed", 2, hi=True)
-    tag(ax, 790, 652, "VHB 4905, two strips on each", 4, hi=True)
-    tool(ax, 790, 596, "isopropyl  ·  utility knife")
-    note(ax, 790, 556, "Only for looks: it carries nothing.\nIts slope runs from the outer wall\nback down to the "
-                       "panel and hides\nthe floor's underside.", fs=9.2, color=INK)
-    body(ax, "Clean each skirt's top face and its basin's floor underneath. Two strips of VHB along the skirt's top, "
-             "one near each end. Hold it with its open back on the\npanel and its ends in line with the basin's walls, "
-             "push it up under the floor and press it there for 30 s. The two skirts meet under the divider.")
-    save(fig, ax, pdf, "09")
-
-
-# ============================================================ 10
-@page
-def s10(pdf):
-    fig, ax = new_page(10, "Feeder  ·  the lid",
+    fig, ax = new_page(9, "Feeder  ·  the lid",
                        "The hinge's fixed leaf on VHB inside both back plates' top band. The lid comes down flush.")
     f = F
     d = _feeder(open_deg=60.0, trays=False)
@@ -970,10 +930,10 @@ def s10(pdf):
              "lands; lift it, put VHB on the fixed leaf, lower the lid and press the leaf onto both back plates along "
              "its length.\nLeave it shut for an hour before you lift it: VHB takes most of its strength in that time "
              "and all of it in a day.")
-    save(fig, ax, pdf, "10")
+    save(fig, ax, pdf, "09")
 
 
-# ============================================================ 11
+# ============================================================ 10
 def _chain(ax, x0, y0):
     """The door chain with the lid switch in it."""
     items = ["door, bottom left", "door, bottom right", "door, top left", "door, top right", "feeder lid"]
@@ -995,8 +955,8 @@ def _chain(ax, x0, y0):
 
 
 @page
-def s11(pdf):
-    fig, ax = new_page(11, "Trays in, the switch into the door chain",
+def s10(pdf):
+    fig, ax = new_page(10, "Trays in, the switch into the door chain",
                        "The lid joins the four door switches in series: lift it and the arm loses power.")
     f = F
     d = _feeder(open_deg=F.lid_rest_deg())
@@ -1025,13 +985,13 @@ def s11(pdf):
              "utility node, clipped every 300. At the door chain,\nopen the loop at one end and put the lid switch in "
              "it with the two lever connectors: five switches in series. The Doors sensor in Home Assistant now\n"
              "reads open when any door or the lid is open, and the safety relay cuts the gantry and the arm.")
-    save(fig, ax, pdf, "11")
+    save(fig, ax, pdf, "10")
 
 
-# ============================================================ 12
+# ============================================================ 11
 @page
-def s12(pdf):
-    fig, ax = new_page(12, "Before the first harvest",
+def s11(pdf):
+    fig, ax = new_page(11, "Before the first harvest",
                        "The checks that catch the usual faults, with nothing in the trays yet.")
     rows = [("Tray", "Slides out with the left door alone and back to the stops; nothing scrapes; the leak sensor "
              "still reads dry."),
@@ -1046,7 +1006,7 @@ def s12(pdf):
     body(ax, "Empty the feeder's trays as often as you harvest; wash them like any food container (no dishwasher for "
              "PLA). The dead-leaf tray holds about 10 L:\nempty it into the compost when the leaves reach its rims. "
              "Never reach into the feeder from inside the cabinet with the robot powered.", fs=10.0)
-    save(fig, ax, pdf, "12")
+    save(fig, ax, pdf, "11")
 
 
 PAGES.insert(0, p_cover)

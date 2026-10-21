@@ -2,11 +2,12 @@
 
 Maag is the Modular Agentic Autonomous Greenhouse.
 
-**Harvest Rev B · design 0.6.1 · 2026-10-21 · all dimensions mm**
+**Harvest Rev B · design 0.6.3 · 2026-10-21 · all dimensions mm**
 
 Rev B reshapes the feeder (taller and shallower, a 45° lid flush with the walls,
-a finger scoop to lift it, a sloped skirt underneath) and prints each
-compartment in three parts. The dead-leaf tray is unchanged.
+a finger scoop to lift it) and prints each compartment in two parts. The
+dead-leaf tray is unchanged. (0.6.1 had a sloped skirt under the floor, for
+looks; 0.6.3 takes it off.)
 
 Where the Herb Snip puts what it cuts. Dead leaves go **down**, into a tray in
 the base bay that slides out of the bottom-left door. Leaves and veggies go
@@ -44,10 +45,10 @@ decimated .npz, is enough for the checks) and the Herb Snip's printed body
 | Dead-leaf tray | 5052 0.063 bent by SendCutSend: 457 × 480 × 50 outside, about 10.5 L. The two side walls end in rims that turn outward: the tray **hangs by its rims** on the rails |
 | Guide rails | Two 5052 0.063 C-channels, 544 long, bolted to the base pan with the pan's own bolts at x 150 and x 650, front and back (M8 × 12 become M8 × 16). A tab at the back of each web is the stop |
 | Handle | Printed, bolted to the tray's front wall with three M5 × 10 into nylocs sunk in hex pockets. It stands 172 up off the wall: a 120 × 42 slot the whole hand goes through, a rounded bar over it |
-| Feeder | Two printed compartments side by side, leaves (front) and veggies (back), 152.4 wide, 132 deep, 307 tall from the skirt's foot to the hinge, on the right panel's outside at tier B. Each is three prints: a **basin** (floor, back plate on the rail line, the walls' lower 85), a **hood** (back plate with the arm's opening, the walls under the lid) that drops into the basin's 1.5 × 4 lip, and a **skirt**, a hollow wedge taped under the floor whose slope runs back down to the panel. Each has its own lift-out printed tray, 108 × 142 × 124, 1.7 L |
+| Feeder | Two printed compartments side by side, leaves (front) and veggies (back), 152.4 wide, 132 deep, 307 tall from the floor's underside to the hinge, on the right panel's outside at tier B. Each is two prints: a **basin** (floor, back plate on the rail line, the walls' lower 85) and a **hood** (back plate with the arm's opening, the walls under the lid) that drops into the basin's 1.5 × 4 lip. Each has its own lift-out printed tray, 108 × 142 × 124, 1.7 L |
 | Arm openings | One 80 × 160 opening per compartment, through the right panel and the module's back plate, corners R25 |
 | Lid | One clear 4.5 polycarbonate lid over both (SendCutSend, the doors' sheet), 304.8 × 173.6, falling 45° away from the panel, on one 1 ft McMaster 1658A15 piano hinge on VHB. Its lower edge is flush with the walls' outer faces, against a ridge on the outer wall's top; a finger scoop 28 wide in the outer wall, at the divider, lifts it. Lifted, it turns 138° and leans on the panel |
-| Fixing | Two M5 × 20 per basin into the T-nuts in tier B's side rail (the panel's own screw line), two M4 × 20 per hood into rubber well nuts set in the panel above the openings; the skirts on VHB |
+| Fixing | Two M5 × 20 per basin into the T-nuts in tier B's side rail (the panel's own screw line), two M4 × 20 per hood into rubber well nuts set in the panel above the openings |
 | Safety | A reed switch for the lid (7939WG, as on the doors) on the veggies hood's back plate, under the hinge, its magnet on the lid's underside; in series with the door chain: lid open, the safety relay cuts the gantry and the arm |
 | Parametric | `Feeder(side="right", tier="B")`. The modular cabinet's left-hand feeder is `side="left"`: every part mirrors about x = 698.5 |
 
@@ -68,14 +69,13 @@ bottom flanges sit round the pan's own bolts, so nothing is drilled.
 **Only the left door.** The tray, 457 wide plus rims, clears the right door's
 astragal by 37, so the bottom-left door alone lets it out.
 
-**Printed compartments, two of them, in three parts each.** The bird-feeder
+**Printed compartments, two of them, in two parts each.** The bird-feeder
 shape (an inclined lid, a sill, deep trays) is easy to print and awkward to
 bend: SendCutSend's boxes stop at 5 in walls. Two compartments of 152.4 make
 exactly the 12 in hinge, and the two walls where they meet are the leaves /
 veggies divider. At 307 tall a compartment no longer fits the P2S's 256 bed in
 one piece, so it splits where the work splits: the basin takes the rail screws
-and the weight, the hood carries the opening, the well nuts and the hinge, and
-the skirt only closes the shape. The joint sits 15 over the rail line, under the
+and the weight, the hood carries the opening, the well nuts and the hinge. The joint sits 15 over the rail line, under the
 openings' sills, and the basin's lip keeps it from showing a gap.
 
 **A flush lid at 45°.** The lid's square-cut lower edge would leave a notch at
@@ -123,7 +123,7 @@ grips the panel when its screw is turned.
 | Feeder to the next thing on the panel's outside | 48.7 (a panel screw on the back post) |
 | Open lid's top edge under the gland above it | 184.2 |
 | Reed switch to its magnet, lid down | 2.0 (the 7939WG works to 32) |
-| Hood, basin, skirt, print bed 256 | 132 × 152.4 × 222; 132 × 152.4 × 89; 65 × 152.4 × 132 (on its back) |
+| Hood, basin, print bed 256 | 132 × 152.4 × 222; 132 × 152.4 × 89 |
 | Lid flush with the walls' outer face | 0.35 (its 0.5 gap to the ridge) |
 | Trays lift clear of the outer wall; of the switch | 169 up; 2.0 |
 | Lid and hinge leaf against the printed parts, closed | 0.000 cm³ |
@@ -152,7 +152,7 @@ the feeder; for the tray it moves with the drop.
 | `sendcutsend/feeder_lid.dxf` | SendCutSend | Polycarbonate 0.177 in clear, qty 1 |
 | `print/deadleaf_handle.stl` | your printer | Flat on its back. PETG or PLA, 4 walls, 20 % gyroid |
 | `print/feeder_hood_leaves.stl`, `feeder_hood_veggies.stl` | your printer | Standing on the joint face. The veggies one has the switch cable's hole |
-| `print/feeder_basin.stl`, `feeder_skirt.stl`, `feeder_tray.stl` | your printer | Print two of each. Basins and trays on their floors, skirts on their open back |
+| `print/feeder_basin.stl`, `feeder_tray.stl` | your printer | Print two of each, on their floors |
 | `drops.yaml`, `drops.json` | the Herb Snip's software | Every drop: release point, carriage x, J1 height, joint angles, margins |
 
 The right panel's two openings, four well-nut holes (10) and the switch's cable
@@ -173,10 +173,10 @@ bend-line checks.
 | M5 × 20 button head | 4 | |
 | M4 × 20 button head | 4 | |
 | Lever connector Wago 221-412; 2-core alarm cable; adhesive cable clips | 2; 3 m; 6 | |
-| Filament, PETG or PLA | about 2 kg | the nine prints are 1.74 L if solid; their 2 to 4 mm walls print solid |
+| Filament, PETG or PLA | about 2 kg | the seven prints are 1.55 L if solid; their 2 to 4 mm walls print solid |
 
-The four DIN 9021 washers and the VHB (both hinge leaves, two strips per skirt)
-come from the enclosure's stock.
+The four DIN 9021 washers and the VHB (both hinge leaves) come from the
+enclosure's stock.
 
 ## What changed elsewhere
 

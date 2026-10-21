@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maag enclosure: assembly instructions, Enclosure Rev A (design 0.6.1).
+"""Maag enclosure: assembly instructions, Enclosure Rev A (design 0.6.3).
 
 Every drawing is generated from enclosure.py on top of cabinet.py, so a page,
 a DXF and the frame they fit cannot disagree.
@@ -30,7 +30,7 @@ import cabinet as C                                                    # noqa: E
 import enclosure as E                                                  # noqa: E402
 
 REV = "Enclosure Rev A"
-DESIGN = "0.6.1"
+DESIGN = "0.6.3"
 OUT = os.environ.get("ENCLOSURE_OUT", os.path.join(_HERE, "build"))
 
 import make_frame_booklet as FB                                        # noqa: E402
@@ -131,9 +131,12 @@ def right_kit(on_panel=True, explode=0.0):
     out.append(("collar", E.to_face("right", mv(E.collar_mesh(), E.DUCT[0], E.DUCT[1], w0 + explode))))
     du, dv = E.DUCT
     spig = E.COLLAR["flange_t"] + E.COLLAR["spigot_l"]
-    path = [(du, dv, w0 + 8.0), (du, dv, w0 + spig + 40.0), (du, dv - 40, w0 + spig + 110.0),
-            (du, dv - 160, w0 + spig + 150.0), (du, dv - 330, w0 + spig + 160.0)]
-    duct = tube(np.array(path), 27.0, 28)
+    # straight off the collar's spigot, one smooth bend, then down beside the panel to the floor
+    a, d = np.array([du, dv, w0 + 8.0]), np.array([du, dv - 330.0, w0 + spig + 160.0])
+    b, c = a + [0.0, 0.0, spig + 150.0], d + [0.0, 210.0, 0.0]
+    s_ = np.linspace(0.0, 1.0, 48)[:, None]
+    path = (1 - s_) ** 3 * a + 3 * (1 - s_) ** 2 * s_ * b + 3 * (1 - s_) * s_ ** 2 * c + s_ ** 3 * d
+    duct = tube(path, 27.0, 28)
     out.append(("duct", E.to_face("right", mv(duct, 0, 0, explode))))
     return out
 

@@ -185,36 +185,14 @@ OPEN_R = 25.0                                    # opening corners: a 30 bridge 
 WELL = dict(hole=10.0, flange_d=14.0, flange_t=1.2, body_d=9.5, body_l=11.0)   # M4 rubber well nut, 1 to 4 grip
 
 
-def _inset(poly, t):
-    """A convex polygon moved in by t on every side (corners mitred)."""
-    P = np.asarray(poly, float)
-    n = len(P)
-    area = 0.5 * sum(P[i, 0] * P[(i + 1) % n, 1] - P[(i + 1) % n, 0] * P[i, 1] for i in range(n))
-    sg = 1.0 if area > 0 else -1.0
-    lines = []
-    for i in range(n):
-        p, q = P[i], P[(i + 1) % n]
-        d = (q - p) / np.linalg.norm(q - p)
-        nrm = sg * np.array([-d[1], d[0]])               # inward
-        lines.append((p + t * nrm, d))
-    out = []
-    for i in range(n):
-        (p1, d1), (p2, d2) = lines[i - 1], lines[i]
-        A = np.array([d1, -d2]).T
-        s_, _ = np.linalg.solve(A, p2 - p1)
-        out.append(tuple(p1 + s_ * d1))
-    return out
-
-
 class Feeder:
     """Two printed compartments side by side on the outside of a side panel,
     one tray in each, one clear lid over both on a piano hinge.
 
-    Each compartment is printed in three parts, because it is taller than the
+    Each compartment is printed in two parts, because it is taller than the
     printer: the HOOD (the back plate with the arm's opening, the side walls
     under the lid, the outer wall's top) sits on the BASIN (the floor, the
-    walls' lower part, the rail screws) in a 1.5 lip, and the SKIRT, a hollow
-    wedge, is taped under the basin: the inclined panel underneath."""
+    walls' lower part, the rail screws) in a 1.5 lip."""
 
     MOD_W = HINGE_LEN / 2          # 152.4: two modules make the hinge's 12 in
     DEPTH = 132.0                  # back plate's back face to the outer wall's outer face
@@ -224,7 +202,6 @@ class Feeder:
     JOINT_DZ = 14.8                # hood on basin, above the slot line: 1000 at tier B
     TOP_DZ = 236.8                 # the back plate's top and the hinge pin: 1222 at tier B
     LIP = dict(t=1.5, h=4.0)       # the basin's walls stand 4 above the joint on their outer 1.5
-    SKIRT_DROP, SKIRT_T = 65.0, 2.0
     INDENT_R = 14.0                # the finger scoop under the lid's lower edge, at the divider
     NAMES = ("leaves", "veggies")
 
@@ -347,22 +324,8 @@ class Feeder:
             body = body - csg.cyl(2.9, bk + 2, "x", c=(wb - 1, u, self.rail_v))
         return body
 
-    def skirt_solid(self, k):
-        """The inclined panel underneath: a hollow wedge, its top on the basin's
-        floor (VHB), its back on the panel, its slope falling back to the panel."""
-        a, b = self.mods[k]
-        wb, wo, T = self.wb, self.w_out, self.SKIRT_T
-        tri = [(wb, self.vf - self.SKIRT_DROP), (wo, self.vf), (wb, self.vf)]
-        outer = csg.prism(tri, "y", a, b)
-        ins = sorted(_inset(tri, T), key=lambda p: p[0])      # two back corners, then the apex
-        (b0, b1), apex = sorted(ins[:2], key=lambda p: p[1]), ins[2]
-        k_ = (wb - 1.0 - apex[0]) / (b0[0] - apex[0])
-        ins = [(wb - 1.0, apex[1] + k_ * (b0[1] - apex[1])), apex, (wb - 1.0, b1[1])]   # open at the back
-        inner = csg.prism(ins, "y", a + T, b - T)
-        return outer - inner
-
     def module_solid(self, k):
-        return csg.union(self.hood_solid(k), self.basin_solid(k), self.skirt_solid(k))
+        return csg.union(self.hood_solid(k), self.basin_solid(k))
 
     def screw_u(self, k):
         a, b = self.mods[k]
@@ -558,8 +521,8 @@ class Feeder:
 
     @property
     def v_low(self):
-        """The feeder's lowest point: the skirt's foot on the panel."""
-        return self.vf - self.SKIRT_DROP
+        """The feeder's lowest point: the basin's floor."""
+        return self.vf
 
 
 FEEDER = Feeder()
@@ -608,7 +571,7 @@ def feeder_meshes(f=None, open_deg=0.0, trays=True, lid=True, fasteners=True, ex
     f = f or FEEDER
     d = {}
     for k, nm in enumerate(f.NAMES):
-        for part in ("basin", "hood", "skirt"):
+        for part in ("basin", "hood"):
             d[f"{part}_{nm}"] = f.to_world(csg.to_mesh(getattr(f, part + "_solid")(k)))
         if trays:
             d[f"tray_{nm}"] = f.to_world(csg.to_mesh(f.tray_solid(k)))
@@ -682,7 +645,7 @@ def feeder_checks(f=None):
     out = {}
     w0, w1, u0, u1, v0, v1 = f.tray_box(0)
     size = lambda sol: tuple(round(float(x), 1) for x in (csg.stats(sol)["hi"] - csg.stats(sol)["lo"]))   # noqa: E731
-    out["hood, basin, skirt, mm (print bed 256)"] = [size(getattr(f, p + "_solid")(0)) for p in ("hood", "basin", "skirt")]
+    out["hood, basin, mm (print bed 256)"] = [size(getattr(f, p + "_solid")(0)) for p in ("hood", "basin")]
     out["tray, mm"] = (round(w1 - w0, 1), round(u1 - u0, 1), round(v1 - v0, 1))
     out["tray, litres"] = round((w1 - w0 - 2 * f.TRAY_WALL) * (u1 - u0 - 2 * f.TRAY_WALL) * (v1 - v0 - 2) / 1e6, 2)
     out["opening, u x v"] = [(round(b - a), round(c1 - c0)) for a, b, c0, c1 in f.openings]
@@ -719,9 +682,9 @@ def feeder_checks(f=None):
     fps = E.footprints(f.face)
     me = [a for k, a in fps if k == "feeder"][0]
     gaps = sorted((round(E._gap(me, a), 1), k) for k, a in fps if k != "feeder")
-    out["feeder (with its skirt) to the next thing on the panel"] = gaps[0]
+    out["feeder to the next thing on the panel"] = gaps[0]
     out["openings into the bay, tightest"] = E.cutout_report()[f.face]
-    vols = {p: sum(getattr(f, p + "_solid")(k).volume() for k in (0, 1)) / 1000 for p in ("hood", "basin", "skirt")}
+    vols = {p: sum(getattr(f, p + "_solid")(k).volume() for k in (0, 1)) / 1000 for p in ("hood", "basin")}
     vols["trays"] = 2 * f.tray_solid(0).volume() / 1000
     out["printed, cm3 solid"] = {k: round(v) for k, v in vols.items()}
     return out
