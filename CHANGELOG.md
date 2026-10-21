@@ -14,6 +14,59 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.6.0 – 2026-10-21
+
+**Harvest Rev A: where the Herb Snip puts what it cuts**, with its own assembly
+booklet in the house style (the Maag cover, how the arm drops, parts, fasteners,
+tools, sections to scale, 11 steps). Everything is generated from the new
+`greenhouse/harvest/harvest.py`, built on `enclosure.py` and `cabinet.py`: the
+booklet, four SendCutSend DXFs, four STLs and the arm's drop poses. See
+`greenhouse/harvest/HARVEST.md`.
+
+- **Dead-leaf tray in the base bay**, bigger: a 5052 tray 457 × 480 × 50, about
+  10.5 L, that hangs by two outward rims on **two guide rails** bolted to the
+  base pan with the pan's own bolts (x 150 and 650, front and back: M8 × 12
+  become M8 × 16). Its floor rides 5 over the pan's front lip, so it slides
+  straight out of the bottom-left door alone; a tab at the back of each rail is
+  the stop.
+- **A handle that stands up off the tray**, printed: a 120 × 42 slot the whole
+  hand goes through and a rounded bar over it, 12.8 under F1, three M5 × 10 into
+  nylocs sunk in its face.
+- **Side feeder outside the right panel at tier B** (the third shelf, waist
+  height), after the side feeders of a bird cage: two printed compartments,
+  leaves in front and veggies behind, each with a lift-out tray, under one clear
+  polycarbonate lid falling 30° on a 1 ft piano hinge. Lifted, the lid leans on
+  the panel. The arm reaches in through one 80 × 160 opening per compartment; the
+  snip's wide servo end stays inside the cabinet. `Feeder(side, tier)`: the
+  modular cabinet's left-hand feeder is the same parts mirrored.
+- **The lid is in the door chain**: a fifth reed switch in series with the four
+  door switches, so lifting it cuts the gantry and the arm.
+- **Drop poses solved and checked** (`greenhouse/harvest/reach.py`, written to
+  `drops.yaml`): for each compartment a pose inside, one through the opening and
+  the release 28 over the tray's rim; five dead-leaf drops along the tray. Every
+  pose clears the frame, the panel, the tiers' plants, the gantry and the arm
+  itself by 6.6 or more, with the arm's own meshes and the Herb Snip's printed
+  body.
+- Printed parts are real boolean solids (`greenhouse/harvest/csg.py`, on
+  manifold3d), so the STLs are watertight.
+
+### Changed
+
+- **Enclosure, right panel**: the feeder's two openings, four Ø10 well-nut holes
+  and a Ø8 cable hole at tier B; the panel's middle screw on tier B's rail line
+  gives way to the feeder's four M5 holes, which hold ordinary panel screws until
+  the feeder goes on. DXF, A&C drawing, face map and step 8 of the enclosure
+  booklet regenerated. The panels are not yet ordered: nothing built changes.
+- **ESPHome utility node**: the doors chain on MCP23017 A4 now counts the feeder
+  lid too (comment only).
+
+### Supersedes
+
+- The Herb Snip's harvest drawer in the base bay (Herb Snip chat, branch
+  `herb-snip-0.5.0`, not in this repo yet): its harvest goes to the feeder, its
+  dead leaves to the tray's five drops. That branch also calls itself 0.5.0; it
+  lands as the next version after this one.
+
 ## 0.5.0 – 2026-10-21
 
 **Enclosure Rev A: the panels and doors, with their own assembly booklet** in

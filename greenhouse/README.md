@@ -9,6 +9,7 @@ on its own.
 | `jetson/` | **software** | The containerized agent stack: a module bus, a safety governor, hardware links for the gantry and the arm, perception, and the language-model gateway. Has its own tests and CI. |
 | `homeassistant/` | **interface** | The package, entities, scripts and dashboard card. |
 | `drawings/` `sendcutsend/` `model/` | **hardware** | Frame, sheet metal and wiring, every file a generator rather than a drawing. The 3D model the drawings are rendered from. |
+| `frame/` `gantry/` `enclosure/` `harvest/` | **assembly** | One model and one Maag assembly booklet each: the cabinet, the gantry, the panels and doors, and where the harvest goes (the dead-leaf tray and the side feeder). Cut files and prints come from the same models. |
 | `build_bom_*.py` `opex_model.py` | **cost** | Bill of materials, one generator per revision, and the daily running-cost model. |
 | `pfsense/` | **network** | The Jetson's place on the IoT VLAN. |
 

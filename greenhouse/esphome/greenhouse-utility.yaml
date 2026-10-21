@@ -9,7 +9,7 @@
 #   GPIO33 / GPIO4 / GPIO2   Zone A / B / C solenoids (U.S. Solid 1/4 in NC 24 V), HiLetgo 4-ch MOSFET board
 #   GPIO5 TX / GPIO36 RX     UART to PZEM-004T v3 energy meter (whole-cabinet AC)
 #   GPIO15                   Humidifier relay (ultrasonic unit ducted into the lane)
-#   MCP23017 A0..A7          leak base, leak A, leak B, leak C, doors chain, reservoir-low float,
+#   MCP23017 A0..A7          leak base, leak A, leak B, leak C, doors chain (4 doors + feeder lid), reservoir-low float,
 #                            safety relay status, spare
 
 substitutions:
@@ -240,7 +240,7 @@ binary_sensor:
   - platform: gpio
     id: doors_open
     name: Doors
-    device_class: door                           # 4 reed switches in series: any door open = on
+    device_class: door                           # 4 door reeds + the harvest feeder's lid, in series: any open = on
     pin: {mcp23xxx: mcp, number: 4, mode: {input: true, pullup: true}}
     filters: [delayed_on_off: 100ms]
   - platform: gpio

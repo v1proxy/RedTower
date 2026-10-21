@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maag enclosure: assembly instructions, Enclosure Rev A (design 0.5.0).
+"""Maag enclosure: assembly instructions, Enclosure Rev A (design 0.6.0).
 
 Every drawing is generated from enclosure.py on top of cabinet.py, so a page,
 a DXF and the frame they fit cannot disagree.
@@ -30,7 +30,7 @@ import cabinet as C                                                    # noqa: E
 import enclosure as E                                                  # noqa: E402
 
 REV = "Enclosure Rev A"
-DESIGN = "0.5.0"
+DESIGN = "0.6.0"
 OUT = os.environ.get("ENCLOSURE_OUT", os.path.join(_HERE, "build"))
 
 import make_frame_booklet as FB                                        # noqa: E402
@@ -313,10 +313,16 @@ def draw_face(ax, face, x0, y0, s, title, sub=""):
                             facecolor="white" if p["kind"] == "panel" else colk[p["kind"]],
                             edgecolor=colk[p["kind"]], lw=0.9, zorder=17))
     for u, v, d, what in E.cutouts(face):
-        if d < 6:
+        if what == "feeder M5":
+            ax.add_patch(Circle((X(u), Y(v)), 3.2, facecolor="white", edgecolor=OK, lw=1.1, zorder=17))
+        elif d < 6:
             ax.add_patch(Circle((X(u), Y(v)), 1.4, facecolor=INK, edgecolor="none", zorder=17))
         else:
             ax.add_patch(Circle((X(u), Y(v)), d / 2 * s, facecolor="white", edgecolor=WARN, lw=1.1, zorder=16))
+    for u0, v0, u1, v1, r, what in E.rect_cutouts(face):
+        a, b = sorted((X(u0), X(u1)))
+        ax.add_patch(FancyBboxPatch((a, Y(v0)), b - a, Y(v1) - Y(v0), boxstyle=f"round,pad=0,rounding_size={r * s}",
+                                    facecolor="white", edgecolor=WARN, lw=1.1, zorder=16))
     ax.text(x0 + fw * s / 2, y0 + fh * s + 22, title, fontsize=10.2, fontweight="bold", color=INK, ha="center",
             family=TITLE_FONT)
     if sub:
@@ -328,7 +334,7 @@ def face_legend(ax, x, y):
     items = [("circle", INK, "white", "M5 × 16 + DIN 9021 washer"), ("circle", "#4b5563", "#4b5563", "M5 × 20, batten"),
              ("circle", ACCENT, ACCENT, "M5 × 16, P-clip"), ("circle", OK, OK, "M5 × 16, anti-tip bracket"),
              ("rect", "#33373a", "#33373a", "EPDM tape, 3/16 × 1/2 in"), ("rect", "#e6ebee", "#e6ebee", "frame behind"),
-             ("big", WARN, "white", "cutout")]
+             ("big", WARN, "white", "cutout"), ("circle", OK, "white", "feeder: × 16, later × 20")]
     for i, (k, ec, fc, t) in enumerate(items):
         yy = y - i * 20
         if k == "circle":
@@ -722,13 +728,13 @@ def p_faces1(pdf):
     draw_face(ax, "back", 268, 150, s, "BACK", "seen from behind")
     draw_face(ax, "right", 734, 150, s, "RIGHT", "front edge on the left")
     face_legend(ax, 945, 720)
-    n = {f: len(E.screws(f)) for f in ("left", "right", "back")}
+    n = {f: len(E.screws(f)) + len([c for c in E.cutouts(f) if c[3] == "feeder M5"]) for f in ("left", "right", "back")}
     note(ax, 945, 560, f"T-nuts: left {n['left']}, right {n['right']},\nback {n['back']}. The P-clips (orange)\n"
                        "are panel screws too: they go\nin at step 11.", fs=8.8, color=INK)
     ax._body_y = 60.0
     body(ax, "Every circle is on a slot centreline, 20 in from an edge or on a rail's middle. Seams: the back's "
              "three panels meet on B1 and B2 with a 6 gap; the\nbatten screws pass through the gap. Cutouts: glands, "
-             "intake and duct on the right; the three drain grommets on the left, 18 under each tier's rail.",
+             "intake, duct and the harvest feeder's two openings on the right; the three drain grommets on the left.",
          fs=9.0)
     save(fig, ax, pdf, "00e_faces1")
 
@@ -1073,8 +1079,12 @@ def s8(pdf):
         axis3(ax, v, (C.W, p["u"], p["v"]), (C.W + out + 30, p["u"], p["v"]))
     tag(ax, 790, 700, "EPDM foam strip, right face", hi=True)
     tag(ax, 790, 652, "Right panel, with its glands and intake", 1, hi=True)
-    tag(ax, 790, 604, "M5 × 16 + washer, T-nut", len(E.screws("right")), hi=True)
+    nf = len([c for c in E.cutouts("right") if c[3] == "feeder M5"])
+    tag(ax, 790, 604, "M5 × 16 + washer, T-nut", len(E.screws("right")) + nf, hi=True)
     tool(ax, 790, 548, "3 mm hex  ·  utility knife")
+    note(ax, 790, 508, f"The {nf} screws on tier B's rail under\nthe two openings (green on the face\nmap) only hold "
+                       "the panel until the\nharvest feeder goes on: keep them\nloose-ish, the feeder swaps them.",
+         fs=9.0, color=INK)
     body(ax, "Tape as at step 3, on the right face. Then the panel: the front edge (glands at the back) flush with "
              "the front of the cabinet, screws and nuts as at\nstep 4. Feed the duct over the collar's spigot and "
              "zip-tie it; its other end goes over the humidifier's outlet, standing on the floor to the\nright. Cables "

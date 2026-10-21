@@ -6,7 +6,7 @@ An indoor greenhouse that an AI agent tends, written down so anyone can build
 one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
 space allows, with only the modules you want.
 
-![design version](https://img.shields.io/badge/design-0.1.3-1d4ed8)
+![design version](https://img.shields.io/badge/design-0.6.0-1d4ed8)
 [![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 ---

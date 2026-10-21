@@ -64,6 +64,13 @@ def panel_dxf(name):
         x, y = outside(name, u, v)
         d.circle((x, y), dia / 2)
         rows.append((x, y, dia, what))
+    for ra, rb, rc, rd, r, what in E.panel_rects(name):
+        xa, ya = outside(name, ra, rb)
+        xb, yb = outside(name, rc, rd)
+        x0, x1 = sorted((xa, xb))
+        y0, y1 = sorted((ya, yb))
+        rrect(d, x0, y0, x1, y1, r)
+        rows.append(((x0 + x1) / 2, (y0 + y1) / 2, ("rect", x1 - x0, y1 - y0, r), what))
     path = os.path.join(AC, f"panel_{name}.dxf")
     open(path, "w").write(d.dumps())
     return path, rows, (u1 - u0, v1 - v0)
@@ -183,6 +190,11 @@ def drawing_pdf(panel_rows):
             ox, oy = 50, 80
             ax.add_patch(Rectangle((ox, oy), pw * sc, ph * sc, facecolor="#f5f7f8", edgecolor=INK, lw=1.0))
             for x, y, dia, what in rows:
+                if isinstance(dia, tuple):
+                    _, rw, rh, rr = dia
+                    ax.add_patch(Rectangle((ox + (x - rw / 2) * sc, oy + (y - rh / 2) * sc), rw * sc, rh * sc,
+                                           facecolor="white", edgecolor=INK, lw=0.7))
+                    continue
                 ax.add_patch(Circle((ox + x * sc, oy + y * sc), max(dia / 2 * sc, 1.6), facecolor="white",
                                     edgecolor=INK, lw=0.7))
             ax.text(ox, oy - 22, "lower left corner = (0, 0)", fontsize=8.4, color=DIM)
@@ -195,12 +207,24 @@ def drawing_pdf(panel_rows):
                     ha="center")
             # hole table, grouped by size
             groups = {}
+            rects = [(x, y, dia, what) for x, y, dia, what in rows if isinstance(dia, tuple)]
             for x, y, dia, what in rows:
-                groups.setdefault((dia, what if dia > 10 else "screw"), []).append((x, y))
+                if isinstance(dia, tuple):
+                    continue
+                groups.setdefault((dia, what if dia > 8 or what not in ("panel", "clip", "antitip") else "screw"),
+                                  []).append((x, y))
             tx, ty = 710, 740
+            for x, y, (_, rw, rh, rr), what in rects:
+                ax.text(tx, ty, f"{rw:g} × {rh:g}, corners R{rr:g}  ·  {what}", fontsize=9.6, fontweight="bold",
+                        color=INK)
+                ty -= 16
+                ax.text(tx + 8, ty, f"centre ({x:.1f}, {y:.1f})", fontsize=7.6, color=INK, family=B.TITLE_FONT)
+                ty -= 20
             for (dia, what), pts in sorted(groups.items(), key=lambda kv: -kv[0][0]):
                 label = {"screw": "screw holes", "fan": "fan opening", "intake": "intake opening",
-                         "duct": "duct", "gland": "cable gland PG21", "grommet": "grommet"}.get(what, what)
+                         "duct": "duct", "gland": "cable gland PG21", "grommet": "grommet",
+                         "feeder M5": "screw holes, harvest feeder", "feeder well nut": "well nuts, harvest feeder",
+                         "reed wire": "feeder switch cable"}.get(what, what)
                 ax.text(tx, ty, f"Ø {dia:g}  ×{len(pts)}  ·  {label}", fontsize=9.6, fontweight="bold", color=INK)
                 ty -= 16
                 line = ""
@@ -223,7 +247,7 @@ def main():
     for n in E.panels():
         p, r, wh = panel_dxf(n)
         rows[n] = (p, r, wh)
-        report[os.path.relpath(p, _HERE)] = f"{wh[0]:.1f} x {wh[1]:.1f}, {len(r)} holes"
+        report[os.path.relpath(p, _HERE)] = f"{wh[0]:.1f} x {wh[1]:.1f}, {len(r)} holes and openings"
     for pair, side in E.DOORS:
         p, wh = door_dxf(pair, side)
         report[os.path.relpath(p, _HERE)] = f"{wh[0]:.1f} x {wh[1]:.1f}"

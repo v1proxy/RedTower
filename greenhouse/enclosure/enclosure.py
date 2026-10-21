@@ -138,7 +138,7 @@ CLIP_V = None          # set below: the five P-clip heights on the FL line
 ANTITIP_U = None
 
 
-def screws(face):
+def _screws(face):
     """Every fastener through a panel into a slot on `face`:
     list of dicts (u, v, kind, line) where kind is 'panel', 'batten', 'clip'
     or 'antitip'. Every point is on a slot centreline, so a drop-in T-nut sits
@@ -180,6 +180,19 @@ def screws(face):
             if p["line"] == "post" and abs(p["u"] - SER / 2) < 1e-6 and \
                     any(abs(p["v"] - c) < 1e-6 for c in CLIP_V):
                 p["kind"] = "clip"
+    return out
+
+
+def screws(face):
+    """Every fastener through a panel into a slot on `face`:
+    list of dicts (u, v, kind, line) where kind is 'panel', 'batten', 'clip'
+    or 'antitip'. Where the harvest feeder covers a rail line its own M5 x 20
+    screws take the place of the panel's (they are in cutouts(), as 'feeder M5')."""
+    out = _screws(face)
+    f = feeder()
+    if f is not None and f.face == face:
+        lo, hi = f.mods[0][0] - 10.0, f.mods[1][1] + 10.0
+        out = [p for p in out if not (p["line"] == "rail" and abs(p["v"] - f.rail_v) < 1e-6 and lo < p["u"] < hi)]
     return out
 
 
@@ -225,6 +238,27 @@ GLAND_HOLE = 28.5
 GROMMET_HOLE = 22.2                              # 7/8 in, for 5/8 OD tube in a 1/8 panel
 DRAIN_DY = 91.0
 
+# The harvest feeder (greenhouse/harvest/harvest.py) hangs on one side panel:
+# it adds two openings for the arm, its screw and wire holes, and takes over
+# the panel's middle screw on that tier's rail line.
+FEEDER_ON = True
+
+
+def feeder():
+    if not FEEDER_ON:
+        return None
+    hv = os.path.join(_HERE, "..", "harvest")
+    if hv not in sys.path:
+        sys.path.insert(0, hv)
+    import harvest
+    return harvest.FEEDER
+
+
+def rect_cutouts(face):
+    """[(u0, v0, u1, v1, r, what)] rectangular cut-outs through a face's panels."""
+    f = feeder()
+    return f.panel_cutouts() if f is not None and f.face == face else []
+
 
 def grommets():
     """(y, z) on the left face: each branch leaves under its tier's left rail."""
@@ -255,7 +289,16 @@ def cutouts(face):
     if face == "left":
         for u, v in grommets():
             out.append((u, v, GROMMET_HOLE, "grommet"))
+    f = feeder()
+    if f is not None and f.face == face:
+        out += f.panel_holes()
     return out
+
+
+def panel_rects(name):
+    """[(u0, v0, u1, v1, r, what)] rectangular cut-outs inside one panel."""
+    face, u0, v0, u1, v1 = panels()[name]
+    return [c for c in rect_cutouts(face) if u0 <= c[0] and c[2] <= u1 and v0 <= c[1] and c[3] <= v1]
 
 
 def panel_holes(name):
@@ -273,6 +316,15 @@ def panel_holes(name):
     return out
 
 
+def _rrect_loop(u0, v0, u1, v1, r, n=6):
+    pts = []
+    for (cx, cy), a0 in (((u1 - r, v0 + r), -90), ((u1 - r, v1 - r), 0), ((u0 + r, v1 - r), 90), ((u0 + r, v0 + r), 180)):
+        for k in range(n + 1):
+            a = math.radians(a0 + 90 * k / n)
+            pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return np.array(pts)
+
+
 def panel_mesh(name, w0=TAPE):
     face, u0, v0, u1, v1 = panels()[name]
     r = 3.0
@@ -282,6 +334,7 @@ def panel_mesh(name, w0=TAPE):
             a = math.radians(a0 + 90 * k / 6)
             outline.append((cx + r * math.cos(a), cy + r * math.sin(a)))
     holes = [circle_pts(d / 2, 40 if d < 30 else 96, u, v) for u, v, d, _ in panel_holes(name)]
+    holes += [_rrect_loop(*c[:5]) for c in panel_rects(name)]
     m = extrude(np.array(outline), T_PANEL, z0=w0, holes=holes)
     return to_face(face, m)
 
@@ -351,7 +404,12 @@ def fasteners(face, explode=0.0, nuts=True, heads=True, only=None):
     tnut, batten_screw, clip_screw, antitip_screw."""
     out = []
     d = -np.asarray(FACES[face]["ew"], float)
-    for p in screws(face):
+    pts = list(screws(face))
+    f = feeder()
+    if f is not None and f.face == face and (not only or "panel" in only):
+        # the harvest feeder's rail-line holes carry ordinary panel screws until the feeder goes on
+        pts += [dict(u=u, v=v, kind="panel", line="feeder") for u, v, dd, w in cutouts(face) if w == "feeder M5"]
+    for p in pts:
         if only and p["kind"] not in only:
             continue
         base = world(face, p["u"], p["v"], 0.0)
@@ -916,6 +974,9 @@ def footprints(face):
     if face == "left":
         for u, v in grommets():
             out.append(("grommet", ("c", u, v, 14.3)))
+    f = feeder()
+    if f is not None and f.face == face:
+        out.append(("feeder", ("r", f.mods[0][0], f.vf, f.mods[1][1], f.vt)))
     if face == "back":
         for s in SEAMS_V:
             out.append(("batten", ("r", 0.0, s - BATTEN["w"] / 2, W, s + BATTEN["w"] / 2)))
@@ -981,12 +1042,19 @@ def cutout_report():
         obst = [("member", ("r",) + tuple(m)) for m in members_on(face)]
         obst += [("tape", ("r",) + tuple(t)) for t in tapes(face)]
         for u, v, d, what in cutouts(face):
+            if what == "feeder M5":
+                continue                      # screws into the rail, like a panel screw
             r = {"gland": 19.0, "grommet": 14.3, "fan": FAN_HOLE / 2, "intake": FAN_HOLE / 2,
-                 "duct": DUCT_HOLE / 2}.get(what, 5.0)
+                 "duct": DUCT_HOLE / 2, "feeder well nut": 8.0, "reed wire": 6.0}.get(what, 5.0)
             for k, ob in obst:
                 g = _gap(("c", u, v, r), ob)
                 if g < worst[0]:
                     worst = (round(g, 2), (what, k, round(u, 1), round(v, 1)))
+        for u0, v0, u1, v1, r, what in rect_cutouts(face):
+            for k, ob in obst:
+                g = _gap(("r", u0, v0, u1, v1), ob)
+                if g < worst[0]:
+                    worst = (round(g, 2), (what, k, round(u0, 1), round(v0, 1)))
         rep[face] = worst
     return rep
 
@@ -1061,6 +1129,12 @@ def counts():
                 c["M5 x 20 button head"] += 1
             else:
                 c["M5 x 16 button head"] += 1
+    f = feeder()
+    if f is not None:
+        n = len([c for c in cutouts(f.face) if c[3] == "feeder M5"])
+        c["M5 drop-in T-nut"] += n
+        c["M5 x 16 button head"] += n
+        c["DIN 9021 M5 washer"] += n
     n_h = sum(len(hinge_screws(p, s)) for p, s in DOORS)
     c["M3 x 12 flat head, hinges (drawn)"] = n_h
     c["M3 x 12 flat head, magnets"] = sum(len(MAG_Z[p]) for p, s in DOORS)

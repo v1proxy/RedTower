@@ -2,7 +2,10 @@
 
 Maag is the Modular Agentic Autonomous Greenhouse.
 
-**Enclosure Rev A · design 0.5.0 · 2026-10-21 · all dimensions mm**
+**Enclosure Rev A · design 0.6.0 · 2026-10-21 · all dimensions mm**
+
+0.6.0 adds the harvest feeder's openings and holes to the right panel (see
+`greenhouse/harvest/HARVEST.md`); nothing else on the enclosure changes.
 
 Read alongside the booklet `Maag_Enclosure_Assembly_Instructions_RevA.pdf` (step
 numbers below are the booklet's). It opens with the Maag cover render, an
@@ -38,6 +41,7 @@ so body text falls back to DejaVu Sans there).
 | Centre | The right door of each pair carries a 40 wide astragal behind the left door's edge: open the left door first |
 | Air | Two Noctua NF-F12 exhaust fans outside on the top panel, blowing up; passive intake low on the right through a 120 grill and a DEMCiflex magnetic filter |
 | Water, power, data | Humidifier duct through a printed collar (right, tier A bay); three PG21 glands (right, back edge); the drain riser outside the left panel on five P-clips, each branch through a grommet |
+| Harvest feeder | On the right panel at tier B: two 80 × 160 openings for the arm, four Ø10 holes for its well nuts, a Ø8 hole for its lid switch. Its four M5 holes on tier B's rail line carry ordinary panel screws until the feeder goes on (greenhouse/harvest) |
 | Safety | A reed switch per door (7939WG, BOM G047) in the door chain; two anti-tip kits into wall studs through B4 |
 
 ## Why it is built this way
@@ -78,7 +82,7 @@ under its tier's rail. Each branch ends up 8 shorter: trim it.
 |---|---|
 | Nest, three 48 × 96 sheets | A: back bottom + back upper, 53 spare across. B: back middle + top, 6.6 spare across. C: both sides, 98 spare |
 | Hole centre to any edge | 18 or more everywhere (16 needed, two diameters); top panel 18 front and back, the rest 20 |
-| Cutouts open into bays | Tightest: the C grommet's flange, 3.7 under L3 |
+| Cutouts open into bays | Tightest: the C grommet's flange, 3.7 under L3; the feeder's openings 9.8 over tier B's right rail |
 | Gantry to the panels' inner faces | left 2.0 (two X-rail screw heads stand 1.5 proud of the frame face), right 3.5, back 38.5, top 8.5 |
 | Panel screw, M5 × 16 | stack 7.9, reaches 8.1 below the face: 3.8 past the lips, 4.1 short of the slot floor |
 | Batten screw, M5 × 20 | stack 9.9, 5.9 past the lips, 2.1 short of the floor |
@@ -92,7 +96,7 @@ under its tier's rail. Each branch ends up 8 shorter: trim it.
 
 | File | For | What |
 |---|---|---|
-| `acplastics/panel_*.dxf` (6) | A&C Plastics | Outline and every hole, mm, each drawn as seen from outside |
+| `acplastics/panel_*.dxf` (6) | A&C Plastics | Outline, every hole and the right panel's two feeder openings, mm, each drawn as seen from outside |
 | `acplastics/Maag_Enclosure_Panels_RevA.pdf` | A&C Plastics | The nest and a page per panel with its hole table: attach with the DXFs to their quote form |
 | `sendcutsend/door_{bottom,top}_{L,R}.dxf` | SendCutSend | Polycarbonate 0.177 in clear, qty 1 each |
 | `sendcutsend/hinge_spacer.dxf` | SendCutSend | Polycarbonate 0.118 in clear, qty 8 (one part: flip it for the right doors) |

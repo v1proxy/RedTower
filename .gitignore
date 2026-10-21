@@ -32,3 +32,4 @@ greenhouse/enclosure/build/
 # cover render intermediates (the .png is tracked)
 greenhouse/*/cover/*.npz
 greenhouse/*/cover/*.blend
+greenhouse/harvest/build/

@@ -1,0 +1,341 @@
+{
+ "feeder": {
+  "leaves": [
+   {
+    "leg": "inside",
+    "release_xyz": [
+     1375.0,
+     285.0,
+     1129.0
+    ],
+    "carriage_x": 1249.75,
+    "j1_z": 1296.2,
+    "joints_deg": [
+     -84.1,
+     -107.4,
+     -40.3,
+     147.8,
+     84.1,
+     177.9
+    ],
+    "margins": {
+     "side rail below": 114.3,
+     "side rail above": 99.5,
+     "back post": 146.9,
+     "plants (y < 210)": 12.6,
+     "plants below (y < 210)": 165.4,
+     "tier rails": 129.5,
+     "panel": 28.7,
+     "feeder floor": 79.7,
+     "feeder walls": 32.1,
+     "lid": 61.2,
+     "gantry": 30.0,
+     "self": true
+    }
+   },
+   {
+    "leg": "through",
+    "release_xyz": [
+     1444.7,
+     285.0,
+     1129.0
+    ],
+    "carriage_x": 1249.75,
+    "j1_z": 1303.2,
+    "joints_deg": [
+     -60.6,
+     -109.0,
+     -36.4,
+     145.4,
+     60.6,
+     170.7
+    ],
+    "margins": {
+     "side rail below": 107.5,
+     "side rail above": 94.6,
+     "back post": 141.5,
+     "plants (y < 210)": 12.6,
+     "plants below (y < 210)": 165.8,
+     "tier rails": 133.4,
+     "panel": 25.7,
+     "feeder floor": 77.0,
+     "feeder walls": 28.1,
+     "lid": 22.4,
+     "gantry": 30.0,
+     "servo inside": 17.3,
+     "self": true
+    }
+   },
+   {
+    "leg": "release",
+    "release_xyz": [
+     1444.7,
+     285.0,
+     1069.0
+    ],
+    "carriage_x": 1249.75,
+    "j1_z": 1243.5,
+    "joints_deg": [
+     -60.6,
+     -108.3,
+     -37.6,
+     145.9,
+     60.6,
+     180.0
+    ],
+    "margins": {
+     "side rail below": 54.8,
+     "side rail above": 140.2,
+     "back post": 142.3,
+     "plants (y < 210)": 12.6,
+     "plants below (y < 210)": 107.3,
+     "tier rails": 76.3,
+     "panel": 25.0,
+     "feeder floor": 19.0,
+     "feeder walls": 29.4,
+     "lid": 76.6,
+     "gantry": 30.0,
+     "servo inside": 17.3,
+     "self": true
+    }
+   }
+  ],
+  "veggies": [
+   {
+    "leg": "inside",
+    "release_xyz": [
+     1375.0,
+     376.0,
+     1129.0
+    ],
+    "carriage_x": 1249.75,
+    "j1_z": 1335.8,
+    "joints_deg": [
+     58.9,
+     113.9,
+     -17.8,
+     83.9,
+     -121.1,
+     40.2
+    ],
+    "margins": {
+     "side rail below": 108.5,
+     "side rail above": 75.2,
+     "back post": 127.3,
+     "plants (y < 210)": 12.6,
+     "plants below (y < 210)": 176.9,
+     "tier rails": 147.1,
+     "panel": 26.4,
+     "feeder floor": 74.0,
+     "feeder walls": 30.1,
+     "lid": 55.6,
+     "gantry": 6.6,
+     "self": true
+    }
+   },
+   {
+    "leg": "through",
+    "release_xyz": [
+     1444.7,
+     376.0,
+     1129.0
+    ],
+    "carriage_x": 1249.75,
+    "j1_z": 1319.3,
+    "joints_deg": [
+     77.1,
+     132.3,
+     -50.7,
+     98.5,
+     -102.9,
+     -17.5
+    ],
+    "margins": {
+     "side rail below": 99.2,
+     "side rail above": 81.3,
+     "back post": 80.4,
+     "plants (y < 210)": 12.9,
+     "plants below (y < 210)": 176.5,
+     "tier rails": 126.6,
+     "panel": 24.9,
+     "feeder floor": 75.5,
+     "feeder walls": 27.5,
+     "lid": 21.2,
+     "gantry": 25.2,
+     "servo inside": 17.3,
+     "self": true
+    }
+   },
+   {
+    "leg": "release",
+    "release_xyz": [
+     1444.7,
+     376.0,
+     1069.0
+    ],
+    "carriage_x": 1249.75,
+    "j1_z": 1254.7,
+    "joints_deg": [
+     76.7,
+     135.6,
+     -57.2,
+     101.6,
+     -103.3,
+     -10.1
+    ],
+    "margins": {
+     "side rail below": 51.5,
+     "side rail above": 131.1,
+     "back post": 80.7,
+     "plants (y < 210)": 12.7,
+     "plants below (y < 210)": 127.8,
+     "tier rails": 91.1,
+     "panel": 25.6,
+     "feeder floor": 16.9,
+     "feeder walls": 28.2,
+     "lid": 71.9,
+     "gantry": 25.3,
+     "servo inside": 17.3,
+     "self": true
+    }
+   }
+  ]
+ },
+ "tray": {
+  "drop1": {
+   "release_xyz": [
+    231.5,
+    330.0,
+    175.0
+   ],
+   "carriage_x": 231.5,
+   "j1_z": 498.7,
+   "joints_deg": [
+    63.2,
+    135.0,
+    6.8,
+    -141.8,
+    -153.2,
+    3.9
+   ],
+   "margins": {
+    "tray and rims": 38.4,
+    "handle": 248.5,
+    "tier A tray": 62.3,
+    "plants A (y < 210)": 12.7,
+    "back rail": 212.5,
+    "tier A rails": 62.3,
+    "gantry": 11.0,
+    "self": true
+   }
+  },
+  "drop2": {
+   "release_xyz": [
+    315.8,
+    330.0,
+    175.0
+   ],
+   "carriage_x": 315.8,
+   "j1_z": 498.7,
+   "joints_deg": [
+    63.2,
+    135.0,
+    6.9,
+    -141.8,
+    -153.2,
+    3.9
+   ],
+   "margins": {
+    "tray and rims": 38.4,
+    "handle": 232.1,
+    "tier A tray": 62.3,
+    "plants A (y < 210)": 12.7,
+    "back rail": 212.5,
+    "tier A rails": 62.3,
+    "gantry": 10.9,
+    "self": true
+   }
+  },
+  "drop3": {
+   "release_xyz": [
+    400.0,
+    330.0,
+    175.0
+   ],
+   "carriage_x": 400.0,
+   "j1_z": 498.7,
+   "joints_deg": [
+    63.2,
+    135.0,
+    6.9,
+    -141.8,
+    -153.2,
+    3.9
+   ],
+   "margins": {
+    "tray and rims": 38.4,
+    "handle": 232.1,
+    "tier A tray": 62.3,
+    "plants A (y < 210)": 12.7,
+    "back rail": 212.5,
+    "tier A rails": 62.3,
+    "gantry": 10.9,
+    "self": true
+   }
+  },
+  "drop4": {
+   "release_xyz": [
+    484.2,
+    330.0,
+    175.0
+   ],
+   "carriage_x": 484.2,
+   "j1_z": 498.7,
+   "joints_deg": [
+    63.2,
+    135.0,
+    6.8,
+    -141.8,
+    -153.2,
+    3.9
+   ],
+   "margins": {
+    "tray and rims": 38.4,
+    "handle": 232.5,
+    "tier A tray": 62.3,
+    "plants A (y < 210)": 12.7,
+    "back rail": 212.5,
+    "tier A rails": 62.3,
+    "gantry": 11.0,
+    "self": true
+   }
+  },
+  "drop5": {
+   "release_xyz": [
+    568.5,
+    330.0,
+    175.0
+   ],
+   "carriage_x": 568.5,
+   "j1_z": 498.7,
+   "joints_deg": [
+    63.2,
+    134.9,
+    6.9,
+    -141.8,
+    -153.2,
+    3.9
+   ],
+   "margins": {
+    "tray and rims": 38.4,
+    "handle": 244.2,
+    "tier A tray": 62.3,
+    "plants A (y < 210)": 12.7,
+    "back rail": 212.5,
+    "tier A rails": 62.3,
+    "gantry": 10.9,
+    "self": true
+   }
+  }
+ }
+}
