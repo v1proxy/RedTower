@@ -14,6 +14,21 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.6.2 – 2026-10-21
+
+**The arm plate drawn as one solid.** A drawing fix, nothing to build differently.
+
+### Fixed
+
+- `gantry/parts.py` `arm_plate()`: the plate's four countersinks were modelled as
+  four stacked layers, and the faces between the layers showed through the line
+  drawings as dark streaks beside the arm. It is now one closed solid
+  (manifold3d) with true 90° countersinks, the same holes and the same 6.35
+  thickness; without manifold3d it falls back to the layers. The harvest
+  booklet's "How the arm drops" page is redrawn; the gantry booklet picks it up at
+  its next build. The SendCutSend DXF (`arm_plate_revB.dxf`) is a separate
+  drawing and does not change.
+
 ## 0.6.1 – 2026-10-21
 
 **Harvest Rev B: the side feeder reshaped, and the exhaust fans inside.** The

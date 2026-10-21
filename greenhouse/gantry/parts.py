@@ -472,16 +472,42 @@ def arm_plate():
     and the OpenBuilds plate. Local x = world x, y = world z (up), z 0..6.35
     with the countersunk face at z = 6.35."""
     out = _rrect(160.0, 160.0, 12.0)
+    T = 6.35
+    try:
+        return _arm_plate_solid(out, T)
+    except ImportError:
+        pass
+    # no manifold3d: the countersinks as four stacked layers (drawn with seams)
     bore = circle_pts(11.0, SEG)
     taps = ([circle_pts(1.65, SEG, x, y) for x, y in ARM_BASE_HOLES]
             + [circle_pts(1.25, SEG, x, y) for x, y in ARM_GBASE_HOLES])
-    T = 6.35
     layers = [(0.0, T - 2.6, 2.75), (T - 2.6, 0.9, 3.6), (T - 1.7, 0.85, 4.4), (T - 0.85, 0.85, 5.2)]
     parts = []
     for z0, h, r in layers:
         csk = [circle_pts(r, SEG, x, y) for x, y in ARM_PLATE_CSK]
         parts.append(extrude(out, h, z0=z0, holes=[bore] + taps + csk))
     return merge(*parts)
+
+
+def _arm_plate_solid(outline, T):
+    """The arm plate as one closed solid (manifold3d): true 90 degree cones for
+    the countersinks and no faces inside the plate, so nothing shows through
+    in the line drawings."""
+    import manifold3d as M3
+    cs = M3.CrossSection([np.asarray(outline, float).tolist()])
+    plate = M3.Manifold.extrude(cs, T)
+    cuts = [M3.Manifold.cylinder(T + 2.0, 11.0, 11.0, SEG).translate([0, 0, -1.0])]
+    for (x, y), r in [(h, 1.65) for h in ARM_BASE_HOLES] + [(h, 1.25) for h in ARM_GBASE_HOLES]:
+        cuts.append(M3.Manifold.cylinder(T + 2.0, r, r, SEG).translate([x, y, -1.0]))
+    r0, r1 = 2.75, 5.2                                    # 5.5 through, 10.4 at the arm face, 90 deg
+    zc = T - (r1 - r0)
+    for x, y in ARM_PLATE_CSK:
+        cuts.append(M3.Manifold.cylinder(T + 2.0, r0, r0, SEG).translate([x, y, -1.0]))
+        cuts.append(M3.Manifold.cylinder(r1 - r0 + 1.0, r0, r1 + 1.0, SEG).translate([x, y, zc]))
+    for c in cuts:
+        plate = plate - c
+    m = plate.to_mesh()
+    return np.asarray(m.vert_properties, float)[:, :3], np.asarray(m.tri_verts, int)
 
 
 def arm_envelope():
