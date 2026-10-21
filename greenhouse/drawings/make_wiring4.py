@@ -119,9 +119,9 @@ arm.port("i", "l", 0.22)
 wire(ax, [arm.p("eth"), (arm.p("eth")[0], 812)], color=NET, lw=1.8)
 wire(ax, [jet.p("arm"), arm.p("i")], color=NET, lw=1.5, label="TCP, pymycobot")
 
-grip = Box(ax, 744, 420, 200, 84, "ADAPTIVE GRIPPER",
-           "Elephant Robotics\nmyCobot Adaptive Gripper\nmounts to the 280 flange\nwith no adapter plate",
-           tag="G083", kind="act")
+grip = Box(ax, 744, 420, 200, 84, "HERB SNIP",
+           "printed cut-and-hold tool, 4 LEGO pins\nMG90S servo, signal from G22\n6 V regulator on the 12 V wrist line\n"
+           "greenhouse/snip, its own BOM", tag="snip", kind="act")
 grip.port("i", "t", 0.5)
 wire(ax, [arm.p("grip"), (arm.p("grip")[0], 522), (grip.p("i")[0], 522),
           grip.p("i")], color=SIG, lw=1.4)
@@ -161,7 +161,7 @@ note(ax, COL, Y1 - 112,
      "cabinet, which leaves a 254 mm corridor for the\n"
      "carriage, the plate and the arm base.\n\n"
      "Joint 1 must sit at least 177 mm behind the front\n"
-     "face for the gripper to reach the back edge of a\n"
+     "face for the tool to reach the back edge of a\n"
      "tray. The arm is 437 mm tall stowed, which is\n"
      "more than the 431 and 392 mm of headroom on\n"
      "the upper two tiers, so it travels FOLDED and\n"
@@ -189,10 +189,10 @@ note(ax, COL, 232,
      "WHAT STILL HAS TO BE PROVEN\n\n"
      "• Hand-eye calibration between the D405 and\n"
      "  the gantry frame (handeye_calibrate.py).\n"
-     "• Whether 250 g payload is enough once the\n"
-     "  gripper and a wet 1 gal pot are included. It\n"
-     "  is not, for lifting pots; it is, for leaf work\n"
-     "  and harvesting. Plan the tasks accordingly.\n"
+     "• The Herb Snip and its D405 take 154 g of the\n"
+     "  250 g payload, leaving 96: enough for leaf work\n"
+     "  and harvesting, never for lifting pots. Plan\n"
+     "  the tasks accordingly.\n"
      "• The two spare TMC2209 channels are an\n"
      "  obvious home for a future tray shuttle.", fs=7.5)
 

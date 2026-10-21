@@ -19,7 +19,7 @@ from params import (Envelope, DesignError, POT, POT_GAP, POT_EDGE, MODULES,
                     W_MIN, W_MAX, D_MIN, D_MAX, H_MIN, H_MAX,
                     SPAN_MAX_2040, SPAN_MAX_4040,
                     ADC_CH, ADC_MAX_PER_BUS, PROBES_MAX_PER_TIER,
-                    ARM_REACH, ARM_GRIPPER, ARM_BASE_DIA, ARM_EXTENDED_H,
+                    ARM_REACH, ARM_TOOL, ARM_BASE_DIA, ARM_EXTENDED_H,
                     ARM_FOLD_L, ARM_WORK_H, ARM_MOUNT_OFF, ARM_PLATE_T,
                     ARM_SETBACK, GANTRY_CARRIAGE_D, TRANSIT_CLEAR,
                     CORRIDOR_MIN, CORRIDOR_MIN_ARM, CORRIDOR_MIN_GANTRY)
@@ -269,14 +269,14 @@ def solve(env: Envelope, version: str = "0.0.0") -> Design:
         reach_front = j1 - ARM_REACH
         # pots are pushed to the BACK of the tray, nearest the arm
         row_front = tray_depth - pot["size"] - POT_EDGE
-        # The gripper reaches past the flange, and it is the gripper that
-        # has to arrive at the leaf.
-        grip_front = reach_front - ARM_GRIPPER
+        # The tool reaches past the flange, and it is the Herb Snip's cut
+        # zone that has to arrive at the stem.
+        grip_front = reach_front - ARM_TOOL
         margin = row_front - grip_front
         if margin < 0:
             warn.append(
                 f"The arm cannot reach the front of the pot row: J1 sits "
-                f"{j1:.0f} mm back, flange plus gripper stops at "
+                f"{j1:.0f} mm back, flange plus the Herb Snip's cut zone stops at "
                 f"y={grip_front:.0f} mm, and the pots start at y={row_front:.0f} mm. "
                 f"Short by {-margin:.0f} mm. Push the pots further back, go "
                 f"shallower, or accept that the arm works the back of each pot only.")
@@ -284,7 +284,7 @@ def solve(env: Envelope, version: str = "0.0.0") -> Design:
             warn.append(
                 f"The flange alone stops at y={reach_front:.0f} mm and the pot row "
                 f"starts at y={row_front:.0f} mm, so the front {reach_front - row_front:.0f} mm "
-                f"of each pot is gripper-only reach. Fine for picking, not for "
+                f"of each pot is tool-only reach. Fine for cutting, not for "
                 f"anything that needs the flange itself over the pot.")
         dy = j1 - (tray_depth - pot["size"] / 2 - POT_EDGE)
         half = math.sqrt(max(0.0, ARM_REACH ** 2 - dy ** 2))

@@ -15,6 +15,11 @@ Tasks:
     harvest   <plant>         force a harvest attempt on the best leaf candidate
     prune     <plant>         force a tip pinch on the best tip candidate
 
+The tool is the Herb Snip (greenhouse/snip): it cuts and holds in one closing. A harvested
+leaf or a pinched tip rides in the closed jaws, folded, to the harvest drawer on the base pan
+at the corridor's left end, where the jaws open; a dead leaf is let go over the pan clear of
+the drawer. HA gets a drawer count and an "emptied" button.
+
 The division of labour that matters: plant_perception measures the plant and produces
 labelled candidate points; plant_tender asks Claude to pick one; this file is the only
 thing that converts a chosen label into motion, and it refuses anything outside the
@@ -47,11 +52,15 @@ PLANT_X = CFG["plant_x"]                                # e.g. {"A01": 95, ..., 
 
 # Arm base frame limits (mm). Anything outside is a bug or a bad calibration, not a plant.
 BOX = CFG.get("reach_box", {"x": [-140, 140], "y": [-80, 260], "z": [-60, 240]})
-TOOL_MM = float(CFG.get("tool_offset_mm", 45))          # flange face to fingertips, closed
+TOOL_MM = float(CFG.get("tool_offset_mm", 87))          # flange face to the Herb Snip's cut point
+SNIP = CFG.get("snip", {})                              # the jaw's two pulses, from tools_snip_check.py
+KEEP = {"pinch_tip", "harvest_leaf"}                    # these go to the drawer; a dead leaf never does
 EULER = CFG.get("handeye", {}).get("euler_order", "xyz")
 CAM_TO_FLANGE = np.array(CFG["cam_to_flange"]) if CFG.get("cam_to_flange") else None
 
-state = {"doors_open": True, "watering": True, "busy": False, "moisture": {}}
+state = {"doors_open": True, "watering": True, "busy": False, "moisture": {}, "bin_items": None}
+BIN_TOPIC = "greenhouse/robot/bin_items"
+_client = None                                          # set in main(), for the drawer count
 lock = threading.Lock()
 CLOSEUPS = CFG.get("closeup_dir", "/opt/greenhouse/closeups")
 
@@ -151,9 +160,21 @@ class Arm:
         self.mc.send_coords([x, y, z, rx, ry, rz], speed, 1)   # 1 = linear interpolation
         time.sleep(settle)
 
-    def grip(self, closed, speed=40, settle=1.5):
-        self.mc.set_gripper_state(1 if closed else 0, speed)
-        time.sleep(settle)
+    def jaw(self, closed, settle=None):
+        """The Herb Snip: 50 Hz pulses on the end connector's G22. Closed cuts, then holds."""
+        if not SNIP.get("calibrated"):
+            raise RuntimeError("the Herb Snip is not calibrated: run tools_snip_check.py, then set "
+                               "snip.calibrated in robot.json")
+        us = SNIP["closed_us"] if closed else SNIP["open_us"]
+        self.mc.set_pwm_output(int(SNIP.get("pin", 22)), int(SNIP.get("hz", 50)),
+                               max(1, min(255, round(us * SNIP.get("hz", 50) * 256 / 1e6))))
+        time.sleep(SNIP.get("settle_s", 0.8) if settle is None else settle)
+
+    def path(self, poses, speed=35):
+        """Joint waypoints in order: the drop path was planned in the model, one straight joint
+        move between each pair, so none of it may be skipped."""
+        for q in poses:
+            self.angles(q, speed)
 
 
 def publish_busy(client, busy):
@@ -192,7 +213,28 @@ def reach(arm, target):
     return approach, contact
 
 
-def act(arm, decision, wrist, pid):
+def let_go(gantry, arm, where):
+    """Folded, to the harvest drawer ("bin") or the waste spot ("waste"), open, close. The arm
+    stays in its lane the whole way: the gantry carries the fold, and only the jaw moves."""
+    arm.angles(CFG["pose_stow"], 40)                   # the fold, still holding it
+    spot = CFG[where]
+    gantry.move(z=spot["z"])
+    gantry.move(x=spot["x"])
+    arm.jaw(False, settle=SNIP.get("release_s", 1.0))
+    arm.jaw(True)
+    if where == "bin":
+        state["bin_items"] = (state.get("bin_items") or 0) + 1
+        if _client is not None:
+            _client.publish(BIN_TOPIC, str(state["bin_items"]), retain=True)
+
+
+def recover(arm):
+    """After a failed action: back to looking. The arm never leaves the lane holding anything,
+    so there is no path to retrace."""
+    arm.angles(CFG["pose_look"], 30)
+
+
+def act(arm, decision, wrist, pid, gantry=None):
     """Carry out a decision the tender already cleared. Returns a short outcome string."""
     name = decision["action"]["action"]
     target = decision.get("target")
@@ -204,14 +246,19 @@ def act(arm, decision, wrist, pid):
         return f"second look: {geo.leaf_count} leaves, {geo.canopy_height_mm:.0f} mm canopy"
 
     if name in ("pinch_tip", "harvest_leaf", "remove_dead_leaf"):
-        arm.grip(False)
+        cap = CFG.get("bin", {}).get("capacity", 40)
+        if name in KEEP and (state.get("bin_items") or 0) >= cap:
+            raise RuntimeError(f"the harvest drawer holds {state['bin_items']} pieces: empty it, then press "
+                               "Harvest drawer emptied")
+        arm.jaw(False)                                 # open before the reach: the stem goes between
         approach, _ = reach(arm, target)
-        arm.grip(True)
-        arm.move_to(approach, speed=12)                # pull straight back along the approach
-        arm.angles(CFG["pose_drop"], 35)               # over the collection cup in the base bay
-        arm.grip(False)
-        arm.angles(CFG["pose_look"], 40)
-        return f"{name} at {target['label']}"
+        arm.jaw(True)                                  # pads first, then the blade: cut and held
+        arm.move_to(approach, speed=12)                # straight back along the approach, holding it
+        if name in KEEP:
+            let_go(gantry, arm, "bin")
+            return f"{name} at {target['label']}, into the harvest drawer"
+        let_go(gantry, arm, "waste")                   # onto the base pan, clear of the drawer
+        return f"{name} at {target['label']}, let go over the base pan"
 
     return name                                        # watering nudges and flags are HA's job
 
@@ -247,12 +294,12 @@ def run_task(client, gantry, arm, wrist, task, target):
                 outcome = None
                 if decision["verdict"]["execute"] and decision.get("target"):
                     try:
-                        outcome = act(arm, decision, wrist, pid)
+                        outcome = act(arm, decision, wrist, pid, gantry)
                     except Exception as exc:           # one plant failing must not end the round
                         outcome = f"aborted: {exc}"
                         decision["verdict"]["execute"] = False
                         decision["verdict"]["blocked"] = str(exc)
-                        arm.angles(CFG["pose_look"], 30)
+                        recover(arm)
                 decision["outcome"] = outcome
                 pt.publish(client, decision)
                 pt.record_visit(decision)
@@ -272,7 +319,7 @@ def run_task(client, gantry, arm, wrist, task, target):
                         "verdict": {"execute": True, "propose": False, "blocked": None},
                         "target": {"label": cand.label, "kind": cand.kind, "point_m": cand.point_m,
                                    "normal": cand.normal, "approach_mm": CFG.get("approach_mm", 40)}}
-            decision["outcome"] = act(arm, decision, wrist, pid)
+            decision["outcome"] = act(arm, decision, wrist, pid, gantry)
             pt.record_visit(decision)
             arm.angles(CFG["pose_stow"], 40)
 
@@ -290,17 +337,29 @@ def run_task(client, gantry, arm, wrist, task, target):
 
 
 def main():
+    global _client
     gantry = Gantry(CFG["fluidnc_port"])
     arm = Arm(CFG["arm_ip"])
     wrist = Wrist()
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="greenhouse-robot")
     client.username_pw_set(CFG["mqtt"]["user"], CFG["mqtt"]["password"])
+    _client = client
 
     def on_connect(c, *_):
         c.publish(f"{PREFIX}/binary_sensor/gh_robot/busy/config", json.dumps({
             "name": "Robot busy", "unique_id": "gh_robot_busy", "object_id": "greenhouse_robot_busy",
             "state_topic": "greenhouse/robot/busy", "device_class": "running", "device": DEVICE}), retain=True)
+        c.publish(f"{PREFIX}/sensor/gh_robot/bin_items/config", json.dumps({
+            "name": "Harvest drawer", "unique_id": "gh_robot_bin_items", "object_id": "greenhouse_harvest_bin",
+            "state_topic": BIN_TOPIC, "unit_of_measurement": "pieces", "icon": "mdi:basket",
+            "device": DEVICE}), retain=True)
+        c.publish(f"{PREFIX}/button/gh_robot/bin_emptied/config", json.dumps({
+            "name": "Harvest drawer emptied", "unique_id": "gh_robot_bin_emptied",
+            "object_id": "greenhouse_harvest_bin_emptied", "command_topic": "greenhouse/robot/bin_emptied",
+            "icon": "mdi:basket-unfill", "device": DEVICE}), retain=True)
         c.subscribe("greenhouse/robot/cmd")
+        c.subscribe(BIN_TOPIC)                                          # the count survives a restart
+        c.subscribe("greenhouse/robot/bin_emptied")
         # Mirror interlock states from HA (HA mqtt_statestream, base_topic: hass_state, publish_attributes: false)
         c.subscribe("hass_state/binary_sensor/greenhouse_utility_doors/state")
         c.subscribe("hass_state/binary_sensor/greenhouse_utility_watering_active/state")
@@ -321,6 +380,17 @@ def main():
                 state["moisture"][part] = float(msg.payload.decode())
             except ValueError:
                 pass
+            return
+        if msg.topic == BIN_TOPIC:
+            if state["bin_items"] is None:                              # our own retained count, once
+                try:
+                    state["bin_items"] = int(msg.payload.decode())
+                except ValueError:
+                    state["bin_items"] = 0
+            return
+        if msg.topic.endswith("bin_emptied"):
+            state["bin_items"] = 0
+            c.publish(BIN_TOPIC, "0", retain=True)
             return
         if not msg.topic.endswith("robot/cmd"):
             return

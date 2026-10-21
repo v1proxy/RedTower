@@ -13,3 +13,4 @@ description: Arm and gantry planning, daily photo route.
 config:
   capture_hour: 9
   step_timeout_s: 120
+  bin_capacity: 40             # pieces before the harvest drawer must be emptied (160 x 180, 80 deep)

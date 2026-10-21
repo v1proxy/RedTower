@@ -36,7 +36,9 @@ PROBES_MAX_PER_TIER = ADC_CH * ADC_MAX_PER_BUS      # 16
 # quoted from the datasheet and two of them were wrong in ways that only a
 # real mesh could show.
 ARM_REACH = 292.6          # flange, radial from the J1 axis. Datasheet says 280.
-ARM_GRIPPER = 90.0         # the adaptive gripper adds this beyond the flange
+ARM_TOOL = 89.7            # the Herb Snip's cut zone beyond the flange frame: 88 from its mount face,
+                           # which sits 1.7 out (tips 109.2). greenhouse/snip. The adaptive gripper
+                           # it replaced added 90.0
 ARM_BASE_DIA = 160.0       # across the base of the mesh
 ARM_EXTENDED_H = 437.1     # straight out. 0.1.3 called this "stowed". It is not.
 ARM_FOLD_L = 162.6         # shortest COLLISION-FREE fold, from the J1 origin.

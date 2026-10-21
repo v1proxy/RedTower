@@ -4,6 +4,18 @@
 generators are driven by the solver. The Jetson bring-up below is complete and
 tested on the reference build.*
 
+## The tool: Herb Snip
+
+The arm carries one printed tool, the Herb Snip: a servo-driven blade that cuts a stem and
+holds what it cut in the same closing. A dead leaf rides in the folded jaws to Harvest
+Rev B's dead-leaf tray in the base bay and is let go over it; leaves and veggies go out
+through the right panel into its feeder at tier B. It goes on the 280's flange with four
+LEGO pins, through its camera ring, and replaces the adaptive gripper: 95.9 g of tool and
+58 g of D405, 96 g of the payload left. Everything about it, the booklet, the print files
+and the BOM, is in
+[`greenhouse/snip/`](../greenhouse/snip/HERB_SNIP.md); commissioning is section 7b of
+[`greenhouse/COMMISSIONING.md`](../greenhouse/COMMISSIONING.md).
+
 ## Jetson bring-up
 
 Everything above the node firmware runs on one Jetson Orin Nano Super developer

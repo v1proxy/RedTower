@@ -43,10 +43,11 @@ class FaultyCobot(SimCobot):
 
 
 class Bench(unittest.TestCase):
-    def rig(self, taught=True, start=STOW):
+    def rig(self, taught=True, start=STOW, **over):
         r = Rig()
         spec = copy.deepcopy(SPEC)
         spec["taught"] = taught
+        spec.update(copy.deepcopy(over))
         self.cobots = [FaultyCobot(r.clock, start)]
         for target, kw in ((A, dict(load_spec=lambda: spec)),
                            (A.mycobot, dict(connect=lambda host, port: self._next()))):
@@ -150,12 +151,13 @@ class TestMyCobot(Bench):
         self.run_s(35)
         self.assertIn("park timed out", self.state()["error"])
 
-    def test_approach_and_cut_wait_for_the_real_sequence(self):
+    def test_approach_waits_for_the_real_sequence_and_cut_for_the_snip(self):
         self.rig()
-        for action in ("approach", "cut"):
-            self.cmd(action)
-            self.assertEqual(self.state()["error"], f"refused: {action} is not built for the real arm yet")
-        self.assertEqual(self.cobot.sent, [])
+        self.cmd("approach")
+        self.assertEqual(self.state()["error"], "refused: approach is not built for the real arm yet")
+        self.cmd("cut")
+        self.assertIn("snip block is not calibrated", self.state()["error"])
+        self.assertEqual((self.cobot.sent, self.cobot.pwm), ([], []))
 
     def test_refuses_to_leave_the_lane_away_from_the_plant(self):
         self.rig()

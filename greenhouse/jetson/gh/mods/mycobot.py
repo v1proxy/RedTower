@@ -36,6 +36,7 @@ class SimCobot:
     def __init__(self, clock, move_s=2.0, start=(0.0,) * JOINTS):
         self.clock, self.move_s = clock, move_s
         self.angles, self.goal, self.until, self.powered = list(start), None, 0.0, True
+        self.pwm = []                       # (pin, hz, duty) sent to the end connector, in order
 
     def _settle(self):
         if self.goal is not None and self.clock() >= self.until:
@@ -59,6 +60,10 @@ class SimCobot:
     def is_moving(self):
         self._settle()
         return 1 if self.goal is not None else 0
+
+    def set_pwm_output(self, channel, frequency, pin_val):
+        if self.powered:                    # the end connector is dead with the arm unpowered
+            self.pwm.append((channel, frequency, pin_val))
 
     def stop(self):
         self.goal = None                    # stays where it was: a stop mid-move is not a pose

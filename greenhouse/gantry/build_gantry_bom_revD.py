@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Maag - GANTRY SUBSYSTEM bill of materials.
 
+Rev D (design 0.7.0): Rev C with one line changed. R02, the adaptive gripper, goes to
+quantity 0: the Herb Snip (greenhouse/snip, its own BOM) replaces it. Nothing else moves.
+
 Scope: everything needed to assemble the X/Z gantry, mount the robot arm on it,
 power it, wire it and bench-test it BEFORE it goes into the greenhouse frame.
 Out of scope: the 4040 frame itself, trays, lighting, irrigation, sensing.
@@ -29,8 +32,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-REV = "Gantry Rev C"
-DATE = "2026-10-20"
+REV = "Gantry Rev D"
+DATE = "2026-10-21"
 
 MS = "https://makerstore.cc"
 
@@ -322,9 +325,10 @@ ROWS = [
     ("R02", "Robot arm", "Adaptive gripper",
      "Elephant Robotics myCobot Adaptive Gripper", "Elephant Robotics Americas",
      "https://americas.shop.elephantrobotics.com/collections/end-effectors/products/adaptive-gripper",
-     1, "pc", 129.99, "Verified",
-     "Mounts straight to the 280 flange, no adapter plate. Cheaper and more "
-     "versatile than the Flexible gripper at $169.99."),
+     0, "pc", 129.99, "Verified",
+     "NOT BOUGHT from design 0.7.0: the Herb Snip (greenhouse/snip, Maag_Herb_Snip_BOM_RevA.xlsx) "
+     "cuts and holds in one tool and replaces it. Kept here, at quantity 0, so a Rev C build can see "
+     "what changed."),
 
     ("R03", "Robot arm", "Arm mounting plate, 6061-T6, 0.250 in",
      "SendCutSend custom, DXF in repo", "SendCutSend",
@@ -541,7 +545,7 @@ def build(path):
 
 
 if __name__ == "__main__":
-    out = "Maag_Gantry_BOM_RevC.xlsx"
+    out = "Maag_Gantry_BOM_RevD.xlsx"
     total, groups = build(out)
     print(f"saved {out}")
     for g, v in groups.items():

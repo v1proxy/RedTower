@@ -5,7 +5,9 @@ interface and only takes time, so everything above it is built and tested before
 hardware exists. Plant and tier coordinates come from config/robot.yaml.
 
 A plant move needs a homing cycle first: after power-up, an alarm or a stop the position is
-not trusted. "home" homes if needed, then goes to the park position.
+not trusted. "home" homes if needed, then goes to the park position. "to_bin" and
+"to_waste" go to robot.yaml's "bin" and "waste": the folded arm over the harvest drawer, or
+over the base pan clear of it, where the Herb Snip lets go of what it holds.
 
 The gantry never travels with the arm out of the lane. It publishes the gantry_still
 interlock the arm needs, and refuses to move itself unless the arm reports parked."""
@@ -143,7 +145,7 @@ class Gantry(Module):
                 self.ctl.stop()
             self.target, self.at, self.error = None, "unknown", ""      # stopped mid-travel: position not trusted
             return self._pub()
-        if action not in ("home", "goto"):
+        if action not in ("home", "goto", "to_bin", "to_waste"):
             return
         self.req, self.error = cmd.get("id"), ""
         problem = self.refusal(action, cmd.get("position"))
@@ -155,15 +157,18 @@ class Gantry(Module):
             self.ctl.home()
             self.target = ("home", None, None)
         else:
-            x, z = self.coords(cmd.get("position") if action == "goto" else None)
+            where = {"goto": cmd.get("position"), "to_bin": "bin", "to_waste": "waste"}.get(action)
+            x, z = self.coords(where)
             self.ctl.move_to(x, z)
-            self.target = ("home" if action == "home" else cmd["position"], x, z)
+            self.target = ("home" if action == "home" else where, x, z)
         self.at, self.deadline = "moving", self.clock() + self.config["move_timeout_s"]
         self._pub()
 
     def coords(self, position):
         if position is None:
             return float(self.layout["park"]["x"]), float(self.layout["park"]["z"])
+        if position in ("bin", "waste"):
+            return float(self.layout[position]["x"]), float(self.layout[position]["z"])
         return float(self.layout["plants"][position]), float(self.layout["tiers"][position[0]])
 
     def refusal(self, action, position):
@@ -173,8 +178,12 @@ class Gantry(Module):
             return "arm is not stowed"
         if self.moving():
             return "already moving"
-        if action == "goto":
-            if position not in self.layout["plants"] or str(position)[:1] not in self.layout["tiers"]:
+        if action in ("goto", "to_bin", "to_waste"):
+            if action != "goto":
+                position = "bin" if action == "to_bin" else "waste"
+                if not isinstance(self.layout.get(position), dict):
+                    return f"robot.yaml has no {position} position"
+            elif position not in self.layout["plants"] or str(position)[:1] not in self.layout["tiers"]:
                 return f"no coordinates for {position}"
             if not self.ctl.homed:
                 return "not homed: send home first"

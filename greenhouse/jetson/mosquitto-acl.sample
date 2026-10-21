@@ -22,6 +22,7 @@ topic write greenhouse/capture/#
 topic write greenhouse/observation/#
 topic write greenhouse/vision/#
 topic write greenhouse/robot/busy
+topic write greenhouse/robot/bin
 topic write greenhouse/gantry/state
 topic write greenhouse/arm/#
 topic write greenhouse/llm/#

@@ -1,14 +1,23 @@
-"""Arm (driver), myCobot 280 Pi over TCP (mycobot.py). Backend "sim" runs the same code on a
-simulated arm. Joint poses come from config/arm.yaml: "stow", folded inside the lane, and
-"look", the depth camera in front of the pot. A capture moves to look, then asks the depth
-camera for a frame.
+"""Arm (driver), myCobot 280 Pi over TCP (mycobot.py), with the Herb Snip on its flange
+(snip.py). Backend "sim" runs the same code on a simulated arm. Joint poses come from
+config/arm.yaml: "stow", the transit fold inside the lane, and "look", the depth camera in
+front of the pot. A capture moves to look, then asks the depth camera for a frame.
+
+Actions, each a list of steps run in order (a joint move, a jaw move, a pause):
+  park      to stow. The jaw keeps what it holds: the fold clears the tray line either way.
+  capture   to look, then a depth frame.
+  approach  jaw open, then the reach (simulated only: the real reach is not built yet).
+  cut       jaw closed: the blade cuts and the pads hold. It stays closed through the park.
+  release   parked only: jaw open, a pause, jaw closed. Motion takes the gantry first to the
+            harvest drawer (robot.yaml "bin") or to the waste spot ("waste"): the arm itself
+            never leaves the lane with what it cut.
 
 The pose the arm reports is read from its joints, never assumed: parked means the joints are
 at stow, the servos are powered and nothing is moving. The real arm is not moved until
-arm.yaml is marked taught.
+arm.yaml is marked taught, and the jaw gets no pulse until its snip block is calibrated.
 
 The arm publishes the arm_stowed interlock the gantry needs, and refuses to leave the lane
-while the gantry is moving or is parked at a different plant from the one asked about."""
+while the gantry is moving or is parked somewhere other than where the action belongs."""
 import os
 from pathlib import Path
 
@@ -18,9 +27,11 @@ from .. import topics as T
 from ..bus import loads
 from ..module import Module
 from . import mycobot
+from . import snip as S
 
 STATE = f"{T.ROOT}/arm/state"
 GANTRY_STATE = f"{T.ROOT}/gantry/state"
+ACTIONS = ("park", "capture", "approach", "cut", "release")
 RECONNECT_S = 10
 READ_FAILURES = 3          # this many bad joint reads in a row means the link is gone
 START_GRACE_S = 1.5        # a servo move may not report "moving" at once
@@ -37,7 +48,7 @@ class Arm(Module):
         self.spec = load_spec()
         self.job, self.pose, self.angles, self.moving, self.powered = None, "unknown", None, False, False
         self.mc, self.lock, self.last, self.gantry, self.error, self.req = None, None, None, {}, "", None
-        self.retry_at, self.failures, self.ticks = 0.0, 0, 0
+        self.retry_at, self.failures, self.ticks, self.snip = 0.0, 0, 0, None
         self.bus.subscribe(GANTRY_STATE, lambda t, p: setattr(self, "gantry", loads(p, {}) or {}))
         self.bus.subscribe(T.actuator_set("arm"), self._on_set)
         self._connect()
@@ -54,18 +65,30 @@ class Arm(Module):
                 self.mc = mycobot.connect(self.config["host"], self.config["port"])
                 if not self.mc.is_power_on():
                     self.mc.power_on()
-                if self.spec.get("taught"):
-                    self.report("running", f"myCobot at {self.config['host']}")
-                else:
+                if not self.spec.get("taught"):
                     self.report("fault", "arm.yaml poses are not taught: the arm will not move")
+                elif self.snip_problem():
+                    self.report("running", f"myCobot at {self.config['host']}; Herb Snip: {self.snip_problem()}")
+                else:
+                    self.report("running", f"myCobot at {self.config['host']}")
             else:
                 self.report("fault", f"unknown backend {backend!r}")
+            self.snip = S.Snip(self.mc, self.spec.get("snip") or {}, self.clock) if self.mc else None
             self.ticks = 0                                  # check servo power on the first read
         except Exception as exc:                            # Pi booting, wrong address, no server
             self._lost(f"arm not reachable: {exc}")
 
+    def snip_problem(self):
+        spec = self.spec.get("snip") or {}
+        bad = S.check_spec(spec)
+        if bad:
+            return bad[0]
+        if self.config["backend"] != "sim" and not spec.get("calibrated"):
+            return "arm.yaml snip block is not calibrated (tools_snip_check.py)"
+        return ""
+
     def _lost(self, why):
-        self.mc, self.job, self.angles, self.moving = None, None, None, False
+        self.mc, self.job, self.angles, self.moving, self.snip = None, None, None, False, None
         self.retry_at = self.clock() + RECONNECT_S
         self.report("fault", why)
 
@@ -90,9 +113,10 @@ class Arm(Module):
         self.pose = self.derive_pose()
         self._pub()
 
-    def near(self, name):
+    def near(self, name_or_angles):
         tol = self.spec["tolerance_deg"]
-        return self.angles is not None and all(abs(a - b) <= tol for a, b in zip(self.angles, self.spec["poses"][name]))
+        goal = self.spec["poses"][name_or_angles] if isinstance(name_or_angles, str) else name_or_angles
+        return self.angles is not None and all(abs(a - b) <= tol for a, b in zip(self.angles, goal))
 
     def derive_pose(self):
         if self.mc is None or self.angles is None:
@@ -105,13 +129,20 @@ class Arm(Module):
             return "at_plant"
         return "unknown"
 
+    def jaw(self):
+        if self.snip is None:
+            return "unknown"
+        if not self.powered and self.config["backend"] != "sim":
+            return "limp"                                       # no arm power, no pulses
+        return self.snip.state()
+
     def _pub(self):
         lock = "OK" if self.pose == "parked" else "OPEN"
         if lock != self.lock:                                   # interlock first, so it is in place
             self.lock = lock                                    # before anyone sees the new state
             self.bus.publish(T.interlock("arm_stowed"), lock, retain=True)
         body = {"pose": self.pose, "busy": self.job is not None, "id": self.req, "error": self.error,
-                "angles": None if self.angles is None else [round(a) for a in self.angles]}
+                "jaw": self.jaw(), "angles": None if self.angles is None else [round(a) for a in self.angles]}
         if body != self.last:
             self.last = body
             self.bus.publish(STATE, body, retain=True)
@@ -119,7 +150,7 @@ class Arm(Module):
     # ---- commands from the governor
     def _on_set(self, topic, payload):
         cmd = loads(payload, {})
-        if not self.enabled or not isinstance(cmd, dict) or cmd.get("action") not in ("park", "capture", "approach", "cut"):
+        if not self.enabled or not isinstance(cmd, dict) or cmd.get("action") not in ACTIONS:
             return
         action, now = cmd["action"], self.clock()
         self.req, self.error = cmd.get("id"), ""
@@ -128,31 +159,87 @@ class Arm(Module):
             self.error = f"refused: {problem}"
             self.report(self.state, self.error)
             return self.refresh()
+        steps = self.steps(action)
         if self.job is not None:
             self.mc.stop()
-        if action in ("park", "capture"):
-            goal = "stow" if action == "park" else "look"
-            self.mc.send_angles(self.spec["poses"][goal], self.spec["speed"])
-            self.job = dict(cmd, goal=goal, sent=now, deadline=now + self.config["move_timeout_s"])
-        else:                                                   # sim only: approach and cut take time
-            self.job = dict(cmd, goal=None, sent=now, deadline=now + self.config["sim_move_s"])
+        self.job = dict(cmd, steps=steps, i=-1, deadline=now + self._budget(action, steps))
+        self._next_step()
         self.refresh()
+
+    def steps(self, action):
+        P = self.spec["poses"]
+        if action == "park":
+            return [("move", P["stow"])]
+        if action == "capture":
+            return [("move", P["look"])]
+        if action == "approach":                                # sim only, see refusal()
+            return [("jaw", "open"), ("sim", self.config["sim_move_s"])]
+        if action == "cut":
+            return [("jaw", "close")]
+        return [("jaw", "open"), ("wait", self.spec["snip"].get("release_s", 1.0)), ("jaw", "close")]   # release
+
+    def _budget(self, action, steps):
+        moves = sum(1 for s in steps if s[0] == "move")
+        return self.config["move_timeout_s"] * max(1, moves)
 
     def refusal(self, cmd):
         action = cmd.get("action")
         if self.mc is None:
             return "arm not connected"
-        if self.config["backend"] != "sim" and not self.spec.get("taught"):
+        real = self.config["backend"] != "sim"
+        if real and not self.spec.get("taught"):
             return "arm.yaml poses are not taught"
         if action == "park":
             return ""
-        if action in ("approach", "cut") and self.config["backend"] != "sim":
-            return f"{action} is not built for the real arm yet"
+        if action == "approach" and real:
+            return "approach is not built for the real arm yet"
+        if action in ("approach", "cut", "release") and self.snip_problem():
+            return f"Herb Snip: {self.snip_problem()}"
+        if action == "release" and self.pose != "parked":
+            return f"release is from the stow pose, the arm is {self.pose}"
         if self.gantry.get("busy"):
             return "gantry is moving"
+        if action == "release":
+            return ""
         if self.gantry.get("at") != cmd.get("position"):
             return f"gantry is at {self.gantry.get('at')}, not at {cmd.get('position')}"
         return ""
+
+    # ---- steps
+    def _next_step(self):
+        job = self.job
+        job["i"] += 1
+        if job["i"] >= len(job["steps"]):
+            return self._done(job)
+        kind, arg = job["steps"][job["i"]]
+        now = self.clock()
+        job["sent"] = now
+        if kind == "move":
+            self.mc.send_angles(arg, self.spec["speed"])
+        elif kind == "jaw":
+            (self.snip.open if arg == "open" else self.snip.close)()
+        else:                                                   # wait, sim
+            job["until"] = now + float(arg)
+
+    def _step_state(self):
+        """'done', 'running' or a failure message for the current step."""
+        job, now = self.job, self.clock()
+        kind, arg = job["steps"][job["i"]]
+        if kind == "move":
+            if not self.moving and self.near(arg):
+                return "done"
+            if not self.moving and now - job["sent"] > START_GRACE_S:
+                return f"{job['action']} stopped short of {self._name(arg)}"
+            return "running"
+        if kind == "jaw":
+            return "done" if self.snip.settled() else "running"
+        return "done" if now >= job["until"] else "running"
+
+    def _name(self, angles):
+        for name, pose in self.spec["poses"].items():
+            if list(pose) == list(angles):
+                return f"the {name} pose"
+        return f"waypoint {[round(a) for a in angles]}"
 
     # ---- every tick
     def loop(self):
@@ -162,18 +249,19 @@ class Arm(Module):
                 self._connect()
             return self.refresh()
         self.refresh()
-        job, now = self.job, self.clock()
-        if job is None or self.mc is None:
+        if self.job is None or self.mc is None:
             return
-        if job["goal"] is None:
-            if now >= job["deadline"]:
-                self._done(job)
-        elif not self.moving and self.near(job["goal"]):
-            self._done(job)
-        elif now > job["deadline"]:
-            self._fail(f"{job['action']} timed out")
-        elif not self.moving and now - job["sent"] > START_GRACE_S:
-            self._fail(f"{job['action']} stopped short of the {job['goal']} pose")
+        for _ in range(len(self.job["steps"])):                 # a settled jaw lets the next step start now
+            st = self._step_state()
+            if st == "running":
+                if self.clock() > self.job["deadline"]:
+                    return self._fail(f"{self.job['action']} timed out")
+                return
+            if st != "done":
+                return self._fail(st)
+            self._next_step()
+            if self.job is None:
+                return
 
     def _done(self, job):
         self.job = None

@@ -70,6 +70,12 @@ class Bridge:
         add("camera", "live_d405", name="Arm camera live", topic=f"{T.ROOT}/live/d405")
         add("binary_sensor", "robot_busy", name="Robot busy", state_topic=f"{T.ROOT}/robot/busy",
             payload_on="ON", payload_off="OFF", device_class="running")
+        add("sensor", "herb_snip", name="Herb Snip jaw", state_topic=f"{T.ROOT}/arm/state",
+            value_template="{{ value_json.jaw }}", icon="mdi:content-cut")
+        add("sensor", "harvest_bin", name="Harvest drawer", state_topic=f"{T.ROOT}/robot/bin",
+            unit_of_measurement="pieces", state_class="measurement", icon="mdi:basket")
+        add("button", "harvest_bin_emptied", name="Harvest drawer emptied", command_topic=T.cmd("motion"),
+            payload_press='{"op": "bin_emptied"}', icon="mdi:basket-unfill")
         add("sensor", "proposals", name="Proposals", state_topic=T.PROPOSALS,
             value_template="{{ value_json | length }}",
             json_attributes_topic=T.PROPOSALS, json_attributes_template="{{ {'items': value_json} | tojson }}")

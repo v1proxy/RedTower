@@ -34,7 +34,9 @@ python greenhouse/enclosure/make_enclosure_files.py  # the right panel, with the
 the myCobot 280 Pi's links (`MYCOBOT_MESH`, Elephant Robotics' .dae folder,
 which the booklet draws undecimated as the gantry booklet does; `MAAG_ARM_NPZ`, a
 decimated .npz, is enough for the checks) and the Herb Snip's printed body
-(`SNIP_STL`, `snip_body.stl`). The printed parts need `manifold3d`.
+(`SNIP_STL`, `snip_body.stl`). The printed parts need `manifold3d`. The baseline
+tool is now Herb Snip Rev A as assembled (`greenhouse/snip`, 0.7.0): its body,
+camera ring and D405 together, not `snip_body.stl` alone.
 
 ---
 
@@ -96,7 +98,10 @@ away by the time the lid is 20° open.
 is wide only for its first 60 along the tool axis (the servo); past that it is a
 slim jaw finger. reach.py keeps the servo end inside the cabinet (17 to spare),
 so only the finger goes through: 80 × 160 is the finger, its swing to the
-release, and a leaf hanging from the jaws.
+release, and a leaf hanging from the jaws. The baseline Herb Snip keeps that
+shape (its housing ends at its deck, 58 along the axis), but its D405 and the
+camera ring's chin stand out beside the housing to 68 from the axis, within
+that first 60: reach.py has to see them.
 
 **The two drops sit 91 apart, close to the divider.** With the arm at the end of
 its X travel the snip reaches the panel from y 275 to about 385: further back,
@@ -130,7 +135,8 @@ grips the panel when its screw is turned.
 
 Drop poses (`drops.yaml`), the tightest gap at each, mm, with the arm's own
 CAD meshes. **Provisional**: solved with the Herb Snip's first printed body,
-without its D405; the housing version replaces it when its files land.
+without its D405. The baseline is now Herb Snip Rev A with its housing, camera
+ring and D405 (`greenhouse/snip`, 0.7.0): rerun with it.
 
 | Drop | Release point (x, y, z) | J1 height | Tightest |
 |---|---|---|---|
@@ -188,16 +194,19 @@ enclosure's stock.
 - **ESPHome utility node**: the doors chain on MCP23017 A4 is now four door reeds
   and the feeder lid, in series. No pin changes.
 
-**Supersedes**: the Herb Snip's harvest drawer (160 × 180 × 80 in the base bay,
-in the Herb Snip chat's branch `herb-snip-0.5.0`, not yet in this repo) and its
-keep-out zone. When that branch lands, its `to_bin` goes to the feeder's two
-compartments and its `to_waste` to the tray's five drops, from `drops.yaml`.
+**Supersedes**: the Herb Snip's harvest drawer (160 × 180 × 80 in the base bay)
+and its keep-out zone. The snip landed in 0.7.0 without it: its `to_waste` is a
+tray drop at the transit fold (the lowest Z, J1 368, no arm move; jaws 49 over the
+rims, at least 58 in from a side wall, the TCP at y 316), and its `to_bin`, the
+feeder, waits on an arm route that follows `drops.yaml`.
 
 ## Open items
 
 - **The snip is posed as printed**: mount face at z 8.5 on the flange, flange
   centre at (0, 12.7) in its STL, jaws as a 18 × 26 × 70 block past 70. Rerun
-  `reach.py` with the Herb Snip's real assembly when its branch lands.
+  `reach.py` with the baseline Herb Snip (`greenhouse/snip`, 0.7.0), tool frame
+  on the flange face: housing x -19.2 to 21, y -19.2 to 42, deck at z 58; jaw
+  finger to z 107.5; D405 and chin to y -68, z -8 to 33; 153.9 g on the flange.
 - **drops.yaml is in cabinet coordinates.** Commissioning jogs to each pose and
   writes the machine coordinates into `robot.yaml`, as for the plants.
 - **The reed switch and magnet are drawn as blocks** (Honeywell publishes no

@@ -47,18 +47,24 @@ gantry:
   goto: {interlocks: [door, estop, arm_stowed], needs_plant: true}
   jog_x: {min: -50, max: 50, interlocks: [door, estop, arm_stowed], approval: always}   # millimetres
   jog_z: {min: -50, max: 50, interlocks: [door, estop, arm_stowed], approval: always}
+  to_bin: {interlocks: [door, estop, arm_stowed]}      # over the harvest drawer, robot.yaml "bin"
+  to_waste: {interlocks: [door, estop, arm_stowed]}    # over the base pan clear of it, "waste"
   stop: {safe_off: true}
 arm:
   capture: {interlocks: [door, estop, gantry_still], needs_plant: true}
   approach: {interlocks: [door, estop, gantry_still], needs_plant: true, needs_grant: tend}
   cut:     {interlocks: [door, estop, gantry_still], needs_plant: true, needs_grant: tend}
+  release: {interlocks: [door, estop, gantry_still], needs_grant: tend}    # jaw open at the fold
   park:    {safe_off: true}
 # A tend task is how a cut happens: the tender proposes it, the owner approves it, and motion
-# runs the whole sequence (go there, capture again, find the leaf again, approach, cut, park).
-# Approval grants exactly one approach and one cut at that plant for 15 minutes. needs_grant:
-# the governor refuses those arm actions from any module without a live grant.
+# runs the whole sequence (go there, capture again, find the leaf again, approach, cut, park,
+# then the drawer for a harvest or the waste spot for a removed leaf). Approval grants exactly
+# one approach, one cut and one release for that plant for 15 minutes. needs_grant: the
+# governor refuses those arm actions from any module without a live grant. The owner's own
+# requests from the interface need none: that is how a held leaf is let go after a stop.
 robot:
-  tend: {interlocks: [door, estop], needs_plant: true, approval: always, grants: {approach: 1, cut: 1}}
+  tend: {interlocks: [door, estop], needs_plant: true, approval: always,
+         grants: {approach: 1, cut: 1, release: 1}}
 
 dosing:
   dose: {min: 0, max: 0, max_per_hour: 0, approval: always}     # stub: no hardware, nothing passes

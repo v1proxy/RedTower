@@ -350,8 +350,9 @@ R = [
   1, "pc", 759.00, "Verified", "In stock, on sale from $799."),
  ("G083", "Robot arm", "Gripper, adaptive", "Elephant Robotics", "myCobot Adaptive Gripper", "Elephant Robotics Americas",
   "https://americas.shop.elephantrobotics.com/collections/end-effectors/products/adaptive-gripper",
-  1, "pc", 129.99, "Verified",
-  "In stock, and the page lists the 280 Pi explicitly, so no adapter plate. Cheaper than the Rev C placeholder."),
+  0, "pc", 129.99, "Verified",
+  "NOT BOUGHT: the Herb Snip (greenhouse/snip, Maag_Herb_Snip_BOM_RevA.xlsx) is the arm's one tool. It cuts and "
+  "holds what it cut, which the adaptive gripper cannot."),
  ("G084", "Robot arm", "Second arm (optional)", "Elephant Robotics", "myCobot 280 Pi", "Elephant Robotics Americas",
   "https://americas.shop.elephantrobotics.com/products/mycobot-280-pi-worlds-smallest-and-lightest-six-axis-collaborative-robot",
   0, "pc", 759.00, "Alternate", "Not in the total. Set Qty to 1 to add it."),
@@ -499,6 +500,8 @@ CHANGES = [
  ("Compute", "The Arducam part is UB020201, not B020201", "A wrong part number buys the wrong camera.", "Fixed"),
  ("Robot arm", "The arm and gripper are both cheaper than Rev C assumed",
   "$759 on sale and $129.99, and the gripper page lists the 280 Pi explicitly, so no adapter.", "Price"),
+ ("Robot arm", "The Herb Snip replaces the adaptive gripper",
+  "G083 at quantity 0. The snip has its own BOM (greenhouse/snip), $45.08 with its spares.", "Fixed"),
 ]
 
 

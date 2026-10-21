@@ -15,6 +15,7 @@ plant_records.json
 data/
 *.db
 greenhouse/jetson/d405_out/
+greenhouse/jetson/snip_empty_depth.npy
 
 # Python
 __pycache__/
@@ -24,10 +25,11 @@ __pycache__/
 # Superseded by git history
 *.revD-backup
 
-# generated booklet pages
+# generated booklet pages and meshes
 greenhouse/gantry/build/
 greenhouse/frame/build/
 greenhouse/enclosure/build/
+greenhouse/snip/build/
 
 # cover render intermediates (the .png is tracked)
 greenhouse/*/cover/*.npz

@@ -1,0 +1,183 @@
+# Maag: the Herb Snip
+
+Maag is the Modular Agentic Autonomous Greenhouse.
+
+**Herb Snip Rev A · design 0.7.0 · 2026-10-21 · all dimensions mm**
+
+The Herb Snip is the arm's tool: one printed end effector on the myCobot 280's flange
+that **cuts and holds in one closing**. A hobby servo closes a snap-off blade onto an
+anvil; printed TPU pads beside the blade close a moment before it, so the leaf or tip
+that was cut stays in the jaws. What it cut goes where Harvest Rev B puts it: a **dead leaf**
+rides in the folded jaws to the **dead-leaf tray** in the base bay, and the jaws open over
+it; **leaves and veggies** go out through the right panel into the **feeder** at tier B. It
+replaces the adaptive gripper (gantry BOM R02, master BOM G083), so there is one tool and no
+tool change.
+
+Read alongside the booklet `Maag_Herb_Snip_Assembly_Instructions_RevA.pdf` (cover, how it
+works, the parts, 12 steps and a wiring page) and the BOM `Maag_Herb_Snip_BOM_RevA.xlsx`.
+
+**Changing a blade** takes the clamp screw and the pivot screw out, both into brass, so the
+threads do not wear: two screws, a 1.3 mm and a 2 mm key. Jaw A then slides out sideways and up
+with the blade in its pocket; jaw B stays on the link. **Changing a pad** is sliding it
+out of its rib toward the servo side; the dovetail is cut one way, so a new one only goes in
+the right way round.
+
+## How it works
+
+| | |
+|---|---|
+| Drive | TowerPro MG90S, 6 V from a Pololu D24V10F6 on the 12 V wrist line |
+| Linkage | four-bar: crank 11.27, link 14.73, jaw tail 14.51; the servo turns 157° for 0° to 55° of jaw |
+| Cut | an OLFA 9 mm snap-off blade, a 34 mm piece, clamped between the moving jaw's halves, closing onto a printed anvil on the tool axis |
+| Hold | two printed TPU 95A pads, one on each jaw, on the servo side of the blade: a comb of 11 fins, 0.8 thick, slanted 35° toward the jaw root, 2.2 proud, so they meet the stem before the blade does. The fins bend round the stem and seat it between them; a piece pulled toward the tips straightens them into it. About 1.1 N on a 4.5 mm stem, and 1.0 N of the servo's force at the end of that cut |
+| Fasteners | every one flush: the pivot is a shoulder screw (4 × 6, M3), its head in a counterbore in jaw B, its shoulder on a heat-set insert in the cheek, which closes over the thread in a round hub; the blade is held by one countersunk M2 into a heat-set insert in jaw B; the camera by two countersunk M3 |
+| Force at the cut | 34 N in the middle of the cut zone, 24 to 28 N at its ends, with the servo derated to 0.15 N m against its 0.22 N m stall |
+| Opening | 55°: 21 across the jaws at the cut zone, 37 at the tips |
+| Camera | the D405 rides on the body, tilted 20° toward the pads: the cut zone sits 72 from it, just past its 70 near limit, the tips at 90, so it sees the stem in the jaws before it cuts |
+| Mounting | four LEGO Technic pins (2780) into the 280's flange, through the camera ring into the body, like Elephant's own tools: no screws |
+| Material | white PETG, like the arm; PLA creeps under the jaw's force and the mist. The pads are TPU 95A |
+| Form | one housing: a round collar with a band cut into it, a waist that eases into a rounded housing (corners 9, deck rim 5) that encloses the servo, the regulator and the linkage. The mechanism moves in a cavity cut to its own swept shapes, with a porthole on the fixed jaw's side to see and guide the link, a window where the horn swings past the wall, and one opening in the deck where the jaw stands. The collar splits at its band: below it the camera ring, the collar's foot and the D405's curved chin in one piece, as wide as the camera, between the flange and the body. Both print on a flat face without supports: the body on its flat base, the ring on its flat side, where the collar's +x side, the chin and the camera's plate meet one plane. Every small part has a 0.6 edge radius |
+| Mass | 95.9 g of tool (the housing 49 g and the camera ring 16 g, at 25 % infill) and 58 g of D405 on the flange: 153.9 of the 280's 250 g payload, 96 g left for what it carries |
+| Control | 50 Hz PWM from the arm's end connector, Atom pin G22, through pymycobot's `set_pwm_output`. 256 steps in 20 ms: 78 µs, about 7° of servo a step, which is plenty for open and closed |
+| Safety | the doors and the E-stop cut the arm's power: no pulses, the servo goes limp, the jaw can be pushed open by hand |
+
+**What it does not do.** It does not grip a loose object presented side-on: the pads are
+on one side of the blade, so it holds what it cut, not what it is handed. A pepper is
+picked the same way as a leaf, by cutting its stem; the perception stack does not label
+fruit yet, so for now that is a manual harvest.
+
+**What was tried first.** A cup on the carriage: no collision-free pose drops into
+anything near the arm's base. Then a bin in pot station B01: there are drop poses over it,
+but no way to reach them from the fold. The arm is side-mounted, its J1 axis 121 from the
+left side at the carriage's left limit, so turning J1 toward the bin swings the tool
+through the side panel, and every route forward crosses B02's plant or the bin wall.
+`bin_reach.py` is the first of those studies.
+
+## Assembly: everything goes in from outside
+
+The body is one piece and stays one piece: every part inside it goes in through an opening
+it already has, in the booklet's order, and the model checks each way in against the parts
+already fitted at that step (`checks.assembly_paths()`, `access_check.py`).
+
+| Step | Part | Way in | Tightest on the way |
+|---|---|---|---|
+| 4 | pads, anvil | each pad along its rib's dovetail from +y; the anvil into its pocket from the mouth | their own sliding fits |
+| 4 | pivot insert | the iron along the pivot's axis from +y | the deck is 4 under the axis: an iron under 8 thick for its first 50 |
+| 5 | jaw (blade, pad, clamp fitted) | held open 30°, down 7 toward its opening side, then across onto the cheek | 0.8 off the fixed pad's fins |
+| 5 | pivot screw | a 2 mm key along the axis from +y, its long leg up | 0.55 |
+| 5 | link (dowel pressed in) | down 6 to the servo side of its layer, past jaw B's rib, then across | the dowel's own slip fit in the lug |
+| 7 | servo with horn, crank and dowel | from the back along its axis, the crank's dowel into the link | the dowel's slip fit, 0.07 |
+| 7 | tab screws | from the back, beside the case | a driver under 5 thick |
+| 8 | regulator | into its bay through the +x face | 0.45 round the board |
+
+## Where the cuts go
+
+Harvest Rev B replaces the printed harvest drawer this package had: the
+**dead-leaf tray**, 457 × 480 × 50 of bent 5052, hangs by its rims on two rails in the base
+bay and slides out of the bottom-left door; the **feeder**, two printed compartments, sits
+on the right panel's outside at tier B. Both are built from the Harvest booklet.
+
+A dead leaf needs nothing new from the arm: it rides in the closed jaws at the transit fold,
+the gantry stops over one of the tray's five drops at the lowest Z, and the jaws open.
+
+| | |
+|---|---|
+| J1 at the release | 368 above the floor, the lowest Z (mast foot, end mount and wheels, plus 5) |
+| Jaws open | 49 above the rims, at least 58 in from a side wall |
+| Z full travel over the tray | the fold's lowest point clears the rims by 30 |
+| robot.yaml X of the five drops | 18, 102, 186, 270 and 355 from the left limit (tray x 231.5 to 568.5) |
+| Transit fold | clear of the tray line (y 223) at every J6, jaws open or closed: tool at y 247.5 or more |
+
+The feeder is different: the arm has to reach out through the right panel's opening with
+the piece in its jaws, on drop poses Harvest Rev B solves (`drops.yaml`). Those poses were
+solved with this tool's first printed body, without its D405, and are rerun with this
+assembly when the two branches meet (open items).
+
+## Files
+
+```
+snip_cad.py          every printed part as a signed-distance model (sdf.py), the linkage, the placement
+snip_cots.py         the bought parts as placed meshes: MG90S, regulator, blade, screws, pins, D405
+assembly.py          everything placed at a jaw opening
+linkage.py           the four-bar synthesis (linkage_best.npy is its answer)
+build_meshes.py      mesh every printed part into build/
+decimate.py          merges the meshes' flat faces: closed, at most 0.05 more error
+export_print.py      the print files, each lying as it prints, welded as stored: every edge on two faces
+checks.py            force, mass, camera view, interference: build/checks.json
+arm_checks.py        the transit fold with the tool on, at every J6, and the drops over the dead-leaf tray
+access_check.py      every way in and every tool's reach, against what is fitted at that step
+interfere.py         moving parts against the body over the jaw's travel
+bin_reach.py         the B01 bin study: reach into a pot station, and what it hits
+make_snip_booklet.py the booklet, from all of the above
+build_snip_bom_revA.py   the BOM
+print/*.stl          the eight print files (the pad's, snip_pad_TPU_x2, is printed twice in TPU)
+```
+
+Regenerate, in order (the D405 mesh from Intel and the 280 meshes from Elephant Robotics
+sit outside the repo, as for the gantry; `D405_STL` and `MYCOBOT_MESH` point at them):
+
+```
+python greenhouse/snip/build_meshes.py
+python greenhouse/snip/decimate.py body ring mj_a mj_b link crank anvil pad
+python greenhouse/snip/checks.py
+python greenhouse/snip/arm_checks.py
+python greenhouse/snip/export_print.py greenhouse/snip/print
+python greenhouse/snip/make_snip_booklet.py   # the booklet into greenhouse/snip/build/booklet
+python greenhouse/snip/build_snip_bom_revA.py
+```
+
+## Software (design 0.7.0)
+
+- `jetson/gh/mods/snip.py`: pulse arithmetic, the jaw (limp, opening, open, closing,
+  closed) and the D405 check that something is between the jaws, against a reference
+  taken with them empty.
+- `jetson/gh/mods/arm.py`: actions are lists of steps (a joint move, a jaw move, a
+  pause). `cut` closes the jaw; `release` opens it at the fold and closes it again, from
+  the stow pose only. The arm state carries `jaw`. The real arm sends the servo nothing
+  until `arm.yaml`'s `snip` block is calibrated.
+- `jetson/gh/mods/motion.py`: a tend task is now approach, cut, park holding it, then the
+  gantry to `bin` (`to_bin`) for a harvest or a pinched tip, or to `waste` (`to_waste`) for
+  a removed leaf, a release there, and home. `waste` is a drop over the dead-leaf tray. The
+  feeder needs an arm route out through the right panel, which this software does not have
+  yet: until it does, leave `bin` out of `robot.yaml`, so a harvest is refused at `to_bin`
+  and stays in the jaws rather than landing in the tray.
+- `jetson/gh/mods/gantry.py`: `to_bin` and `to_waste` go to `robot.yaml`'s `bin` and
+  `waste`.
+- `jetson/config/limits.yaml`: `to_bin`, `to_waste` and `release`; an approved tend task
+  grants one release with its approach and cut.
+- Home Assistant: **Herb Snip jaw**, **Harvest drawer** (pieces) and a **Harvest drawer
+  emptied** button, from the bridge and from the prototype supervisor alike. The names are
+  the drawer's: they become the tray's and the feeder's counters with the feeder route.
+- `jetson/tools_snip_check.py`: commissioning. Pulses, open, close, cut, limp, and the
+  stem check.
+- `jetson/prototype/robot_supervisor.py`: the same behaviour on the prototype path.
+- Tests: `jetson/tests/test_snip.py`.
+
+## Commissioning
+
+Booklet step 12, and `greenhouse/COMMISSIONING.md` section 7b.
+
+## Open items
+
+- **The horn.** TowerPro publishes no drawing of the MG90S single-arm horn. The crank's
+  pocket is drawn from photographs and calipers on a typical horn: print the crank first
+  and check it (step 2). `HORN` in `snip_cad.py` changes the pocket.
+- **The blade's angle.** Snap-off blades are ground anywhere from about 52° to 68° at the
+  snap line; the pocket takes the whole range.
+- **PWM on the end connector.** `set_pwm_output` on the 280 Pi's Atom is what pymycobot
+  documents; the 50 Hz on G22 is checked on the real arm in step 12. If it is not steady,
+  the Pololu Micro Maestro on the D405's USB run drives the same lead (BOM E02).
+- **The servo's travel.** 157° is needed for the full 55°. A servo that stops short opens
+  the jaw a little less, which costs nothing but mouth width.
+- **The feeder's route.** The arm's drop poses through the right panel come from Harvest
+  Rev B's `drops.yaml`, solved with this tool's first body: rerun its `reach.py` with this
+  assembly (body, camera ring, D405) and give the software its feeder route.
+- **Two ways into the tray.** This tool drops a dead leaf at the transit fold, the lowest Z,
+  with no arm move; `harvest/drops.yaml` solves unfolded poses at J1 499 for the same five
+  drops. Either lands inside; the software uses the fold. `snip_cad.TRAY` matches
+  `harvest.py`'s `TRAY` (x 171.5 to 628.5, y 32 to 512, rims at z 120).
+- **The pads' stiffness.** The fins are sized for TPU 95A at 26 MPa, the stiff end of what
+  95A filaments list: a softer one holds about half as hard, still several times a sprig's
+  weight. Check it in commissioning (step 12): the cut leaf must stay in the pads.
+- **The shoulder screw's thread.** Makers list 5 to 7 for the M3 thread of a 4 mm shoulder
+  screw; the cheek's blind bore takes 7. The shoulder must be 6.

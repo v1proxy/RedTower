@@ -14,6 +14,108 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.7.0 – 2026-10-21
+
+**The Herb Snip: the arm's tool.** One printed end effector that cuts a stem and
+holds what it cut in the same closing. A TowerPro MG90S drives a blade jaw through a
+four-bar linkage onto an anvil; printed TPU pads close a moment before the blade, so the
+cut leaf or tip stays in the jaws. It goes on the 280's flange with four LEGO pins and
+replaces the adaptive gripper. A new module, so existing builds stay valid. See
+`greenhouse/snip/HERB_SNIP.md`.
+
+### The tool
+
+- 34 N at the cut with the servo derated to 0.15 N m; 55° of opening, 21 across the jaws
+  at the cut zone; the servo turns 157° for it.
+- An OLFA 9 mm snap-off blade, a 34 mm piece, in a pocket that takes every snap angle from
+  52° to 68°; a printed anvil, a wear part.
+- The D405 rides on the tool, tilted 20°: the cut zone is 72 from it, past its 70 near limit,
+  so it sees the stem in the jaws before it cuts.
+- The pads are TPU 95A, one part printed twice: a comb of 11 fins slanted toward the jaw
+  root on a one-way dovetail that slides into each rib. About 1.1 N of hold on a 4.5 mm
+  stem; at most 2.0 N of the servo's force, on a 6 mm stem, at the end of the cut.
+- Every fastener sits flush: a shoulder screw for the pivot, head in a counterbore, shoulder
+  on a heat-set insert in the cheek (no "snug, then back off"); one countersunk M2 into a
+  second insert clamps the blade, where three socket heads were; two countersunk M3 hold
+  the camera. Changing a blade is two screws into brass.
+- The body is one housing from the flange up: a round collar with a band, a waist into a
+  rounded housing that encloses the servo, the regulator and the linkage, and a deck the jaws
+  stand on. The mechanism moves in a cavity cut to its swept shapes; a porthole shows the link,
+  a window lets the horn past the wall. One edge radius on every small part, and jaws that
+  close into one beak.
+- The collar splits at its band into the body and a camera ring: the ring is the collar's
+  foot and the D405's chin in one piece, on the same four pins between the flange and the
+  body. The body stands on a flat base and the ring on its flat side: nothing needs supports.
+- 95.9 g of tool; with the D405, 153.9 g of the 280's 250 g payload.
+- Power from a Pololu D24V10F6 (6 V) on the 12 V wrist line, never from the arm; signal as
+  50 Hz PWM from the end connector's G22. Doors or E-stop cut the arm's power, the pulses
+  stop and the servo goes limp.
+- Every drawing is from the real model: `snip_cad.py` for the printed parts, Intel's D405
+  mesh, the MG90S datasheet and Elephant's arm meshes. Interference over the jaw's whole
+  travel: none. The transit fold clears the tray line with the jaws open or closed, at
+  every J6 angle.
+
+### Where the cuts go
+
+Harvest Rev B's dead-leaf tray and feeder, not a drawer of the snip's own. A dead leaf
+rides in the folded jaws; the gantry stops over one of the tray's five drops at the lowest
+Z and the jaws open 49 above its rims, at least 58 from a wall; Z full travel there clears
+the rims by 30. Leaves and veggies go out through the right panel into the feeder, on
+drop poses Harvest Rev B solves; that arm route is the next software step. The printed
+harvest drawer and its handle, drawn for this release first, are gone.
+
+### Assembly
+
+Every part goes into the one-piece body from outside, and the model checks each way in
+against what is already fitted: the jaw open 30°, down 7 toward its opening side and
+across, 0.8 off the fixed pad; the link down 6 to the servo side, past jaw B's rib; the
+servo from the back. The regulator's bay leaves 0.45 round the board.
+
+Tried first and dropped, both against the real 280 mesh: a cup on the carriage, and a bin in
+pot station B01. The arm is side-mounted with its J1 axis 121 from the left side at the
+carriage's left limit, so turning toward a bin there swings the tool through the side panel,
+and every route forward crosses B02's plant. B01 stays a pot station.
+
+### Software
+
+- `gh/mods/snip.py`: pulse arithmetic, the jaw, and the D405 check that something is
+  between the jaws.
+- The arm driver runs actions as steps. `cut` closes the jaw and it stays closed through
+  the park; `release` opens and closes it at the fold. `arm/state` carries `jaw`. The real
+  arm sends the servo nothing until `arm.yaml`'s `snip` block is calibrated.
+- Motion: a tend task is now approach, cut, park holding it, then `to_bin` (a harvest or a
+  pinched tip) or `to_waste` (a removed leaf), `release`, home. A full drawer stops the next
+  harvest. The governor grants one release with each approved cut.
+- Gantry: `to_bin` and `to_waste`, to `robot.yaml`'s new `bin` and `waste` positions.
+- Home Assistant: **Herb Snip jaw**, **Harvest drawer** and a **Harvest drawer emptied**
+  button.
+- `tools_snip_check.py` for commissioning; `prototype/robot_supervisor.py` does the same
+  cut-and-hold and routing; `tests/test_snip.py` (155 tests pass).
+- `arm.yaml`'s `stow` placeholder is now the model's fold, `(0, -110, -80, -140, -90, 0)`,
+  the pose every clearance in the gantry booklet assumes.
+
+### Added
+
+- `greenhouse/snip/`: the model, the eight print files, the checks (with `access_check.py`
+  for every way in and every tool's reach), a mesh decimator,
+  `Maag_Herb_Snip_Assembly_Instructions_RevA.pdf` (the same cover as every Maag booklet),
+  `Maag_Herb_Snip_BOM_RevA.xlsx` and its generator.
+- `greenhouse/COMMISSIONING.md` section 7b, the Herb Snip.
+
+### Changed
+
+- **Gantry BOM Rev D**: Rev C with line R02, the adaptive gripper ($129.99), at quantity
+  0. Nothing else moves. `build_gantry_bom_revD.py` replaces the Rev C generator.
+- README: the design badge (it still said 0.1.3), the `arm` module line, the layout.
+- **Master BOM Rev F**: G083, the adaptive gripper, at quantity 0.
+- `design/params.py`: `ARM_GRIPPER` (90.0) becomes `ARM_TOOL`, 89.7, the Herb Snip's cut
+  zone past the flange; the solver's reach note speaks of the tool.
+- Wiring sheet E-04: the Herb Snip where the adaptive gripper was, and its payload.
+- `GANTRY_ASSEMBLY.md`: the reach row with the Herb Snip.
+- `harvest/HARVEST.md`: the Herb Snip as assembled is the baseline tool for `reach.py`; the
+  drawer it superseded is gone, and the dead-leaf drop at the fold is recorded beside the
+  poses in `drops.yaml`.
+
 ## 0.6.3 – 2026-10-21
 
 **The feeder without its skirt, and the humidifier duct drawn smooth.** Nothing

@@ -5,8 +5,11 @@ Two sequences:
   photo route   visit every living plant, take one depth capture, go home. Daily, or on command.
   tend task     an approved cut. Go to the plant, capture it again, find the approved candidate
                 again in the new capture (same kind, within MATCH_MM of where it was), approach,
-                cut, park, go home. If the candidate cannot be found again, nothing cuts. The
-                governor only allows the approach and the cut with the task's one-time grant.
+                cut (the Herb Snip cuts and holds), park holding it, then the gantry takes the
+                folded arm to the harvest drawer for a harvest or a pinched tip, or to the waste
+                spot for a removed leaf, and the jaw opens there. Then home. If the candidate
+                cannot be found again, nothing cuts. The governor only allows the arm's part of
+                it with the task's one-time grant.
 
 The arm is parked inside the lane before every gantry move, and a park only counts as done
 when the arm reports it. The governor and both drivers enforce the same rule."""
@@ -18,9 +21,15 @@ from ..bus import loads
 from ..module import Module
 
 BUSY = f"{T.ROOT}/robot/busy"
+BIN = f"{T.ROOT}/robot/bin"         # pieces in the harvest drawer since it was last emptied, retained
 MATCH_MM = 25            # a leaf that moved further than this between captures is not trusted
 STEP_ACTIONS = {"goto": ("gantry", "goto"), "home": ("gantry", "home"), "capture": ("arm", "capture"),
-                "park": ("arm", "park"), "approach": ("arm", "approach"), "cut": ("arm", "cut")}
+                "park": ("arm", "park"), "approach": ("arm", "approach"), "cut": ("arm", "cut"),
+                "to_bin": ("gantry", "to_bin"), "to_waste": ("gantry", "to_waste"), "release": ("arm", "release")}
+GRANTED = ("approach", "cut", "release")               # the arm's part of an approved tend task
+ARM_DONE = ("approach", "cut", "release")              # finished when the arm says so
+STATIONS = {"to_bin": "bin", "to_waste": "waste"}      # gantry steps that end at a named spot
+THROWN = ("remove_leaf",)                             # what is cut and thrown away, not kept
 
 
 def refind(target, candidates):
@@ -50,6 +59,8 @@ class Motion(Module):
         self.bus.subscribe(f"{T.ROOT}/observation/+", self._on_observation)
         self.bus.subscribe(f"{T.ROOT}/safety/verdict/+", self._on_verdict)
         self.bus.subscribe(T.actuator_set("robot"), self._on_robot)
+        self.bin_items, self.keep = None, False                 # until our own retained count comes back
+        self.bus.subscribe(BIN, self._on_bin)
         self._busy(False)
 
     def _busy(self, on):
@@ -66,10 +77,21 @@ class Motion(Module):
         return [("park", None)] + ([] if self.gantry.get("homed") else [("home", None)])   # no trusted position yet
 
     # ---- commands
+    def _on_bin(self, topic, payload):
+        if self.bin_items is None:
+            n = loads(payload, 0)
+            self.bin_items = n if isinstance(n, int) and not isinstance(n, bool) else 0
+
+    def _bin(self, n):
+        self.bin_items = n
+        self.bus.publish(BIN, n, retain=True)
+
     def on_cmd(self, data):
         op = data.get("op")
         if op == "stop":
             return self._abort("stopped by command")
+        if op == "bin_emptied":
+            return self._bin(0)
         if not self.idle():
             return self.report("running", "busy, command ignored")
         if op == "capture_route":
@@ -97,8 +119,15 @@ class Motion(Module):
     def start_tend(self, task):
         pos = task["position"]
         self.task, self.label_now = task, None
+        keep = ((task.get("target") or {}).get("action") not in THROWN)
+        self.keep = keep
+        if keep and (self.bin_items or 0) >= self.config["bin_capacity"]:
+            self._journal("stopped", f"the harvest drawer holds {self.bin_items} pieces: empty it, then press "
+                                     "Harvest drawer emptied")
+            return self.report("running", "harvest drawer full")
+        after = [("to_bin", None) if keep else ("to_waste", None), ("release", pos)]
         self.queue = self._first() + [("goto", pos), ("capture", pos), ("find", pos), ("approach", pos),
-                                      ("cut", pos), ("park", None), ("home", None)]
+                                      ("cut", pos), ("park", None)] + after + [("home", None)]
         self._busy(True)
         self.report("running", f"tend task at {pos}: {task.get('value')}")
 
@@ -114,6 +143,7 @@ class Motion(Module):
         if self.step:
             kind, pos, rid, deadline = self.step
             done = ((kind == "goto" and self.gantry.get("at") == pos and not self.gantry.get("busy")) or
+                    (kind in STATIONS and self.gantry.get("at") == STATIONS[kind] and not self.gantry.get("busy")) or
                     (kind == "home" and self.gantry.get("at") == "home" and not self.gantry.get("busy")) or
                     (kind == "park" and self.arm.get("pose") == "parked" and not self.arm.get("busy")))
             if kind == "find":
@@ -137,7 +167,7 @@ class Motion(Module):
             if kind in STEP_ACTIONS:
                 actuator, action = STEP_ACTIONS[kind]
                 extra = {}
-                if kind in ("approach", "cut"):
+                if kind in GRANTED:
                     extra = {"task": self.task["id"]}
                 why = f"tend task {self.task['id']}" if self.task else "photo route"
                 self.request(actuator, action, self.label_now if kind in ("approach", "cut") else None, pos,
@@ -155,11 +185,11 @@ class Motion(Module):
 
     def _on_gantry(self, topic, payload):
         self.gantry = loads(payload, {}) or {}
-        self._driver_refused(self.gantry, ("goto", "home"))
+        self._driver_refused(self.gantry, ("goto", "home") + tuple(STATIONS))
 
     def _on_arm(self, topic, payload):
         self.arm = loads(payload, {}) or {}
-        self._driver_refused(self.arm, ("capture", "approach", "cut"))
+        self._driver_refused(self.arm, ("capture",) + ARM_DONE)
 
     def _driver_refused(self, state, kinds):
         if self.step and self.step[0] in kinds and state.get("error") and state.get("id") == self.step[2]:
@@ -167,7 +197,9 @@ class Motion(Module):
 
     def _on_arm_done(self, topic, payload):
         done = loads(payload, {}) or {}
-        if self.step and self.step[0] in ("approach", "cut") and done.get("id") == self.step[2]:
+        if self.step and self.step[0] in ARM_DONE and done.get("id") == self.step[2]:
+            if self.step[0] == "release" and getattr(self, "keep", False) and self.gantry.get("at") == "bin":
+                self._bin((self.bin_items or 0) + 1)
             self.step = None
 
     def _on_capture(self, topic, payload):

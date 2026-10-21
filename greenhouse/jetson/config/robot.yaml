@@ -6,6 +6,8 @@
 # route. The driver refuses any target outside "travel".
 travel: {x_min: 0, x_max: 1200, z_min: 0, z_max: 1250}
 park: {x: 0, z: 0}                 # where "home" returns to once homed
+bin: {x: 0, z: 10}                 # the folded arm over the harvest drawer: X at its left limit, Z just above its lowest
+waste: {x: 250, z: 10}             # over the base pan, 250 right of it: a dead leaf never lands in the drawer
 feed_mm_min: 3000                  # G1 feed for plant moves; the controller caps each axis itself
 
 tiers:                             # carriage Z with the arm in the look pose for that tier

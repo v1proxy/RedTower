@@ -6,7 +6,7 @@ up to design 0.2.0).
 **Gantry Rev E · design 0.3.0 · 2026-10-20 · all dimensions mm**
 
 Read alongside the booklet `Gantry_Assembly_Instructions_RevE.pdf` (step
-numbers below are the booklet's) and `Maag_Gantry_BOM_RevC.xlsx`.
+numbers below are the booklet's) and `Maag_Gantry_BOM_RevD.xlsx`.
 Steps 1 to 20 happen on a bench. Steps 21 to 27 put it in the cabinet. The
 booklet now opens with a rendered cover, the parts, the fasteners and a tools
 page, and carries two wiring pages between steps 16 and 17.
@@ -137,7 +137,7 @@ the wheel screws are 30 mm low profile with 1.5 mm heads; the eccentrics are
 | Z travel | 1350 usable; tiers at 345, 1005, 1437 |
 | J1 axis | 385.65 from the front |
 | Flange reach | 292.6 from J1, forward to y = 93 |
-| With the gripper | forward to y = 3: the whole 203 mm tray |
+| With the Herb Snip | its cut zone forward to y = 3.3 (`ARM_TOOL` 89.7 past the flange): the whole 203 mm tray |
 | Folded transit | 162.6 long, 20.0 clear of the tray line |
 | Working height | 263, inside the 341 tier opening |
 

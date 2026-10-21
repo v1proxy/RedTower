@@ -4,11 +4,31 @@
 # To teach (commissioning step 10): gantry homed and parked, doors closed, stack stopped.
 # Release the servos with tools_arm_check.py --release, move the arm by hand into each pose,
 # read the angles with tools_arm_check.py, write them here, then set taught: true.
-#   stow  folded inside the 174 mm lane, clear of both rails, safe for any gantry move
+#   stow  folded inside the 174 mm lane, clear of both rails, safe for any gantry move. The model's
+#         fold, (0, -110, -80, -140, -90, 0), clears the tray line with the Herb Snip open or closed
 #   look  D405 about 200 mm in front of the pot, looking at the plant; the gantry's Z sets the tier
 taught: false
 speed: 30                 # pymycobot speed 1 to 100; keep it low until the poses are proven
 tolerance_deg: 2.0        # a pose is reached when every joint is this close
 poses:
-  stow: [0, -135, 140, -5, 0, 0]
+  stow: [0, -110, -80, -140, -90, 0]
   look: [0, -40, 70, -30, 0, 0]
+
+# The Herb Snip's servo, 50 Hz pulses on the end connector's G22 (gh/mods/snip.py). Until
+# calibrated is true the real arm sends it nothing: find the two pulses with tools_snip_check.py
+# (Herb Snip booklet, step 12). One duty step is 78 us, about 7 degrees of servo.
+snip:
+  calibrated: false
+  pin: 22
+  hz: 50
+  closed_us: 2400         # PLACEHOLDER: the blade reaching the anvil, plus one step
+  open_us: 700            # PLACEHOLDER: the jaw at 55 degrees
+  settle_s: 0.8           # an open or a close is done in this time
+  release_s: 1.0          # jaw open at the fold, over the drawer or the waste spot
+  stem_view:              # where the D405 sees between the jaws, from snip_cad.py's placement
+    ang_y: [-12.7, -6.1]  # cut zone to jaw tips, degrees from the optical axis
+    half_width_deg: 4
+    flip: false           # true if the jaws show above the image centre
+    range_mm: [68, 120]
+    nearer_mm: 4          # this much nearer than with the jaws empty counts
+    min_px: 150

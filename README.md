@@ -6,7 +6,7 @@ An indoor greenhouse that an AI agent tends, written down so anyone can build
 one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
 space allows, with only the modules you want.
 
-![design version](https://img.shields.io/badge/design-0.6.3-1d4ed8)
+![design version](https://img.shields.io/badge/design-0.7.0-1d4ed8)
 [![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 ---
@@ -167,7 +167,7 @@ irrigation, leak detection, and the interlocks above.
 |---|---|---|
 | `climate` | CO2 sensing, exhaust fans on a local thermostat, humidifier | ~$150 |
 | `gantry` | C-Beam rail, carriage, stepper motion | 254 mm of your depth |
-| `arm` | myCobot 280, gripper, depth camera, Jetson | ~$800, and requires `gantry` |
+| `arm` | myCobot 280, the Herb Snip (a printed cut-and-hold tool), depth camera, Jetson; what it cuts goes to Harvest Rev B's dead-leaf tray and feeder | ~$800, and requires `gantry` |
 
 The smallest build is a few hundred dollars of sensing, light and water in a
 closet, with no robot anywhere near it. The largest is 110 plants on a room wall
@@ -209,6 +209,10 @@ greenhouse/
   esphome/           node firmware: tier nodes + utility node
   homeassistant/     package: entities, scripts, dashboard card
   jetson/            tending agents and the robot stack
+  frame/             the cabinet's model and its assembly booklet
+  gantry/            the X/Z gantry and the arm: model, BOM, assembly booklet
+  snip/              the Herb Snip, the arm's cut-and-hold tool: model, print files, BOM, booklet
+  booklet/           the page kit every assembly booklet is drawn with
   drawings/          frame, sheet metal and wiring, generated
   sendcutsend/       DXFs for the cutter, and the unfolder that makes them
   model/             the greenhouse as real 3D geometry

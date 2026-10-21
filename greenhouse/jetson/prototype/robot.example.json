@@ -8,6 +8,15 @@
  "arm_ip": "192.168.10.Y",
  "park_x": 1280,
  "park_z": 60,
+ "bin": {
+  "x": 123.5,
+  "z": 20,
+  "capacity": 40
+ },
+ "waste": {
+  "x": 373.5,
+  "z": 20
+ },
  "plant_x": {
   "A01": 94.1,
   "A02": 282.2,
@@ -39,10 +48,10 @@
  },
  "pose_stow": [
   0,
-  -135,
-  150,
-  0,
-  0,
+  -110,
+  -80,
+  -140,
+  -90,
   0
  ],
  "pose_look": [
@@ -54,15 +63,7 @@
   0
  ],
  "closeup_dir": "/opt/greenhouse/closeups",
- "pose_drop": [
-  -90,
-  -20,
-  30,
-  -10,
-  0,
-  0
- ],
- "tool_offset_mm": 45,
+ "tool_offset_mm": 88,
  "approach_mm": 40,
  "reach_box": {
   "x": [
@@ -84,5 +85,14 @@
   "board_cols": 7,
   "board_rows": 5,
   "square_mm": 10.0
+ },
+ "snip": {
+  "calibrated": false,
+  "pin": 22,
+  "hz": 50,
+  "closed_us": 2400,
+  "open_us": 700,
+  "settle_s": 0.8,
+  "release_s": 1.0
  }
 }

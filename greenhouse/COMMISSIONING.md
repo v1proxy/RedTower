@@ -70,6 +70,33 @@ Mechanical build and wiring are in the Maag Design Basis; this covers the softwa
 4. Arm config: `backend: mycobot`, `host: 192.168.10.25`.
 5. Pass: the panel shows the arm Parked; the gantry refuses to move while the arm is out.
 
+## 7b. Herb Snip
+
+The tool's booklet (`snip/Maag_Herb_Snip_Assembly_Instructions_RevA.pdf`) builds it and
+puts it on the arm; this is its step 12. `docker stop gh-arm` first.
+
+1. The servo's signal and ground on the end connector's G22 and GND, its red on the
+   regulator's VOUT. Pass: VOUT reads 6.0 V with the 12 V wrist line on.
+2. `python tools_snip_check.py 192.168.10.25`. Pass: it reads the `snip` block in
+   `jetson/config/arm.yaml` and prints the duty step of each pulse.
+3. Find the two pulses: `pulse 1500`, then `pulse 2400`. If the horn turned clockwise seen
+   from the horn side, the long pulse is the closed end, else the short one. Step the
+   closed pulse toward the anvil, 78 us at a time, until the blade just reaches it, then
+   one step more: `closed_us`. `open_us` is the jaw at 55°, about 1700 us away. Write both,
+   then `calibrated: true`. Until then the real arm sends the servo nothing.
+4. `... pwm` opens and closes three times. `... cut` on a basil stem. Pass: clean through,
+   and the piece still in the pads when the jaw opens.
+5. `python tools_snip_check.py stem --empty` with nothing in the jaws, then `stem` with a
+   stem between them. Pass: empty reads empty, the stem reads something in the jaws. If the
+   box misses the jaws, set `stem_view.flip`.
+6. The dead-leaf tray on its rails (Harvest Rev B). Set `waste` in `jetson/config/robot.yaml`
+   to one of the tray's drops, X 18, 102, 186, 270 or 355 from the left limit, and Z just
+   above its lowest. Fold the arm and run Z full travel there. Pass: nothing touches the
+   tray's rims.
+7. Leave `bin` out of `robot.yaml` until the feeder route is in the software: a harvest is
+   then refused at `to_bin` and stays in the jaws, never in the tray. Pass: an approved tend
+   task on a dead leaf ends with the leaf in the tray.
+
 ## 8. Cameras
 
 1. `python tools_d405_check.py out` on a plant. Pass: candidates on the annotated image.
@@ -90,6 +117,7 @@ Mechanical build and wiring are in the Maag Design Basis; this covers the softwa
 1. Set each plant's type in the panel (Replace plant). The tender reasons far better with them.
 2. Authority Agent proposes. Watch a few days of the environment agent's output and the
    proposals before approving anything: the reasons matter more than the actions.
-3. Cuts: every cut is a tend task the owner approves, in every mode. On the real arm, approach
-   and cut stay refused until they are tuned on the hardware.
+3. Cuts: every cut is a tend task the owner approves, in every mode. On the real arm the
+   approach stays refused until it is tuned on the hardware; the cut and the release work
+   once the Herb Snip is calibrated (7b).
 4. Authority Agent autonomous only after that. The kill switch stops every agent at once.
