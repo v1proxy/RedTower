@@ -14,6 +14,66 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.4.0 – 2026-10-20
+
+**Frame Rev A: the first assembly booklet for the cabinet itself**, in the house
+style of the gantry booklet: cover, parts, fasteners, tools, every joint, and
+21 steps from measuring the profile to the water test. Generated from
+`greenhouse/frame/cabinet.py`, a model of every member, bracket, sheet, screw
+and foot. See `greenhouse/frame/FRAME_ASSEMBLY.md`.
+
+### Frame hardware: a bracket on every joint, no end taps (bracket schedule Rev 6)
+
+Rev 5 put an M8 end tap on all 54 member ends. An end-tap screw head can only
+enter the mating slot from that slot's open end, and with the shelf rails tying
+both sides together no order of assembly gets every head in. Rev 6 drops the
+end taps (BOM G006) and brackets every joint: **44 PETOX gussets** (20 owned,
+two more sets to buy) and the **10 TOCLUX hidden connectors**, moved to the
+eight floor corners and the two top side rails' back ends, where a gusset has
+no room. Every nut is a **drop-in** M8 slot-8 nut (buy 150). Nothing on a top
+face, nothing in the gantry corridor: `cabinet.py` checks both.
+
+### Printed TPU feet replace the levelling feet
+
+`greenhouse/frame/tpu_foot.py`: the bedside table's 2020 foot generator with a
+4040 preset, 40 × 40 × 20 with a 20 mm barbed pin into the post's centre bore,
+SUNLU TPU 95A. The bore is unmeasured, so it prints fit-test coupons for 6.8,
+8.4 and 10.5. Replaces BOM G007. The cabinet now stands 20 higher.
+
+### Corrected
+
+- **Base pan DXFs regenerated for the 559 depth.** `basepan_DOWN.dxf` and
+  `basepan_UP.dxf` were still the 457-deep pan (holes at y 437) although
+  `make_dxf_rev4.py` already said 559. The tray DXFs change only in the drain
+  pilot (next item).
+- **Drain route**: the base pan's outlet would hang 38 above the floor, below any
+  bucket's rim, so "base pan to a floor bucket" could never run. Each tray now
+  drains on its own, down a short branch into one riser zip-tied to the FL post,
+  and the riser into a 2 gal lidded bucket (a 5 gal one is too tall). No tray
+  takes another's runoff. The pan has no drain and is the dry catch tray, with
+  the leak sensor. `basepan_DOWN.dxf` drops its drain pilot; the tray drain
+  pilot moves from (60, 150) to (66, 95), where the bulkhead nut clears the shelf
+  rail. BOM: G090 3 not 4, G090c 2 gal not 5, plus 4 elbows, 2 tees, 5 zip ties.
+- **Sheet screws**: M8 × 16 through a single sheet bottoms in a 12.25 deep slot.
+  Now M8 × 12 through one sheet, M8 × 16 through two layers.
+- **Drain fall built in**: every tray falls 5 mm to its drain at the left end
+  (BOM G090's note), and the pan to its leak sensor, by marking the right-hand
+  posts 5 higher on levels 0 to 3. The top level stays dead level for the X rail.
+- `greenhouse/gantry/frame.py`: the base mid rail moves from mid-span (x 678.5)
+  to 660 to 700, under the pan's lap bolt; the three 123 tier mid rails are now
+  drawn and counted (cut report 30.07 m, 17 sticks, as the gantry booklet's step
+  21 already said). The Gantry Rev E PDF is unchanged until its next rebuild.
+
+### Added
+
+- `greenhouse/frame/Maag_Frame_Assembly_Instructions_RevA.pdf`: the booklet, 26
+  pages, and `make_frame_booklet.py`, which draws it.
+- `greenhouse/booklet/maagbook.py`: the booklet page kit, lifted from the
+  gantry generator with the footer as a parameter, for every booklet after it.
+- The frame booklet's cover is the gantry booklet's render
+  (`greenhouse/gantry/cover/cover.png`): every Maag booklet carries the same cover.
+- `.gitignore`: the frame booklet's build folder and the cover intermediates.
+
 ## 0.3.0 – 2026-10-20
 
 **The project is now Maag, the Modular Agentic Autonomous Greenhouse.** It was

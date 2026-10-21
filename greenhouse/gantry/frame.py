@@ -32,6 +32,7 @@ LEVELS = [0.0, 304.8, 965.2, 1397.0, 1789.0]     # bottom z of each rail
 TRAY_D = 203.0                  # trays occupy y 0 .. 203
 CORRIDOR = D - TRAY_D           # gantry corridor behind them
 TIERS = LEVELS[1:4]             # the three tray levels
+MID = (660.0, 700.0)            # mid rails, under the sheet laps (sendcutsend/make_dxf_rev4.py)
 
 # -------------------------------------------------------------- gantry fit
 RAIL_L = 1397.0                 # X rail, CUT from the 1500 mm stick
@@ -123,15 +124,23 @@ def cabinet(z0=0.0, z1=H, x0=0.0, x1=W, y0=0.0, y1=D):
         for y in ys:
             if _band(y, y + SER, y0, y1):
                 out.append(mv(vslot(wx[1] - wx[0], axis="x"), wx[0], y, z))
-    # depth rails at every level, both sides, plus one in the base mid-span
+    # depth rails at every level, both sides, plus the base mid rail under the
+    # pan's lap. 0.4.0: the mid rails sit at MID, under the sheet laps the
+    # DXFs cut (x 660 to 700); up to 0.3.0 the base one was drawn at mid-span,
+    # 18.5 off the lap bolt, and the tiers' three short ones were missing.
     wy = _band(SER, D - SER, y0, y1)
     for z in LEVELS:
         if not (wy and _band(z, z + SER, z0, z1)):
             continue
-        xs = [0.0, W - SER] + ([W / 2 - SER / 2] if z == 0.0 else [])
+        xs = [0.0, W - SER] + ([MID[0]] if z == 0.0 else [])
         for x in xs:
             if _band(x, x + SER, x0, x1):
                 out.append(mv(vslot(wy[1] - wy[0], axis="y"), x, wy[0], z))
+    # tier mid rails, front rail to shelf rail, under each tray's lap
+    wm = _band(SER, TRAY_D - SER, y0, y1)
+    for z in TIERS:
+        if wm and _band(z, z + SER, z0, z1) and _band(MID[0], MID[1], x0, x1):
+            out.append(mv(vslot(wm[1] - wm[0], axis="y"), MID[0], wm[0], z))
     return merge(*out) if out else (np.zeros((0, 3)), np.zeros((0, 3), int))
 
 
@@ -352,7 +361,8 @@ def members():
         (SPAN_X, 10,  "width rails, front and back at all five levels"),
         (SPAN_X,  3,  "width rails carrying the tray's rear edge"),
         (SPAN_Y, 10,  "depth rails at all five levels, both sides"),
-        (SPAN_Y,  1,  "depth rail, base mid-span"),
+        (SPAN_Y,  1,  "base mid rail, under the pan's lap"),
+        (TRAY_D - 2 * SER, 3, "tier mid rails, under the trays' laps"),
     ]
 
 
@@ -377,7 +387,7 @@ def cutlist(stock=2000.0, kerf=3.0):
 def cut_report(stock=2000.0):
     out = []
     tot = sum(L * n for L, n, _ in members())
-    out.append(f"cabinet {W:.0f} x {D:.0f} x {H:.0f}, 4040 V-slot")
+    out.append(f"cabinet {W:.0f} x {D:.0f} x {H:.0f}, 4040 EU slot 8")
     for L, n, what in members():
         out.append(f"  {n:3d} x {L:7.1f}   {what}")
     out.append(f"  total 4040: {tot/1000:.2f} m")

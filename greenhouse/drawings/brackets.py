@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Rev 5: the two T-slot brackets Vittorio bought, placed on the frame.
+"""SUPERSEDED at 0.4.0 by greenhouse/frame/cabinet.py (bracket schedule Rev 6: a bracket
+on every joint, no end taps). Kept for the record of Rev 5.
+
+Rev 5: the two T-slot brackets Vittorio bought, placed on the frame.
 
 Bracket A, TOCLUX B0F18V8KTS, $16.99 for 10 sets
     40-series HIDDEN inside connector. An L-shaped block that drops into the 8 mm

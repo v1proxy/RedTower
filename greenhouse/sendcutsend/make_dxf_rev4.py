@@ -54,9 +54,9 @@ pan_up_h = [(x - MID[0], PF, "x") for x in (800, 1050, 1260)] + \
            [(x - MID[0], PB, "x") for x in (800, 1050, 1260)] + \
            [(1377.0 - MID[0], PS, "y"), (sum(MID) / 2 - MID[0], PS, "y")]
 
-SPEC = [("tray_DOWN", tray_down, tray_down_h, (60.0, 150.0), 3),
+SPEC = [("tray_DOWN", tray_down, tray_down_h, (66.0, 95.0), 3),    # drain: frame/cabinet.py DRAIN
         ("tray_UP", tray_up, tray_up_h, None, 3),
-        ("basepan_DOWN", pan_down, pan_down_h, (70.0, PS), 1),
+        ("basepan_DOWN", pan_down, pan_down_h, None, 1),    # no drain: see frame/cabinet.py BUCKET
         ("basepan_UP", pan_up, pan_up_h, None, 1)]
 
 print(f"{'part':14} {'flat W x L (mm)':>20} {'flat (in)':>16} {'fits':>5} "

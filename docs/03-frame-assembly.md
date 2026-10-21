@@ -1,8 +1,11 @@
 # Frame assembly
 
-*Chapter not yet written for the parametric design (0.1.0).*
+The reference `m` build has its own booklet: **Frame Rev A**, design 0.4.0.
 
-The reference `m` build is fully documented in the generators and configs:
-see `greenhouse/` and `CHANGELOG.md` for what is and is not yet derived from
-`design/`. This chapter is written as part of the 0.2.0 work, when the
-generators are driven by the solver rather than by their own constants.
+- `greenhouse/frame/Maag_Frame_Assembly_Instructions_RevA.pdf`, the booklet
+- `greenhouse/frame/FRAME_ASSEMBLY.md`, what changed and why, the steps in brief, the buy list
+- `greenhouse/frame/cabinet.py`, the model every page is drawn from: `python cabinet.py` prints the cut
+  list, the joints and every clearance check
+- `greenhouse/frame/tpu_foot.py`, the printed feet (`--profile 4040`)
+
+Other sizes from `design/solve.py` are not yet drawn: the booklet is the `m` build.
