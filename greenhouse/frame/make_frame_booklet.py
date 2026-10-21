@@ -248,16 +248,21 @@ def slot_section(ax, cx, cy, s, case, label):
     y += 1.6
     L = 12.0 if case == "DOWN" else 16.0
     ax.add_patch(Rectangle((cx - 4 * s, z + (y - L) * s), 8 * s, L * s, facecolor="#7d8890", edgecolor=INK, lw=0.7, zorder=25))
-    hd = [(-7, 0), (7, 0), (7, 1.1), (5.3, 3.4), (2.8, 4.4), (-2.8, 4.4), (-5.3, 3.4), (-7, 1.1)]
+    hd = [(-7, 0), (7, 0), (7, 1.1), (5.3, 3.4), (2.8, 4.4), (2.5, 4.4), (2.5, 1.8), (-2.5, 1.8), (-2.5, 4.4),
+          (-2.8, 4.4), (-5.3, 3.4), (-7, 1.1)]
     ax.add_patch(Poly([(cx + u * s, z + (y + v) * s) for u, v in hd], closed=True, facecolor="#7d8890",
                       edgecolor=INK, lw=0.7, zorder=25))
+    ax.add_patch(Rectangle((cx - 4 * s, z + y * s), 8 * s, 1.8 * s - 0.01, facecolor="#7d8890", edgecolor="none",
+                           zorder=25.5))
     tip = y - L
     spare = C.SLOT_DEPTH + tip
-    xd = cx + 12 * s
+    xd = cx + 24 * s
+    for yy in (z + tip * s, z - C.SLOT_DEPTH * s):
+        ax.plot([cx + 4 * s, xd + 4], [yy, yy], color=OK, lw=0.6, ls=(0, (2, 2)), zorder=30)
     ax.plot([xd, xd], [z + tip * s, z - C.SLOT_DEPTH * s], color=OK, lw=1.3, zorder=30)
     for yy in (z + tip * s, z - C.SLOT_DEPTH * s):
         ax.plot([xd - 4, xd + 4], [yy, yy], color=OK, lw=1.3, zorder=30)
-    ax.text(cx + 14.5 * s, z + (tip - C.SLOT_DEPTH) / 2 * s, f"{spare:.1f} clear", fontsize=8.4, color=OK,
+    ax.text(xd + 8, z + (tip - C.SLOT_DEPTH) / 2 * s, f"{spare:.1f} clear", fontsize=8.4, color=OK,
             va="center", fontweight="bold", zorder=30)
     ax.text(cx, z - 23 * s, label, fontsize=8.6, color=INK, ha="center", zorder=30)
 
@@ -271,22 +276,22 @@ def bulkhead():
 def p_fasteners(pdf):
     fig, ax = new_page(None, "Frame and trays  ·  fasteners",
                        "Every screw in the build. Lay them out in labelled pots first.")
-    items = [("M8 × 16 cap screw  ·  gussets", "88", lambda: C.cap_screw(8, 16)),
+    items = [("M8 × 16 cap screw  ·  gussets", "88", lambda: C.cap_screw(8, 16, detail=True)),
              ("M8 washer  ·  gussets", "88", C.washer8),
              ("M8 drop-in T-nut  ·  gussets", "88", C.tnut8),
-             ("M6 grub  ·  hidden connectors", "20", lambda: C.grub6(8)),
-             ("M8 × 12 button head  ·  one sheet", "28", lambda: C.button_head(8, 12)),
-             ("M8 × 16 button head  ·  two layers", "32", lambda: C.button_head(8, 16)),
+             ("M6 grub  ·  hidden connectors", "20", lambda: C.grub6(8, detail=True)),
+             ("M8 × 12 button head  ·  one sheet", "28", lambda: C.button_head(8, 12, detail=True)),
+             ("M8 × 16 button head  ·  two layers", "32", lambda: C.button_head(8, 16, detail=True)),
              ("M8 washer  ·  under sheet heads", "60", C.washer8),
              ("M8 washer  ·  shims, UP pieces", "28", C.washer8),
              ("M8 drop-in T-nut  ·  sheets", "60", C.tnut8)]
     for i, (nm, q, fn_) in enumerate(items):
         r, c = divmod(i, 3)
         cx, cy = 96 + c * 352, 700 - r * 118
-        scene(ax, [Part(fn_(), STEEL)], (cx, cy), (64, 64), MM=iso_matrix(30, 30),
-              clip=(cx - 46, cy - 46, cx + 46, cy + 46))
-        ax.text(cx + 52, cy + 11, nm, fontsize=8.3, color=INK, va="center")
-        ax.text(cx + 52, cy - 11, f"{q}×", fontsize=10.0, color=ACCENT, fontweight="bold", va="center")
+        scene(ax, [Part(fn_(), STEEL, ang=30, lw=0.5)], (cx, cy), (78, 78), MM=iso_matrix(30, 32),
+              clip=(cx - 50, cy - 50, cx + 50, cy + 50), px=7.0)
+        ax.text(cx + 60, cy + 11, nm, fontsize=8.3, color=INK, va="center")
+        ax.text(cx + 60, cy - 11, f"{q}×", fontsize=10.0, color=ACCENT, fontweight="bold", va="center")
     ax.text(60, 398, "Cap screws, gusset washers and grubs come in the PETOX and TOCLUX boxes. Buy 150 "
                      "drop-in T-nuts: 88 for the gussets, 60 for the sheets.", fontsize=9.4, color=INK)
     ax.text(60, 374, "The PETOX boxes come with SLIDE-IN nuts, which only enter a slot from its end: keep them "
@@ -307,10 +312,9 @@ def p_fasteners(pdf):
 
 # ============================================================ tools
 def _tools():
-    import tools_page as TP
-    from tools_page import (hex_key, calipers, tape_measure, spirit_level, hacksaw, loft, rrect,
-                            to_x, CHROME, DARK, RED, BLUE, YEL, HSS)
-    from kit3d import extrude, revolve
+    import tools_lib as T
+    from tools_page import hex_key, spirit_level
+    hacksaw = T.hacksaw
 
     def keys():
         out = []
@@ -319,57 +323,20 @@ def _tools():
                 out.append((mv(m, 0, 0, -i * 11.0), c))
         return out
 
-    def square():
-        blade = box(300.0, 25.0, 1.6, c=(0, 0, 0))
-        head = box(25.0, 100.0, 16.0, c=(40.0, -100.0 + 25.0, -7.0))
-        return [(blade, CHROME), (head, DARK)]
-
-    def clamp():
-        bar = box(300.0, 18.0, 6.0, c=(0, -9.0, -3.0))
-        jaw1 = box(16.0, 18.0, 90.0, c=(0, -9.0, -90.0))
-        jaw2 = box(16.0, 18.0, 80.0, c=(150.0, -9.0, -80.0))
-        scr = rot(cylinder(5.0, 70.0, n=20), ry=0)
-        handle = to_x(cylinder(14.0, 90.0, n=24))
-        return [(bar, CHROME), (jaw1, RED), (jaw2, RED), (mv(scr, 158.0, 0, -150.0), CHROME),
-                (mv(rot(handle, ry=-90), 158.0, 0, -150.0), DARK)]
-
-    def caulk_gun():
-        barrel = to_x(cylinder(26.0, 230.0, n=28))
-        rod = to_x(cylinder(3.5, 120.0, n=12))
-        grip = box(26.0, 18.0, 110.0, c=(-20.0, -9.0, -120.0))
-        trig = box(18.0, 14.0, 90.0, c=(14.0, -7.0, -110.0))
-        nozzle = to_x(cylinder(8.0, 40.0, n=16, r2=2.0))
-        return [(barrel, RED), (mv(rod, -120.0, 0, 0), CHROME), (grip, DARK), (trig, DARK),
-                (mv(nozzle, 230.0, 0, 0), YEL)]
-
-    def step_drill():
-        prof = [(0, 0), (5, 0), (5, 40)]
-        r, z = 11.0, 40.0
-        for k in range(10):
-            prof += [(r, z), (r, z + 4.0)]
-            z += 4.0
-            r -= 1.0
-        prof += [(1.5, z + 6), (0, z + 8)]
-        prof2 = [(0, 0)] + [p for p in prof[1:]]
-        return [(to_x(revolve(prof2, n=36)), HSS)]
-
-    def pry_bar():
-        P = np.array([(0, 0, 0), (300, 0, 0), (330, 0, 18), (350, 0, 30)])
-        from kit3d import tube
-        return [(tube(P, 8.0, 8), BLUE)]
-
     return [
-        (calipers, "Calipers", "150 mm, digital", "the profile, 1; the feet's\nbore and fit, 4", (20, 45)),
-        (tape_measure, "Tape measure", "5 m", "the cut list, 2; the level marks, 3;\nthe diagonals, 10", (30, 30)),
-        (square, "Square", "300 mm combination", "every mark squared round the post, 3;\nevery cut checked, 2", (25, 40)),
+        (T.calipers, "Calipers", "150 mm, digital", "the profile, 1; the feet's\nbore and fit, 4", (20, 45)),
+        (T.tape_measure, "Tape measure", "5 m", "the cut list, 2; the level marks, 3;\nthe diagonals, 10", (32, 26)),
+        (T.combination_square, "Square", "300 mm combination", "every mark squared round the post, 3;\nevery cut checked, 2",
+         (25, 40)),
         (hacksaw, "Saw", "mitre saw, non-ferrous blade,\nor hacksaw and mitre box", "31 cuts, 2. Deburr every end", (20, 40)),
         (keys, "Hex keys, ball end", "3 · 5 · 6 mm, long series",
          "3: hidden connector grubs, 6 to 9\n5: sheet screws, 17 to 19\n6: gusset screws, 5 to 14", (30, 34)),
         (spirit_level, "Spirit level", "600 mm, with a plumb vial", "posts plumb, 7 and 10;\nthe falls and the top, 21", (25, 30)),
-        (clamp, "Clamps", "2 F-clamps, 300", "a rail on its ledges while you\nbolt it, 9 and 12", (25, 30)),
-        (pry_bar, "Bar and a block", "flat bar and a wood offcut", "lifting each corner\n25 mm for its foot, 15", (25, 35)),
-        (step_drill, "Step drill", "to the bulkhead's hole size", "the Ø 6 drain pilots, 16", (25, 25)),
-        (caulk_gun, "Caulking gun", "and neutral-cure silicone", "tray corners and laps, 16 to 19", (25, 30)),
+        (T.f_clamps, "Clamps", "2 F-clamps, 300", "a rail on its ledges while you\nbolt it, 9 and 12", (25, 22)),
+        (T.pry_bar_and_block, "Bar and a block", "flat bar and a wood offcut", "lifting each corner\n25 mm for its foot, 15",
+         (25, 35)),
+        (T.step_drill, "Step drill", "to the bulkhead's hole size", "the Ø 6 drain pilots, 16", (25, 25)),
+        (T.caulking_gun, "Caulking gun", "and neutral-cure silicone", "tray corners and laps, 16 to 19", (28, 18)),
     ]
 
 
@@ -382,9 +349,9 @@ def p_tools(pdf):
         x0, ytop = 40 + c * 270, 762 - r * 228
         ax.add_patch(FancyBboxPatch((x0, ytop - 218), 258, 218, boxstyle="round,pad=0,rounding_size=8",
                                     facecolor="none", edgecolor=B.FRAMEC, lw=1.0, zorder=5))
-        parts = [Part(m, col, ang=30) for m, col in fn()]
-        scene(ax, parts, (x0 + 129, ytop - 62), (222, 92), MM=iso_matrix(az, el),
-              clip=(x0 + 2, ytop - 120, x0 + 256, ytop - 2))
+        parts = [Part(m, col, ang=30, lw=0.45) for m, col in fn()]
+        scene(ax, parts, (x0 + 129, ytop - 62), (226, 100), MM=iso_matrix(az, el),
+              clip=(x0 + 2, ytop - 120, x0 + 256, ytop - 2), px=5.0)
         ax.text(x0 + 14, ytop - 132, name, fontsize=9.2, fontweight="semibold", family=TITLE_FONT,
                 color=INK, va="top")
         ax.text(x0 + 14, ytop - 149, size, fontsize=7.8, color=INK, va="top", linespacing=1.3)

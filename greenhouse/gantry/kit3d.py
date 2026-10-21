@@ -222,19 +222,27 @@ def tube(path, r, n=10):
 # ------------------------------------------------------------------ fasteners
 def screw_m5_lp(length, head_d=9.5, head_h=2.8, shank_d=5.0, n=16):
     """M5 low-profile socket head cap screw, head at z=0 going down."""
-    head = cylinder(head_d/2, head_h, n=n, c=(0, 0, 0))
-    socket = cylinder(2.1, 1.6, n=6, c=(0, 0, head_h-1.7))
+    # the head's side, and its top as a ring round a 3 mm hex socket 1.7 deep
+    # with its floor, so the socket reads as a hole (it used to be a solid
+    # hex buried inside the head)
+    R = 3.0 / math.sqrt(3)
+    hexp = circle_pts(R, 6, start=math.pi/6)
+    top = extrude(circle_pts(head_d/2, max(n, SEG)), 1.9, z0=head_h - 1.9, holes=[hexp])
+    floor_ = extrude(hexp * 0.999, 0.2, z0=head_h - 1.9)
+    socket = merge(top, floor_)
+    side = cylinder(head_d/2, head_h - 1.9, n=n, c=(0, 0, 0))
     shank = cylinder(shank_d/2, length, n=n, c=(0, 0, -length))
     # thread hint: three shallow rings
     rings = []
     for k in range(4):
         zz = -length + 1.5 + k*(length-3)/4.0
         rings.append(cylinder(shank_d/2+0.18, 0.5, n=n, c=(0, 0, zz)))
-    return merge(head, socket, shank, *rings)
+    return merge(side, socket, shank, *rings)
 
 
 def nut_m5(n=6, af=8.0, h=4.0):
-    return cylinder(af/2/math.cos(math.pi/6), h, n=6)
+    """M5 hex nut with its bore (it used to be a solid hex)."""
+    return extrude(circle_pts(af/2/math.cos(math.pi/6), 6), h, holes=[circle_pts(2.1, SEG)])
 
 
 # ------------------------------------------------------------------ transforms

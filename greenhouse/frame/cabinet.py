@@ -39,11 +39,13 @@ import numpy as np
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_HERE, "..", "gantry"))
+sys.path.insert(0, os.path.join(_HERE, "..", "booklet"))
 sys.path.insert(0, _HERE)
 
 from kit3d import extrude, merge, mv, rot, circle_pts, cylinder, box, revolve   # noqa: E402
 import frame as GF                                                               # noqa: E402
 import tpu_foot as TF                                                            # noqa: E402
+import hardware as HW                                                            # noqa: E402
 
 # ------------------------------------------------------------------ the frame
 W, D, H = GF.W, GF.D, GF.H          # 1397 x 559 x 1829
@@ -244,10 +246,10 @@ def hidden_local():
     (the members are on those sides), reaching H_LEG along each, two M6 grubs."""
     legA = box(H_LEG + H_D1, H_D1 - H_D0, H_W, c=(-H_D1, -H_D1, -H_W / 2))
     legB = box(H_D1 - H_D0, H_LEG + H_D1, H_W, c=(-H_D1, -H_D1, -H_W / 2))
-    grubA = mv(cylinder(3.0, 6.0), 0, 0, 0)
+    grubA = HW.grub(6, 6.0)
     gA = _swap_zv(grubA)
     gs = [mv(gA, H_LEG * 0.62, -H_D1 - 0.5, 0), ]
-    gB = _swap_zu(cylinder(3.0, 6.0))
+    gB = _swap_zu(HW.grub(6, 6.0))
     gs.append(mv(gB, -H_D1 - 0.5, H_LEG * 0.62, 0))
     return merge(legA, legB, *gs)
 
@@ -350,39 +352,30 @@ def bracket_meshes(kind=None, level=None, labels=None, explode=0.0):
 
 
 # ------------------------------------------------------------- fasteners
-def button_head(M=8.0, L=16.0):
-    """ISO 7380 button head, head on z = 0 up, shank down to -L."""
-    hd, hh = {6: (10.5, 3.3), 8: (14.0, 4.4)}.get(int(M), (M * 1.75, M * 0.55))
-    head = revolve([(0, 0), (hd / 2, 0), (hd / 2, hh * 0.25), (hd * 0.38, hh * 0.78),
-                    (hd * 0.2, hh), (0, hh)])
-    shank = cylinder(M / 2, L, c=(0, 0, -L))
-    return merge(head, shank)
+def button_head(M=8.0, L=16.0, detail=False):
+    """ISO 7380 button head with its hex socket, head on z = 0 up, shank down
+    to -L (booklet/hardware.py). detail=True threads the shank."""
+    return HW.button_head(int(M), L, detail)
 
 
-def cap_screw(M=8.0, L=16.0):
-    """ISO 4762, head on z = 0 up."""
-    hd, hh = 13.0, 8.0
-    head = revolve([(0, 0), (hd / 2 - 0.4, 0), (hd / 2, 0.4), (hd / 2, hh - 0.6), (hd / 2 - 0.6, hh), (0, hh)])
-    return merge(head, cylinder(M / 2, L, c=(0, 0, -L)))
+def cap_screw(M=8.0, L=16.0, detail=False):
+    """ISO 4762 with its socket and knurl, head on z = 0 up."""
+    return HW.cap_screw(int(M), L, detail)
 
 
 def washer8(t=1.6):
-    from kit3d import ring
-    return ring(8.0, 4.2, t)
+    return HW.washer(8.4, 16.0, t)
 
 
 def tnut8():
-    """Drop-in (roll-in) M8 T-nut for slot 8, in its own frame: top at z = 0
-    sitting against the underside of the slot lips, body down to -6."""
-    body = extrude(np.array([(-8.0, -5.5), (8.0, -5.5), (8.0, 5.5), (-8.0, 5.5)]), 4.0, z0=-4.0,
-                   holes=[circle_pts(3.4, 36)])
-    keel = extrude(np.array([(-5.5, -3.0), (5.5, -3.0), (5.5, 3.0), (-5.5, 3.0)]), 2.0, z0=-6.0,
-                   holes=[circle_pts(3.4, 36)])
-    return merge(body, keel)
+    """Drop-in hammer-head M8 T-nut for slot 8, in its own frame: the wings'
+    top at z = 0 against the underside of the slot lips, wings below, the
+    locating rib up in the slot's mouth."""
+    return HW.hammer_tnut(8)
 
 
-def grub6(L=8.0):
-    return cylinder(3.0, L)
+def grub6(L=8.0, detail=False):
+    return HW.grub(6, L, detail)
 
 
 def place_axis(mesh, p, d):

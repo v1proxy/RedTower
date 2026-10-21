@@ -14,6 +14,54 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.5.0 – 2026-10-21
+
+**Enclosure Rev A: the panels and doors, with their own assembly booklet** in
+the house style (the Maag cover, parts, fasteners, tools, face maps, a door
+section, 18 steps). Everything is generated from the new
+`greenhouse/enclosure/enclosure.py`, built on `cabinet.py`: the booklet, 14 DXFs,
+the panel drawing for A&C Plastics and a printed duct collar. See
+`greenhouse/enclosure/ENCLOSURE.md`.
+
+- **Back, sides and top: 1/8 in frosted polycarbonate** (TUFFAK GP Matte), six
+  panels from three 48 × 96 in sheets, surface mounted on the frame's outer
+  faces: EPDM foam strip on the land beside each slot, M5 × 16 and a DIN 9021
+  washer through 8 mm holes (the expansion allowance) into drop-in T-nuts, no
+  more than 300 apart. 112 T-nuts. The back's three panels meet over B1 and B2;
+  a 5052 batten clamps each seam.
+- **Four clear doors, two stacked pairs**, 4.5 polycarbonate, each on two 1 ft
+  stainless piano hinges (frame leaf on a 3.0 spacer into M3 T-nuts, door leaf
+  on VHB), held by cup magnets on F0, F1, F3 and F4, sealed by EPDM weatherstrip;
+  an astragal on each right door. Each opens 152°. A reed switch per door feeds
+  the door chain (BOM G047).
+- **Air**: two NF-F12 exhaust fans outside on the top, filtered passive intake
+  low on the right; the humidifier duct through a printed collar.
+- **The drain riser moves off the FL post** to five P-clips outside the left
+  panel, each branch through a grommet (Frame Rev A step 20's riser comes off at
+  Enclosure step 9). Each branch is trimmed 8.
+- **Anti-tip**: two steel cable kits through B4 into wall studs, replacing BOM
+  G015 (the A34's leg cannot reach the wall past the panel and batten).
+- Supersedes BOM Rev E G002, G002b, G008 to G012b and G015; BOM Rev F to follow.
+
+### Fasteners and tools drawn as they are made (both booklets)
+
+- **Every screw now has its hex socket, and the fasteners pages show threads.**
+  New `greenhouse/booklet/hardware.py`: ISO 7380 button heads, ISO 4762 cap
+  screws (knurled), ISO 10642 flat heads, ISO 4026 grubs, nuts with their bores
+  and chamfers, DIN 985 nylocs with the nylon ring, hammer-head T-nuts with the
+  rounded corners that let them turn into the slot. `cabinet.py`'s fastener
+  builders call it, so the frame and enclosure scenes carry sockets too; the
+  section drawings show the socket in each head. `kit3d.screw_m5_lp` and `nut_m5`
+  draw their socket and bore for the gantry's next build.
+- **The tools pages are remodelled** in `greenhouse/booklet/tools_lib.py`,
+  part by part: calipers with depth rod and roller, a tape with its cupped,
+  graduated blade, a combination square with its scale and vial, a hacksaw with
+  a toothed blade and a closed grip, F-clamps with a toothed bar and threaded
+  screw, the pry bar and a 2 × 4, the step drill's flute and three-flat shank, a
+  skeleton caulking gun with its cartridge, a snap-off knife, flush cutters,
+  isopropyl and a cloth, a kettle and a mug.
+- Frame Rev A booklet re-rendered with both; its content is unchanged.
+
 ## 0.4.1 – 2026-10-21
 
 **Fixed: the tray and base pan DXFs crossed themselves at every corner where two
