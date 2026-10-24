@@ -35,3 +35,6 @@ greenhouse/snip/build/
 greenhouse/*/cover/*.npz
 greenhouse/*/cover/*.blend
 greenhouse/harvest/build/
+
+# the Home Assistant release zip (dist/greenhouse-panel.js is tracked: HACS reads it)
+greenhouse/ha/build/

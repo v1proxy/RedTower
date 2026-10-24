@@ -6,7 +6,7 @@ An indoor greenhouse that an AI agent tends, written down so anyone can build
 one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
 space allows, with only the modules you want.
 
-![design version](https://img.shields.io/badge/design-0.7.1-1d4ed8)
+![design version](https://img.shields.io/badge/design-0.8.0-1d4ed8)
 [![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 [![Maag, the reference m build, rendered from the design's own 3D model](docs/booklets/cover.jpg)](docs/booklets/README.md)
@@ -98,6 +98,26 @@ Jetson. Flipping it stops the arm without having to agree on a state machine.
 
 The design assumption is that the agent will eventually be wrong, and that
 nothing it can be wrong about should be able to drown a shelf of basil.
+
+---
+
+## The interface and the controls
+
+[![The Greenhouse panel in Home Assistant, on simulated data](docs/interface/panel-hero.png)](docs/07-home-assistant.md)
+
+The whole greenhouse is driven from one view inside Home Assistant. Every module with its
+status and an enable switch, the authority ceiling and the agent kill switch, the
+environment, the power draw over 24 hours, all 27 plants with a card each, and the agent's
+proposals waiting for a yes or a no. Every button on it is a request to the same safety
+governor an agent has to ask, so the interface cannot do anything the limits do not allow.
+
+[![The control system: who asks, what the safety governor checks, the three verdicts, and who acts](docs/interface/control-system.png)](docs/07-home-assistant.md#the-control-system)
+
+**[Read how it works and how to install it](docs/07-home-assistant.md).** The card runs on its
+own simulated data with `demo: true`, so it can be tried in five minutes on any Home
+Assistant. Download it from [the latest release](https://github.com/v1proxy/RedTower/releases/latest)
+(the card, both packages and the view in one zip) or add this repository to HACS as a
+Dashboard repository.
 
 ---
 
@@ -211,9 +231,13 @@ design/
   solve.py           envelope -> complete, checked design
 docs/                the build guide, in order
   booklets/          every booklet page as an image, generated from the PDFs
+  interface/         the panel's screenshots and the control system diagram, generated
+dist/                the panel card where HACS looks for it, copied by greenhouse/ha/make_bundle.py
 greenhouse/
   esphome/           node firmware: tier nodes + utility node
-  homeassistant/     package: entities, scripts, dashboard card
+  ha/                the interface: the Greenhouse panel card, the Jetson package, the view,
+                     and the generators for the release zip and the pictures
+  homeassistant/     first-generation package: thresholds, fallback watering, node alerts
   jetson/            tending agents and the robot stack
   frame/             the cabinet's model and its assembly booklet
   gantry/            the X/Z gantry and the arm: model, BOM, assembly booklet
@@ -335,6 +359,10 @@ A design under construction, not a finished kit.
   services and agents wait on the hardware they drive.
   [`docs/08-arm.md`](docs/08-arm.md) has the bring-up, including the steps that
   cost me an evening.
+- The Home Assistant interface is packaged and checked against a bench Home
+  Assistant in CI. My own Home Assistant still runs the first-generation card
+  until I install this one; [`docs/07-home-assistant.md`](docs/07-home-assistant.md)
+  lists what is not yet verified.
 
 Open items live in `CHANGELOG.md` under the current version.
 

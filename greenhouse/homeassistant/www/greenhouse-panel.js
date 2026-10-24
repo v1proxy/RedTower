@@ -1,5 +1,9 @@
 /*
- * greenhouse-panel-card
+ * greenhouse-panel-card  (FIRST GENERATION, superseded in design 0.8.0)
+ * Use greenhouse/ha/www/greenhouse/greenhouse-panel.js instead: this card drives the
+ * input_boolean.gh_kill and input_select.gh_authority helpers, which the Jetson supervisor
+ * does not read. Kept for the history of the interface. Guide: docs/07-home-assistant.md
+ *
  * Maag control interface for Home Assistant.
  *
  * Port of the approved interface baseline (Baseline 1, 2026-10-03, mockup v7).

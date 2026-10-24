@@ -29,8 +29,11 @@ Mechanical build and wiring are in the Maag Design Basis; this covers the softwa
 ## 3. Home Assistant
 
 1. Copy `ha/packages/greenhouse_jetson.yaml` next to the existing `greenhouse.yaml` package, and
-   `ha/www/greenhouse/greenhouse-panel.js` to `/config/www/greenhouse/`.
-2. Settings, Dashboards, Resources: add `/local/greenhouse/greenhouse-panel.js` (JavaScript module).
+   `ha/www/greenhouse/greenhouse-panel.js` to `/config/www/greenhouse/`. The release zip
+   (`ha/make_bundle.py`) carries the same files in Home Assistant's own layout; the full guide
+   is `../docs/07-home-assistant.md`.
+2. Settings, Dashboards, Resources: add `/local/greenhouse/greenhouse-panel.js?v=<version>`
+   (JavaScript module). Raise `?v=` on every update so browsers reload the card.
 3. Add the view in `ha/dashboard_view.yaml` to the Red Tower dashboard, without `demo: true`.
 4. Replace `notify.notify` in the package with your phone's notify service. Restart.
 5. Pass: the Greenhouse view shows every module with its status; Supervisor reads Running.

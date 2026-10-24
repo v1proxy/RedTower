@@ -1,7 +1,9 @@
 /* Greenhouse view for Home Assistant. One custom card, no build step.
  * Reads the entities published by the Jetson's HA bridge and by the ESPHome nodes.
  * Every command the user gives goes to the safety governor, never straight to a device.
- * Card option  demo: true  runs the whole view on simulated data. */
+ * Card option  demo: true  runs the whole view on simulated data.
+ * No network calls of its own: IBM Plex is used if the device has it, else the system font. */
+const CARD_VERSION = '0.8.0';
 const C = { bg: '#14181a', panel: '#1d2326', line: '#2c3539', line2: '#4a565b', text: '#e6ebe8', mute: '#9aa6a0',
   soft: '#c9d1cd', green: '#7fd18b', greenBg: '#24362a', greenFg: '#a6e3b0', greenLine: '#3f7a4c',
   red: '#ff8f85', redBg: '#3d1c19', redFg: '#ffb8b0', redLine: '#b0483d', yellow: '#f2d86a', yellowBg: '#38320f',
@@ -148,7 +150,7 @@ class GreenhousePanel extends HTMLElement {
     if (sig === this.sig) return;
     if (this.shadowRoot.activeElement && this.shadowRoot.activeElement.id === 'plant-type' && this.ui.replacing) { this.pending = true; return; }
     this.sig = sig;
-    this.shadowRoot.innerHTML = `<style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');${CSS}</style><div class="root">${this.view(m)}</div>`;
+    this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="root">${this.view(m)}</div>`;
   }
 
   // ---------- rendering
@@ -377,4 +379,5 @@ function makeDemo(changed) {
 
 if (!customElements.get('greenhouse-panel')) customElements.define('greenhouse-panel', GreenhousePanel);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: 'greenhouse-panel', name: 'Greenhouse panel', description: 'Full greenhouse control view' });
+window.customCards.push({ type: 'greenhouse-panel', name: 'Greenhouse panel', description: 'Maag: the full greenhouse control view' });
+console.info(`%c MAAG GREENHOUSE PANEL %c ${CARD_VERSION} `, 'color:#14181a;background:#7fd18b;font-weight:600', 'color:#7fd18b;background:#1d2326');

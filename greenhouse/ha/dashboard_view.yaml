@@ -1,6 +1,7 @@
-# Add as a view of the Red Tower dashboard (raw configuration editor), and add the resource
-#   /local/greenhouse/greenhouse-panel.js   (type: JavaScript module)
-# under Settings, Dashboards, Resources.
+# The Greenhouse view. Paste under views: in a dashboard's raw configuration editor.
+# Resource first (Settings, Dashboards, Resources), as a JavaScript module:
+#   /local/greenhouse/greenhouse-panel.js?v=0.8.0     copied by hand into config/www/greenhouse/
+#   or the path HACS shows, when the card came from HACS
 - title: Greenhouse
   path: greenhouse
   icon: mdi:sprout

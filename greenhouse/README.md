@@ -7,7 +7,8 @@ on its own.
 |---|---|---|
 | `esphome/` | **firmware** | Node firmware, one per tier plus a utility node. The hard interlocks live here and refuse regardless of what anything upstream asks. |
 | `jetson/` | **software** | The containerized agent stack: a module bus, a safety governor, hardware links for the gantry and the arm, perception, and the language-model gateway. Has its own tests and CI. |
-| `homeassistant/` | **interface** | The package, entities, scripts and dashboard card. |
+| `ha/` | **interface** | The Greenhouse panel card, the package that links Home Assistant to the Jetson, the dashboard view, and the generators for the release zip and the screenshots. Guide: [`../docs/07-home-assistant.md`](../docs/07-home-assistant.md). |
+| `homeassistant/` | **interface, first generation** | The package that still holds the thresholds, run times, fallback watering and node alerts, installed next to `ha/`'s. Its card is superseded by `ha/`'s. |
 | `drawings/` `sendcutsend/` `model/` | **hardware** | Frame, sheet metal and wiring, every file a generator rather than a drawing. The 3D model the drawings are rendered from. |
 | `frame/` `gantry/` `enclosure/` `harvest/` | **assembly** | One model and one Maag assembly booklet each: the cabinet, the gantry, the panels and doors, and where the harvest goes (the dead-leaf tray and the side feeder). Cut files and prints come from the same models. |
 | `build_bom_*.py` `opex_model.py` | **cost** | Bill of materials, one generator per revision, and the daily running-cost model. |
