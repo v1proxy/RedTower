@@ -108,8 +108,9 @@ nothing it can be wrong about should be able to drown a shelf of basil.
 The whole greenhouse is driven from one view inside Home Assistant. Every module with its
 status and an enable switch, the authority ceiling and the agent kill switch, the
 environment, the power draw over 24 hours, all 27 plants with a card each, and the agent's
-proposals waiting for a yes or a no. Every button on it is a request to the same safety
-governor an agent has to ask, so the interface cannot do anything the limits do not allow.
+proposals waiting for a yes or a no. Every button on it that moves something is a request
+to the same safety governor an agent has to ask, so the interface cannot do anything the
+limits do not allow.
 
 [![The control system: who asks, what the safety governor checks, the three verdicts, and who acts](docs/interface/control-system.png)](docs/07-home-assistant.md#the-control-system)
 

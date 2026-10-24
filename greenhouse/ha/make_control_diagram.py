@@ -88,10 +88,10 @@ text(48, 108, "Whoever asks, you or an agent, the safety governor decides. The E
 # ------------------------------------------------------------------ who asks
 text(48, 158, "Who asks", 11.5, DIM, MONO, 600)
 box(48, 170, 300, 132, "You · the panel", [
-    ("body", "Manual buttons, jog, Photo now"), ("body", "Approve or reject a proposal"),
-    ("code", "greenhouse/safety/request/ui"), ("dim", "Only the interface may write it (ACL)")])
+    ("body", "Lights, water, humidifier, Home"), ("body", "Never queued: yours run or not"),
+    ("code", "greenhouse/safety/request/ui"), ("dim", "With the ACL, only the interface writes it")])
 box(48, 318, 300, 112, "Services · Layer 2", [
-    ("body", "Climate, irrigation, motion"), ("body", "Run at Auto and above"),
+    ("body", "Climate, irrigation, motion"), ("body", "Act at Auto and above"),
     ("code", "greenhouse/safety/request")])
 box(48, 446, 300, 132, "Agents · Layer 3", [
     ("body", "Environment agent, plant tender"), ("body", "Only at Agent proposes or autonomous"),
@@ -104,25 +104,27 @@ gx, gy, gw, gh = 396, 170, 452, 408
 rect(gx, gy, gw, gh, "#ffffff", INK, 2.2)
 text(gx + 16, gy + 28, "Safety governor · Jetson, Layer 0", 15.5, INK, MONO, 600)
 text(gx + 16, gy + 50, "The only path to an actuator. Unknown means denied.", 12.6, DIM)
-checks = [
-    ("Who", "The topic decides. A module must be enabled", "and allowed this actuator in its manifest."),
+checks = [  # in the order Governor.check runs them
+    ("Defined", "An action with no limit is always denied.", None),
+    ("Who", "Enabled, and allowed this actuator.", None),
     ("Kill switch", "On: every agent request is denied.", None),
-    ("Authority", "Off: only turning things off. Manual: you,", "and turning off. Agents: proposes and up."),
-    ("Limits", "Min, max and per hour, from limits.yaml.", "An action with no limit is always denied."),
+    ("Authority", "Off: turning off only. Manual: you only.", None),
+    ("Approval", "never, agent or always. A cut always waits.", None),
+    ("Tend grant", "Module arm work needs an approved task.", None),
+    ("Limits", "Min, max and per hour, from limits.yaml.", None),
     ("Interlocks", "Door, E-stop, water, arm stowed, gantry still.", None),
-    ("Plant", "Work at a plant needs a confirmed type,", "and the plant not marked dead."),
-    ("Approval", "Per action: never, agent or always.", "A cut always waits for you."),
+    ("Plant", "A confirmed type, not marked dead.", None),
 ]
 yy = gy + 84
 for i, (head, l1, l2) in enumerate(checks, 1):
-    col = SAFETY if head in ("Kill switch", "Interlocks") else INK
+    col = SAFETY if head in ("Kill switch", "Interlocks", "Tend grant") else INK
     out.append(f'<circle cx="{gx + 30}" cy="{yy - 5}" r="12" fill="{INK}"/>')
     text(gx + 30, yy, str(i), 13, "#ffffff", MONO, 700, "middle")
     text(gx + 52, yy, head, 13.6, col, MONO, 600)
-    text(gx + 148, yy, l1, 12.8, INK)
+    text(gx + 162, yy, l1, 12.8, INK)
     if l2:
-        text(gx + 148, yy + 18, l2, 12.8, INK)
-    yy += 48 if l2 else 40
+        text(gx + 162, yy + 18, l2, 12.8, INK)
+    yy += 52 if l2 else 34
 
 # ------------------------------------------------------------------ verdicts
 vx, vw = 892, 262
@@ -170,8 +172,8 @@ around = [
     ("Supervisor · Layer 0", [
         ("body", "Owns enable, authority and the kill"), ("body", "switch, and keeps them across restarts"),
         ("body", "Starts and stops containers: agents"), ("body", "run only at Agent proposes or"),
-        ("body", "autonomous, never with the kill on"), ("dim", "One status per module: running,"),
-        ("dim", "stub, degraded, paused, halted,"), ("dim", "disabled, stopped, offline")]),
+        ("body", "autonomous, never with the kill on"), ("dim", "One status per module: running, stub,"),
+        ("dim", "degraded, paused, halted, disabled,"), ("dim", "stopped, offline, fault, not built yet")]),
     ("HA bridge · Layer 0", [
         ("body", "MQTT discovery: about 220 entities"), ("body", "under the device Greenhouse"),
         ("body", "The panel writes these, and the"), ("body", "supervisor obeys them:"),
@@ -198,6 +200,29 @@ markers = "".join(
 SVG = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">'
        f'<title>Maag control system: one path to every actuator</title><defs>{markers}</defs>'
        f'<rect width="{W}" height="{H}" fill="#ffffff"/>{"".join(out)}</svg>')
+
+
+def quantize_exact(im, keep):
+    """256 colours, nearest colour for every pixel, with the colours in keep held exactly.
+
+    Pillow's palette mapping is approximate and moves small flat areas (a status dot, the white
+    ground) by a few levels; here each distinct colour is mapped to its true nearest entry."""
+    import numpy as np
+    from PIL import Image
+    im = im.convert("RGB")
+    keep = [tuple(int(c[i:i + 2], 16) for i in (1, 3, 5)) for c in keep]
+    base = im.quantize(colors=256 - len(keep), method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    pal = np.array(base.getpalette()[: 3 * (256 - len(keep))], dtype=np.int32).reshape(-1, 3)
+    pal = np.vstack([pal, np.array(keep, dtype=np.int32)])
+    a = np.asarray(im, dtype=np.int32).reshape(-1, 3)
+    uniq, inv = np.unique(a, axis=0, return_inverse=True)
+    idx = np.empty(len(uniq), dtype=np.uint8)
+    for s in range(0, len(uniq), 4096):
+        d = ((uniq[s:s + 4096, None, :] - pal[None, :, :]) ** 2).sum(-1)
+        idx[s:s + 4096] = d.argmin(1)
+    out = Image.fromarray(idx[inv.reshape(-1)].reshape(im.height, im.width), "P")
+    out.putpalette(pal.astype(np.uint8).flatten().tolist())
+    return out
 
 
 def main():
@@ -241,15 +266,8 @@ def main():
         b.close()
     try:                                  # 256 colours, the house colours kept exact: a third of the size
         from PIL import Image
-        im = Image.open(png).convert("RGB")
-        own = [INK, DIM, FRAME, RULE, EDGE, PANEL, CHIP, OK, WARN, SIGNAL, SAFETY, "#ffffff"]
-        base = im.quantize(colors=256 - len(own), method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-        pal = base.getpalette()[: 3 * (256 - len(own))]
-        for c in own:
-            pal += [int(c[i:i + 2], 16) for i in (1, 3, 5)]
-        ref = Image.new("P", (1, 1))
-        ref.putpalette(pal)
-        im.quantize(palette=ref, dither=Image.Dither.NONE).save(png, optimize=True)
+        quantize_exact(Image.open(png), [INK, DIM, FRAME, RULE, EDGE, PANEL, CHIP, OK, WARN, SIGNAL, SAFETY,
+                                         "#ffffff"]).save(png, optimize=True)
     except ImportError:
         pass
     print("wrote control-system.svg and control-system.png")

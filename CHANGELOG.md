@@ -23,10 +23,11 @@ installed from a release or from HACS. Nothing on a built unit changes.
 
 ### Added
 
-- `docs/07-home-assistant.md`, written. The control system: one path to every actuator, the
-  safety governor's seven checks in order, the three verdicts, who acts on an approved
-  command, the authority ceiling level by level, the kill switch, the supervisor, the bridge,
-  the mirror, the watchdog and the watering fallback. Then the panel section by section, what
+- `docs/07-home-assistant.md`, written and checked line by line against the code. The control
+  system: one path to every actuator, the safety governor's nine checks in the order the code
+  runs them, the three verdicts, who acts on an approved command, the authority ceiling level
+  by level, the kill switch, the supervisor, the bridge, the mirror, the watchdog and the
+  watering fallback. Then the panel section by section, what
   every control sends, every entity it reads, three ways to install it, how to check it, and
   what is not verified yet.
 - `docs/interface/`: the control system diagram (SVG and PNG, house style) and screenshots of
@@ -58,9 +59,30 @@ installed from a release or from HACS. Nothing on a built unit changes.
   first-generation package that is still installed beside it. The first-generation card is
   marked superseded in its header.
 - `COMMISSIONING.md` step 3 points at the guide and the release zip.
+- `ha/mosquitto-setup.md`: the access list sample has no entry for Home Assistant's own login,
+  and installed as it is it would cut Home Assistant off from MQTT. It now says to add one,
+  as the bench check does.
+
+### Found while writing it
+
+- **Two things can water after a Home Assistant restart.** `input_boolean.gh_auto_water` starts
+  on at every restart (`initial: true`), and the handover that turns it off fires only when
+  irrigation changes to Running. If irrigation was already running, Home Assistant's threshold
+  rule and the Jetson's irrigation can both water a zone, each at most once an hour, until
+  `gh_auto_water` is turned off. That rule also calls the node directly, outside the governor.
+  The node's own refusals still hold. Documented; the fix is open.
+- **The jog buttons do nothing yet.** The governor approves `jog_x` and `jog_z` from the panel,
+  but the gantry driver does not carry them out. Home works.
+- **The kill switch stops agents, not you.** A proposal already queued can still be approved,
+  and then runs as your own request. Documented.
+- **The approval queue lives in the governor's memory.** A restart of the core empties it.
+  Documented.
+- **Photo now works at Auto and above only**, because motion asks for each move as a service.
+  Documented.
 
 ### Open
 
+- The double watering after a restart, and the jog in the gantry driver (above).
 - `homeassistant/packages/greenhouse.yaml` still defines the first-generation helpers
   (`input_select.gh_authority`, `input_boolean.gh_kill`, `input_boolean.gh_claude_autonomy`,
   the proposal text helpers, `script.gh_robot_task`, `script.gh_tender_approve`). The stack does
@@ -69,6 +91,8 @@ installed from a release or from HACS. Nothing on a built unit changes.
   those helpers instead of the supervisor's kill switch. Installing this card (commissioning
   step 3) closes that, and must happen before any agent is started.
 - Tablet and phone layouts are checked in a browser at their widths, not yet on the devices.
+- The bench check loads `greenhouse_jetson.yaml` alone, on the current stable Home Assistant:
+  both packages together, and Home Assistant 2024.8, are untested.
 - The broker access list is still not applied on the reference build.
 
 ## 0.7.1 – 2026-10-24

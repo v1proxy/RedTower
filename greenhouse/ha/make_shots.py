@@ -59,6 +59,29 @@ document.body.dataset.ready = '1';
 </script></body></html>"""
 
 
+def quantize_exact(im, keep):
+    """256 colours, nearest colour for every pixel, with the colours in keep held exactly.
+
+    Pillow's palette mapping is approximate and moves small flat areas (a status dot, the white
+    ground) by a few levels; here each distinct colour is mapped to its true nearest entry."""
+    import numpy as np
+    from PIL import Image
+    im = im.convert("RGB")
+    keep = [tuple(int(c[i:i + 2], 16) for i in (1, 3, 5)) for c in keep]
+    base = im.quantize(colors=256 - len(keep), method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    pal = np.array(base.getpalette()[: 3 * (256 - len(keep))], dtype=np.int32).reshape(-1, 3)
+    pal = np.vstack([pal, np.array(keep, dtype=np.int32)])
+    a = np.asarray(im, dtype=np.int32).reshape(-1, 3)
+    uniq, inv = np.unique(a, axis=0, return_inverse=True)
+    idx = np.empty(len(uniq), dtype=np.uint8)
+    for s in range(0, len(uniq), 4096):
+        d = ((uniq[s:s + 4096, None, :] - pal[None, :, :]) ** 2).sum(-1)
+        idx[s:s + 4096] = d.argmin(1)
+    out = Image.fromarray(idx[inv.reshape(-1)].reshape(im.height, im.width), "P")
+    out.putpalette(pal.astype(np.uint8).flatten().tolist())
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fonts", type=Path, default=os.environ.get("MAAG_PLEX_WOFF2"))
@@ -124,14 +147,7 @@ def main():
     own = sorted(set(re.findall(r"#[0-9a-fA-F]{6}\b", CARD.read_text())) | {"#ffffff"})
 
     def save(src, dst, im=None):
-        im = (im or Image.open(src)).convert("RGB")
-        base = im.quantize(colors=256 - len(own), method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-        pal = base.getpalette()[: 3 * (256 - len(own))]
-        for c in own:
-            pal += [int(c[i:i + 2], 16) for i in (1, 3, 5)]
-        ref = Image.new("P", (1, 1))
-        ref.putpalette(pal)
-        im.quantize(palette=ref, dither=Image.Dither.NONE).save(dst, optimize=True)
+        quantize_exact(im or Image.open(src), own).save(dst, optimize=True)
 
     for n in ("hero", "power", "plants-console", "plant-overlay", "kill", "denied"):
         save(raw / f"{n}.png", OUT / f"panel-{n}.png")
