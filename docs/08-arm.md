@@ -13,7 +13,8 @@ through the right panel into its feeder at tier B. It goes on the 280's flange w
 LEGO pins, through its camera ring, and replaces the adaptive gripper: 95.9 g of tool and
 58 g of D405, 96 g of the payload left. Everything about it, the booklet, the print files
 and the BOM, is in
-[`greenhouse/snip/`](../greenhouse/snip/HERB_SNIP.md); commissioning is section 7b of
+[`greenhouse/snip/`](../greenhouse/snip/HERB_SNIP.md), and its booklet can be read
+[page by page](booklets/snip.md); commissioning is section 7b of
 [`greenhouse/COMMISSIONING.md`](../greenhouse/COMMISSIONING.md).
 
 ## Jetson bring-up

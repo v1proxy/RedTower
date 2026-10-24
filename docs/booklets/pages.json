@@ -1,0 +1,516 @@
+{
+ "frame": {
+  "sha256": "c6b58ba713a32edfc83a16a8cb61f09e410b1041b97f1d43d55ed6796ac89907",
+  "pdf": "greenhouse/frame/Maag_Frame_Assembly_Instructions_RevA.pdf",
+  "pages": [
+   [
+    "Cover",
+    null
+   ],
+   [
+    "Frame and trays · parts",
+    null
+   ],
+   [
+    "Frame and trays · fasteners",
+    null
+   ],
+   [
+    "Tools",
+    null
+   ],
+   [
+    "Every joint, and what holds it",
+    null
+   ],
+   [
+    "Know your profile",
+    1
+   ],
+   [
+    "Cut and label",
+    2
+   ],
+   [
+    "Mark the levels",
+    3
+   ],
+   [
+    "Print the feet",
+    4
+   ],
+   [
+    "The base · front, back and the mid rail",
+    5
+   ],
+   [
+    "Hidden connectors in the eight floor ends",
+    6
+   ],
+   [
+    "Stand the posts",
+    7
+   ],
+   [
+    "Ledges for the top",
+    8
+   ],
+   [
+    "The top ring",
+    9
+   ],
+   [
+    "Square it, then tighten",
+    10
+   ],
+   [
+    "Tier A · eight ledges",
+    11
+   ],
+   [
+    "Tier A · front, back and side rails",
+    12
+   ],
+   [
+    "Tier A · the tray rails",
+    13
+   ],
+   [
+    "Tiers B and C · the same three steps",
+    14
+   ],
+   [
+    "The feet",
+    15
+   ],
+   [
+    "The sheets · check, drill, seal",
+    16
+   ],
+   [
+    "Base pan · T-nuts, then the DOWN piece",
+    17
+   ],
+   [
+    "Base pan · the UP piece over the lap",
+    18
+   ],
+   [
+    "Trays · the same, three times",
+    19
+   ],
+   [
+    "Drains · one riser on the FL post",
+    20
+   ],
+   [
+    "Before you load it",
+    21
+   ]
+  ]
+ },
+ "gantry": {
+  "sha256": "ea6654935f2379cfd1a588edc5a62055a8f3efadb7601f24b997da4dc7c834bd",
+  "pdf": "greenhouse/gantry/Gantry_Assembly_Instructions_RevE.pdf",
+  "pages": [
+   [
+    "Cover",
+    null
+   ],
+   [
+    "Gantry · parts",
+    null
+   ],
+   [
+    "Gantry · fasteners",
+    null
+   ],
+   [
+    "Tools",
+    null
+   ],
+   [
+    "Know your plate",
+    1
+   ],
+   [
+    "Fixed wheels · the stack",
+    2
+   ],
+   [
+    "Eccentric wheels",
+    3
+   ],
+   [
+    "Onto the rail, then set the preload",
+    4
+   ],
+   [
+    "Build the second carriage",
+    5
+   ],
+   [
+    "X motor onto its plate",
+    6
+   ],
+   [
+    "Pulley onto the shaft",
+    7
+   ],
+   [
+    "Motor onto the rail's left end",
+    8
+   ],
+   [
+    "Idler at the far end",
+    9
+   ],
+   [
+    "Belt and clamps",
+    10
+   ],
+   [
+    "Nut block onto the Z carriage",
+    11
+   ],
+   [
+    "Lead screw through the nut",
+    12
+   ],
+   [
+    "Top end · the screw hangs here",
+    13
+   ],
+   [
+    "Foot · braked motor and coupler",
+    14
+   ],
+   [
+    "Limit switches · all four",
+    15
+   ],
+   [
+    "Controller on standoffs",
+    16
+   ],
+   [
+    "Wiring · power and the safety relay",
+    null
+   ],
+   [
+    "Wiring · controller, motors, brake, limits",
+    null
+   ],
+   [
+    "First motion, before the arm",
+    17
+   ],
+   [
+    "Arm plate onto the Z carriage",
+    18
+   ],
+   [
+    "The arm, last",
+    19
+   ],
+   [
+    "Before you trust it",
+    20
+   ],
+   [
+    "The cabinet the gantry lands on",
+    21
+   ],
+   [
+    "Why the cabinet got deeper",
+    22
+   ],
+   [
+    "X rail onto the rear uprights",
+    23
+   ],
+   [
+    "Hang the Z mast",
+    24
+   ],
+   [
+    "The Z drive, installed",
+    25
+   ],
+   [
+    "Z carriage, arm plate, arm",
+    26
+   ],
+   [
+    "Commissioned",
+    27
+   ]
+  ]
+ },
+ "enclosure": {
+  "sha256": "a906316cda8ae1dc87f4d4b45d3506f99730c65b6c9ee5c541821292130b1bfe",
+  "pdf": "greenhouse/enclosure/Maag_Enclosure_Assembly_Instructions_RevA.pdf",
+  "pages": [
+   [
+    "Cover",
+    null
+   ],
+   [
+    "The enclosure · what goes where",
+    null
+   ],
+   [
+    "Enclosure · parts",
+    null
+   ],
+   [
+    "Enclosure · fasteners",
+    null
+   ],
+   [
+    "Tools",
+    null
+   ],
+   [
+    "Where every screw goes · sides and back",
+    null
+   ],
+   [
+    "Where every screw goes · top and front",
+    null
+   ],
+   [
+    "How it closes · the door, in section",
+    null
+   ],
+   [
+    "Before you start",
+    1
+   ],
+   [
+    "Clean every land, seal the post tops",
+    2
+   ],
+   [
+    "Back · tape",
+    3
+   ],
+   [
+    "Back · the bottom panel",
+    4
+   ],
+   [
+    "Back · the middle and upper panels",
+    5
+   ],
+   [
+    "Back · two battens over the seams",
+    6
+   ],
+   [
+    "Right panel · on the bench first",
+    7
+   ],
+   [
+    "Right panel · tape, then the panel",
+    8
+   ],
+   [
+    "Left side · take the riser off the post",
+    9
+   ],
+   [
+    "Left side · tape, grommets, the panel",
+    10
+   ],
+   [
+    "Left side · the riser on its P-clips",
+    11
+   ],
+   [
+    "Top panel · fans on the bench",
+    12
+   ],
+   [
+    "Top panel · on, and anchored to the wall",
+    13
+   ],
+   [
+    "Doors · on the bench",
+    14
+   ],
+   [
+    "Front · weatherstrip, magnets, switches",
+    15
+   ],
+   [
+    "Front · hang the doors",
+    16
+   ],
+   [
+    "Doors · adjust and check",
+    17
+   ],
+   [
+    "Before you plant",
+    18
+   ]
+  ]
+ },
+ "harvest": {
+  "sha256": "ff461a6616ca266b6f1a2adfce27ff68ea6234bcc7051aabbd987c1e0630cfab",
+  "pdf": "greenhouse/harvest/Maag_Harvest_Assembly_Instructions_RevB.pdf",
+  "pages": [
+   [
+    "Cover",
+    null
+   ],
+   [
+    "Harvest · where every cut goes",
+    null
+   ],
+   [
+    "How the arm drops",
+    null
+   ],
+   [
+    "Harvest · parts",
+    null
+   ],
+   [
+    "Harvest · fasteners",
+    null
+   ],
+   [
+    "Tools",
+    null
+   ],
+   [
+    "In section, to scale",
+    null
+   ],
+   [
+    "Before you start",
+    1
+   ],
+   [
+    "Base pan · the guide rails",
+    2
+   ],
+   [
+    "The tray · its handle",
+    3
+   ],
+   [
+    "The tray · slide it in",
+    4
+   ],
+   [
+    "The feeder · on the bench",
+    5
+   ],
+   [
+    "Right panel · well nuts in, temporary screws out",
+    6
+   ],
+   [
+    "Feeder · hang the two basins",
+    7
+   ],
+   [
+    "Feeder · the two hoods",
+    8
+   ],
+   [
+    "Feeder · the lid",
+    9
+   ],
+   [
+    "Trays in, the switch into the door chain",
+    10
+   ],
+   [
+    "Before the first harvest",
+    11
+   ]
+  ]
+ },
+ "snip": {
+  "sha256": "34e86df54c5364cd3a63bff712f2ba6a72d1a6293b12d9c3a539f47680176b6f",
+  "pdf": "greenhouse/snip/Maag_Herb_Snip_Assembly_Instructions_RevA.pdf",
+  "pages": [
+   [
+    "Cover",
+    null
+   ],
+   [
+    "How the Herb Snip works",
+    null
+   ],
+   [
+    "Herb Snip · printed parts",
+    null
+   ],
+   [
+    "Herb Snip · purchased parts",
+    null
+   ],
+   [
+    "Tools",
+    null
+   ],
+   [
+    "Print the parts",
+    1
+   ],
+   [
+    "Fit the crank to your servo's horn",
+    2
+   ],
+   [
+    "The blade between the jaw halves",
+    3
+   ],
+   [
+    "Pads, anvil and the pivot insert",
+    4
+   ],
+   [
+    "The jaw on its pivot, and the link",
+    5
+   ],
+   [
+    "The crank on the servo, at closed",
+    6
+   ],
+   [
+    "The servo into the housing",
+    7
+   ],
+   [
+    "Regulator and leads",
+    8
+   ],
+   [
+    "Wiring · the Herb Snip",
+    null
+   ],
+   [
+    "The camera on its ring",
+    9
+   ],
+   [
+    "Onto the arm",
+    10
+   ],
+   [
+    "Where the cuts go",
+    11
+   ],
+   [
+    "Commission",
+    12
+   ]
+  ]
+ }
+}

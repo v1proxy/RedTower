@@ -1,5 +1,8 @@
 # Module — gantry
 
+The gantry's booklet, Gantry Rev E, can be read [page by page](booklets/gantry.md); its
+guide is [`greenhouse/gantry/GANTRY_ASSEMBLY.md`](../greenhouse/gantry/GANTRY_ASSEMBLY.md).
+
 *Chapter not yet written for the parametric design (0.1.0).*
 
 The reference `m` build is fully documented in the generators and configs:

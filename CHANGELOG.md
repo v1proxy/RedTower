@@ -14,6 +14,25 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.7.1 – 2026-10-24
+
+**The booklets, readable on GitHub.** Documentation only: no part, dimension or pin
+changes, nothing to do on a built unit.
+
+- `greenhouse/booklet/make_gallery.py` renders every page of the five assembly booklets
+  from their PDFs (121 pages) into `docs/booklets/`: each page 1400 px wide and as a
+  thumbnail. Page titles and step numbers come from the PDFs' own text.
+- `docs/booklets/README.md`: every page of every booklet, in build order, as thumbnails.
+  A page opens full size in its booklet's page-by-page view, `docs/booklets/<booklet>.md`,
+  which also links the PDF and the module's guide.
+- The README opens with the shared cover render and has a new section, **Assembly
+  booklets**: four pages from each booklet, each linked to its page.
+- Each module's guide (`FRAME_ASSEMBLY.md`, `GANTRY_ASSEMBLY.md`, `ENCLOSURE.md`,
+  `HARVEST.md`, `HERB_SNIP.md`) opens with the same four pages and a link to all of them;
+  `docs/03-frame-assembly.md`, `docs/08-gantry.md` and `docs/08-arm.md` link the views.
+- The blocks it writes sit between `<!-- booklet... -->` markers. Rerun it after rebuilding
+  any booklet; a booklet whose PDF has not changed is not rendered again.
+
 ## 0.7.0 – 2026-10-21
 
 **The Herb Snip: the arm's tool.** One printed end effector that cuts a stem and

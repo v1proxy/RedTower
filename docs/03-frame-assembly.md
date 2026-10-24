@@ -2,7 +2,8 @@
 
 The reference `m` build has its own booklet: **Frame Rev A**, design 0.4.0.
 
-- `greenhouse/frame/Maag_Frame_Assembly_Instructions_RevA.pdf`, the booklet
+- `greenhouse/frame/Maag_Frame_Assembly_Instructions_RevA.pdf`, the booklet; to read it here
+  first, [page by page](booklets/frame.md)
 - `greenhouse/frame/FRAME_ASSEMBLY.md`, what changed and why, the steps in brief, the buy list
 - `greenhouse/frame/cabinet.py`, the model every page is drawn from: `python cabinet.py` prints the cut
   list, the joints and every clearance check
