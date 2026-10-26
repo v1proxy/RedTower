@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;width:1400px;height:800px;overflow:hidden}</style></head>
+<body><div id="host" style="width:1400px;height:800px"></div>
+<home-assistant id="ha"></home-assistant>
+<script type="module">
+const ha=document.getElementById('ha'); ha.attachShadow({mode:'open'}); ha.shadowRoot.innerHTML='<home-assistant-main></home-assistant-main>';
+const mn=ha.shadowRoot.querySelector('home-assistant-main'); mn.attachShadow({mode:'open'}); mn.shadowRoot.innerHTML='<ha-drawer><partial-panel-resolver><ha-panel-lovelace></ha-panel-lovelace></partial-panel-resolver></ha-drawer>';
+const pl=mn.shadowRoot.querySelector('ha-panel-lovelace'); pl.attachShadow({mode:'open'}); pl.shadowRoot.innerHTML='<hui-root></hui-root>';
+const hr=pl.shadowRoot.querySelector('hui-root'); hr.attachShadow({mode:'open'}); hr.shadowRoot.innerHTML='<hui-view></hui-view>';
+await import('./floor3dpro-axo-card.js');
+const params = new URLSearchParams(location.search);
+const cfg = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(params.get('cfg')),c=>c.charCodeAt(0))));
+const states = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(params.get('st')),c=>c.charCodeAt(0))));
+const hass = { states, themes:{darkMode:true}, language:'en', locale:{language:'en'}, localize:(k)=>k, callService:()=>{}, callWS: async()=>({}), user:{is_admin:true}, config:{unit_system:{temperature:'°F'}}, connection:{subscribeEvents:()=>()=>{}} };
+await customElements.whenDefined('floor3dpro-axo-card');
+const card = document.createElement('floor3dpro-axo-card');
+card.setConfig(cfg);
+card.hass = hass;
+document.getElementById('host').appendChild(card);
+window.__card = card;
+window.__toggle = (lv) => { const c = card; c._toggleVisibleLevel(lv); c._requestRender && c._requestRender('t'); };
+</script></body></html>

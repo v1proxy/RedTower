@@ -1,0 +1,337 @@
+{
+    "type":  "custom:floor3dpro-axo-card",
+    "name":  "Red Tower",
+    "path":  "/local/3d/",
+    "objfile":  "redtower.glb?v=20261025i",
+    "style":  "overflow: hidden; width: auto; height: 70vh; position: relative;",
+    "backgroundColor":  "#000000",
+    "globalLightPower":  "1.0",
+    "shadow":  "no",
+    "header":  "no",
+    "click":  "yes",
+    "lock_camera":  "no",
+    "hideLevelsMenu":  "no",
+    "show_axes":  "no",
+    "sky":  "no",
+    "overlay":  "no",
+    "camera_position":  {
+                            "x":  1346,
+                            "y":  1700,
+                            "z":  1048
+                        },
+    "camera_target":  {
+                          "x":  191,
+                          "y":  545,
+                          "z":  -107
+                      },
+    "entities":  [
+                     {
+                         "entity":  "sensor.ground_floor_thermostat_air_temperature",
+                         "object_id":  "room_entry",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ isNaN(parseFloat(\u0027$entity\u0027)) ? \u0027Entry  --\u0027 : \u0027Entry  \u0027 + Math.round(parseFloat(\u0027$entity\u0027)) + \u0027ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°F\u0027 ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "sensor.studio_power_minute_average",
+                         "object_id":  "room_studio",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ isNaN(parseFloat(\u0027$entity\u0027)) ? \u0027Studio  --\u0027 : \u0027Studio  \u0027 + Math.round(parseFloat(\u0027$entity\u0027)) + \u0027 W\u0027 ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "sensor.polestar_8882_battery_charge_level",
+                         "object_id":  "room_garage",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ (() =\u003e { try { const s = document.querySelector(\u0027home-assistant\u0027).hass.states, c = s[\u0027sensor.polestar_8882_charging_status\u0027], p = s[\u0027sensor.polestar_8882_charging_power\u0027], b = parseFloat(\u0027$entity\u0027); if (isNaN(b)) return \u0027Polestar  --\u0027; const w = p ? parseFloat(p.state) : NaN; return \u0027Polestar  \u0027 + Math.round(b) + \u0027%\u0027 + (c \u0026\u0026 c.state === \u0027Charging\u0027 \u0026\u0026 !isNaN(w) ? \u0027  \u0027 + (w / 1000).toFixed(1) + \u0027 kW\u0027 : \u0027\u0027); } catch (err) { return \u0027Polestar  $entity%\u0027; } })() ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "binary_sensor.backyard_window",
+                         "object_id":  "window_guest_room",
+                         "type3d":  "color",
+                         "action":  "more-info",
+                         "colorcondition":  [
+                                                {
+                                                    "state":  "on",
+                                                    "color":  "#E81123"
+                                                },
+                                                {
+                                                    "state":  "off",
+                                                    "color":  "#3FA34D"
+                                                },
+                                                {
+                                                    "state":  "unavailable",
+                                                    "color":  "#555555"
+                                                }
+                                            ]
+                     },
+                     {
+                         "entity":  "sensor.kitchen_thermostat_air_temperature",
+                         "object_id":  "room_kitchen",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ isNaN(parseFloat(\u0027$entity\u0027)) ? \u0027Kitchen  --\u0027 : \u0027Kitchen  \u0027 + Math.round(parseFloat(\u0027$entity\u0027)) + \u0027ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°F\u0027 ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "sensor.living_power_minute_average",
+                         "object_id":  "room_living_room",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ isNaN(parseFloat(\u0027$entity\u0027)) ? \u0027Living  --\u0027 : \u0027Living  \u0027 + Math.round(parseFloat(\u0027$entity\u0027)) + \u0027 W\u0027 ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "binary_sensor.third_reality_inc_3rds17bz",
+                         "object_id":  "door_balcony",
+                         "type3d":  "color",
+                         "action":  "more-info",
+                         "colorcondition":  [
+                                                {
+                                                    "state":  "on",
+                                                    "color":  "#E81123"
+                                                },
+                                                {
+                                                    "state":  "off",
+                                                    "color":  "#3FA34D"
+                                                },
+                                                {
+                                                    "state":  "unavailable",
+                                                    "color":  "#555555"
+                                                }
+                                            ]
+                     },
+                     {
+                         "entity":  "vacuum.sagan",
+                         "object_id":  "vacuum_sagan",
+                         "type3d":  "color",
+                         "action":  "more-info",
+                         "colorcondition":  [
+                                                {
+                                                    "state":  "cleaning",
+                                                    "color":  "#00B4FF"
+                                                },
+                                                {
+                                                    "state":  "returning",
+                                                    "color":  "#FFB000"
+                                                },
+                                                {
+                                                    "state":  "paused",
+                                                    "color":  "#FFB000"
+                                                },
+                                                {
+                                                    "state":  "error",
+                                                    "color":  "#E81123"
+                                                },
+                                                {
+                                                    "state":  "idle",
+                                                    "color":  "#9E9E9E"
+                                                },
+                                                {
+                                                    "state":  "unavailable",
+                                                    "color":  "#555555"
+                                                }
+                                            ]
+                     },
+                     {
+                         "entity":  "vacuum.asimov",
+                         "object_id":  "vacuum_asimov",
+                         "type3d":  "color",
+                         "action":  "more-info",
+                         "colorcondition":  [
+                                                {
+                                                    "state":  "cleaning",
+                                                    "color":  "#00B4FF"
+                                                },
+                                                {
+                                                    "state":  "returning",
+                                                    "color":  "#FFB000"
+                                                },
+                                                {
+                                                    "state":  "paused",
+                                                    "color":  "#FFB000"
+                                                },
+                                                {
+                                                    "state":  "error",
+                                                    "color":  "#E81123"
+                                                },
+                                                {
+                                                    "state":  "idle",
+                                                    "color":  "#9E9E9E"
+                                                },
+                                                {
+                                                    "state":  "unavailable",
+                                                    "color":  "#555555"
+                                                }
+                                            ]
+                     },
+                     {
+                         "entity":  "vacuum.asimov",
+                         "object_id":  "room_bedroom",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ \u0027Asimov  \u0027 + \u0027$entity\u0027 ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "vacuum.sagan",
+                         "object_id":  "room_hall_l2",
+                         "type3d":  "room",
+                         "action":  "more-info",
+                         "entity_template":  "[[[ \u0027Sagan  \u0027 + \u0027$entity\u0027 ]]]",
+                         "room":  {
+                                      "label":  "yes",
+                                      "label_text":  "template",
+                                      "transparency":  100,
+                                      "elevation":  150,
+                                      "width":  250,
+                                      "height":  80,
+                                      "span":  92,
+                                      "font":  "sans-serif",
+                                      "textbgcolor":  "rgba(0,0,0,0.72)",
+                                      "textfgcolor":  "#FFFFFF"
+                                  }
+                     },
+                     {
+                         "entity":  "media_player.tv1_2",
+                         "type3d":  "color",
+                         "object_id":  "tv_living_room_screen",
+                         "action":  "more-info",
+                         "colorcondition":  [
+                                                {
+                                                    "state":  "on",
+                                                    "color":  "#4DA3FF"
+                                                },
+                                                {
+                                                    "state":  "playing",
+                                                    "color":  "#4DA3FF"
+                                                },
+                                                {
+                                                    "state":  "paused",
+                                                    "color":  "#4DA3FF"
+                                                },
+                                                {
+                                                    "state":  "idle",
+                                                    "color":  "#4DA3FF"
+                                                },
+                                                {
+                                                    "state":  "off",
+                                                    "color":  "#1C1E22"
+                                                },
+                                                {
+                                                    "state":  "standby",
+                                                    "color":  "#1C1E22"
+                                                },
+                                                {
+                                                    "state":  "unavailable",
+                                                    "color":  "#1C1E22"
+                                                }
+                                            ]
+                     },
+                     {
+                         "entity":  "sensor.polestar_8882_charger_connection_status",
+                         "type3d":  "show",
+                         "object_id":  "\u003ccar\u003e",
+                         "show":  {
+                                      "state":  "on"
+                                  },
+                         "entity_template":  "[[[ \u0027$entity\u0027 === \u0027Connected\u0027 ? \u0027on\u0027 : \u0027off\u0027 ]]]"
+                     }
+                 ],
+    "view_layout":  {
+                        "grid-column":  "1 / -1"
+                    },
+    "ortho_half_height":  860,
+    "object_groups":  [
+                          {
+                              "object_group":  "car",
+                              "objects":  [
+                                              {
+                                                  "object_id":  "car_polestar_body"
+                                              },
+                                              {
+                                                  "object_id":  "car_polestar_glass"
+                                              },
+                                              {
+                                                  "object_id":  "car_polestar_tires"
+                                              },
+                                              {
+                                                  "object_id":  "car_polestar_rims"
+                                              },
+                                              {
+                                                  "object_id":  "car_polestar_tail"
+                                              }
+                                          ]
+                          }
+                      ]
+}

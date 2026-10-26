@@ -14,6 +14,53 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.9.0 – 2026-10-25
+
+**The house in 3D.** Red Tower itself on the dashboard: an axonometric 3D floor plan in Home
+Assistant, built from the house's Revit model in Blender, with floors that peel away, live room
+labels, the furniture rebuilt from photos, the exterior coloured as built, and the car in the
+garage with its charge level. A new capability beside the greenhouse; nothing on a built unit
+changes.
+
+### Added
+
+- `house/floorplan/README.md`: the method end to end. Reading floors, ceilings and rooms out of a
+  33,976-object Revit export; cutting it into levels 4 ft above each floor with capped section
+  cuts; the naming rules the card depends on; materials that read well under the card's flat
+  light; furniture from photos with the makers' dimensions; deploying and configuring the card;
+  the gotchas, each with its cause.
+- `house/floorplan/blender/`: every script, headless. `build_ha.py` (palette, level cuts, numpy
+  joins, bindable rooms, light anchors, status strips, vacuum pucks), `finalize.py`, the
+  repaints, `furnish_bedroom.py`, `furnish_living.py` (bookcases, L sofa, Flos Arco, TV),
+  `furnish_car.py` (a Polestar 2 from its published size), the analysis tools, and
+  `rebuild_all.ps1` / `rebuild_all.sh` for the whole chain.
+- `repaint5.py`: exterior trims selected by geometry, since the export has no family names.
+  Parapet, coping, entry door, awning, downspouts and roof scuppers red; every window frame
+  aluminium; wall faces seen from outside take the nearest cladding colour, found with
+  sky-visibility rays after splitting the walls at the roof planes.
+- `house/floorplan/card/`: two patches for the HACS `floor3dpro-card` and `build_card.js`, which
+  applies both. `axo_patch.js`: orthographic camera (`ortho_half_height`), level buttons highest
+  first, renamed elements so it runs beside the HACS card, and a fix for labels and room planes
+  collapsing into one corner whenever the card is rebuilt (its model cache shared geometry
+  between clones). `ui_patch.js`: labels at four times the resolution on a rounded box that fits
+  the text, true white text, 40 px floor buttons with hidden floors dimmed.
+- `house/floorplan/card/card_config.json`: the card as configured at Red Tower, and
+  `house/floorplan/preview/`: the card rendered headless to check a model before uploading it.
+- The car: shown in the garage while the charger is connected, with battery and charging power
+  on its label, through the Polestar API integration (HACS). The guide covers the install, the
+  sign-in and the bindings; the dashboard has a Polestar row (battery, range, charging, full at).
+- `docs/house/`: the screenshots. README: a section, The house in 3D, and `house/` in the layout.
+
+### Changed
+
+- `VERSION`, the panel card's `CARD_VERSION` and its resource query are 0.9.0. The greenhouse
+  card itself is unchanged.
+
+### Not included
+
+- The house model and the GLB built from it stay out of the repository. The scripts take your
+  own model as input.
+
 ## 0.8.0 – 2026-10-24
 
 **The interface and the controls: explained, pictured and packaged.** How the greenhouse is

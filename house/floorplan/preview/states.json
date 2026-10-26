@@ -1,0 +1,9 @@
+{"sensor.ground_floor_thermostat_air_temperature":{"state":"77.0","attributes":{"unit_of_measurement":"°F","friendly_name":"Ground Floor Thermostat Air temperature"}},
+ "sensor.studio_power_minute_average":{"state":"47.7","attributes":{"unit_of_measurement":"W"}},
+ "sensor.car_power_minute_average":{"state":"0.0","attributes":{"unit_of_measurement":"W"}},
+ "binary_sensor.backyard_window":{"state":"unavailable","attributes":{}},
+ "sensor.kitchen_thermostat_air_temperature":{"state":"79.0","attributes":{"unit_of_measurement":"°F"}},
+ "sensor.living_power_minute_average":{"state":"186.2","attributes":{"unit_of_measurement":"W"}},
+ "binary_sensor.third_reality_inc_3rds17bz":{"state":"off","attributes":{}},
+ "vacuum.sagan":{"state":"docked","attributes":{}},
+ "vacuum.asimov":{"state":"cleaning","attributes":{}}}

@@ -3,7 +3,7 @@
  * Every command the user gives goes to the safety governor, never straight to a device.
  * Card option  demo: true  runs the whole view on simulated data.
  * No network calls of its own: IBM Plex is used if the device has it, else the system font. */
-const CARD_VERSION = '0.8.0';
+const CARD_VERSION = '0.9.0';
 const C = { bg: '#14181a', panel: '#1d2326', line: '#2c3539', line2: '#4a565b', text: '#e6ebe8', mute: '#9aa6a0',
   soft: '#c9d1cd', green: '#7fd18b', greenBg: '#24362a', greenFg: '#a6e3b0', greenLine: '#3f7a4c',
   red: '#ff8f85', redBg: '#3d1c19', redFg: '#ffb8b0', redLine: '#b0483d', yellow: '#f2d86a', yellowBg: '#38320f',
