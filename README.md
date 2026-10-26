@@ -6,7 +6,7 @@ An indoor greenhouse that an AI agent tends, written down so anyone can build
 one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
 space allows, with only the modules you want.
 
-![design version](https://img.shields.io/badge/design-0.9.0-1d4ed8)
+![design version](https://img.shields.io/badge/design-0.10.0-1d4ed8)
 [![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 [![Maag, the reference m build, rendered from the design's own 3D model](docs/booklets/cover.jpg)](docs/booklets/README.md)
@@ -224,11 +224,13 @@ laser cutter, and the running-cost model.
 
 [![The 3D tab of the Red Tower dashboard: floor buttons, the house in its real colours, the Polestar tile](docs/house/3d-view.png)](house/floorplan/README.md)
 
-The greenhouse lives in a house, and the house is on the dashboard too: an axonometric 3D
-model of Red Tower, built from its Revit model in Blender, where each floor can be peeled away
-and rooms carry live labels (temperatures, power, the robot vacuums). The car appears in the
-garage while it is plugged in, with its charge level on the label, and the exterior is coloured
-as built. [`house/floorplan/README.md`](house/floorplan/README.md) is the whole method, from a
+The greenhouse lives in a house, and the house is on the dashboard too: an axonometric 3D model
+of Red Tower, built from its Revit model in Blender, where each floor can be peeled away and
+rooms carry live labels (temperatures, power, the robot vacuums). The car appears in the garage
+while it is plugged in, with its charge level on the label, and the exterior is coloured as
+built. The sky behind it follows the real weather and the sun's real position, and after dark
+the windows light up while someone is home.
+[`house/floorplan/README.md`](house/floorplan/README.md) is the whole method, from a
 33,976-object Revit export to a 2.7 MB GLB, with every script and the patches the card needs.
 
 ---

@@ -30,7 +30,7 @@
             "object_id": "room_entry",
             "type3d": "room",
             "action": "more-info",
-            "entity_template": "[[[ isNaN(parseFloat('$entity')) ? 'Entry  --' : 'Entry  ' + Math.round(parseFloat('$entity')) + 'ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°F' ]]]",
+            "entity_template": "[[[ isNaN(parseFloat('$entity')) ? 'Entry  --' : 'Entry  ' + Math.round(parseFloat('$entity')) + '°F' ]]]",
             "room": {
                 "label": "yes",
                 "label_text": "template",
@@ -107,7 +107,7 @@
             "object_id": "room_kitchen",
             "type3d": "room",
             "action": "more-info",
-            "entity_template": "[[[ isNaN(parseFloat('$entity')) ? 'Kitchen  --' : 'Kitchen  ' + Math.round(parseFloat('$entity')) + 'ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°F' ]]]",
+            "entity_template": "[[[ isNaN(parseFloat('$entity')) ? 'Kitchen  --' : 'Kitchen  ' + Math.round(parseFloat('$entity')) + '°F' ]]]",
             "room": {
                 "label": "yes",
                 "label_text": "template",

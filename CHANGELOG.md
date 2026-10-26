@@ -14,6 +14,45 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.10.0 – 2026-10-26
+
+**The house in its weather.** The 3D floor plan now lives in the real sky: the weather outside
+is animated around the house, the sun's light comes in from where the sun really is, and after
+dark the windows light up while someone is home. Turning a floor off also clears its tiles from
+the dashboard. A new capability on the house dashboard; nothing on a built unit changes.
+
+### Added
+
+- `house/floorplan/card/fx_patch.js`, a third patch for the card, applied by `build_card.js`
+  after the other two:
+  - **Floor filter.** Dashboard cards in the same grid as the 3D card that carry
+    `variables: { rt_floor: N }` hide while level N is hidden in the 3D view, so turning a
+    floor off also removes its tiles underneath.
+  - **Weather** from any weather entity (`weather_entity`, default `weather.forecast_home`;
+    `weather: "no"` turns it off), at 30 fps: rain slanted by the wind, downpour, snow, hail,
+    storms with lightning, clouds, fog, wind streaks, and stars by night.
+  - **A sky behind the house.** The scene background is cleared and painted on a canvas behind
+    the model, so stars, clouds and lightning bolts always stay behind the building, while
+    rain, snow, hail, fog and the lightning flash fall in front of it.
+  - **Sunlight.** The sun always stays just outside the frame and moves around its edge through
+    the day, placed from `sun.sun` azimuth and elevation relative to the camera. Only its light
+    comes in, as a soft wash and a glow from that edge: no rays, streaks or flares. Its colour
+    shifts slightly, cool white at dawn, warm white at midday, light peach at sunset, and a
+    cloud in front of it dims it.
+  - **Lit windows.** After sunset, while someone is home, every window glows warm as if the
+    lights were on (`presence_entity`, default `zone.home`; `window_lights: "no"` turns it off).
+- `docs/house/3d-sky.png`: night with someone home, and sunset.
+
+### Changed
+
+- `ui_patch.js`: the floor buttons are in the dashboard's red; hidden floors dim to 30 %.
+- `card_config.json`: the weather entity is set, and the temperature labels show a proper
+  degree sign (it had been saved with a broken encoding).
+- `house/floorplan/README.md`: the third patch, its options and the new figure; the resource
+  query is `?v=10`.
+- `VERSION`, the panel card's `CARD_VERSION` and its resource query are 0.10.0. The greenhouse
+  card itself is unchanged.
+
 ## 0.9.0 – 2026-10-25
 
 **The house in 3D.** Red Tower itself on the dashboard: an axonometric 3D floor plan in Home
