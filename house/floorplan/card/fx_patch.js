@@ -1,8 +1,9 @@
 // Red Tower FX patch for floor3dpro-axo-card (applied after axo_patch.js and ui_patch.js).
 // - floor filter: cards in the same grid tagged `variables: { rt_floor: N }` hide while level N is hidden in the 3D view
 // - weather: the weather entity animated over the 3D view (rain, downpour, snow, hail, storm with lightning, clouds,
-//   fog, wind, stars by night, and by day a lens glare placed from sun.sun's azimuth and elevation relative to the
-//   camera: bloom, halo, diffraction spikes, anamorphic streak, ghosts; warmer and lower at sunrise and sunset). Card options: `weather_entity` (default weather.forecast_home),
+//   fog, wind, stars by night, and sunlight: the sun itself stays out of frame and only its light comes in, from the
+//   side it is on (sun.sun azimuth and elevation relative to the camera), bluish at dawn, yellow at midday, red at
+//   sunset; no lens flares). Card options: `weather_entity` (default weather.forecast_home),
 //   `weather: "no"` to turn it off. Drawn on a 2D canvas above the model, 30 fps, sized to the card.
 const FX_METHODS = String.raw`_rtFloorFilter(){try{const lv=this._displaylevels;if(!lv||!lv.length)return;const hc=this.parentNode,grid=hc&&hc.parentNode;if(!grid||!grid.children)return;const root=grid.getRootNode&&grid.getRootNode();if(root&&root.appendChild&&root!==document&&!(root.getElementById&&root.getElementById("rt-floor-filter"))){const s=document.createElement("style");s.id="rt-floor-filter";s.textContent=".rt-floor-hidden{display:none !important}";root.appendChild(s)}for(const k of grid.children){const cf=k.config||k._config;const v=cf&&cf.variables&&cf.variables.rt_floor;if(v===undefined||v===null||v==="")continue;k.classList.toggle("rt-floor-hidden",lv[Number(v)]===false)}}catch(e){}}
 _rtWeatherEnsure(){try{
@@ -17,33 +18,25 @@ _rtWeatherEnsure(){try{
   if(!W.running&&this._isConnected!==false){W.running=true;const loop=(ts)=>{if(!this._rtW||this._rtW!==W||!W.cv.isConnected||this._isConnected===false){W.running=false;return}requestAnimationFrame(loop);if(document.hidden||ts-W.last<33)return;const dt=Math.min(0.1,(ts-(W.last||ts))/1000);W.last=ts;this._rtWeatherFrame(W,dt,ts)};requestAnimationFrame(loop)}
 }catch(e){}}
 _rtSun(ctx,cw,ch,t,cond,sun,W){
-  const sa=sun&&sun.attributes||{};const az=parseFloat(sa.azimuth),el=parseFloat(sa.elevation);
+  const sa=sun&&sun.attributes||{};const az=parseFloat(sa.azimuth),el=parseFloat(sa.elevation);if(isNaN(el)||el<-6)return;
+  const rising=sa.rising===true||(sa.rising===undefined&&new Date().getHours()<12);
   let vaz=315;try{const cp=this._camera.position,tg=this._controls&&this._controls.target;if(cp&&tg){const dx=tg.x-cp.x,dn=-(tg.z-cp.z);if(Math.abs(dx)+Math.abs(dn)>1e-6)vaz=Math.atan2(dx,dn)*180/Math.PI}}catch(e){}
   let d=isNaN(az)?40:az-vaz;d=((d+540)%360)-180;
-  const e=isNaN(el)?35:Math.max(0,el);const behind=Math.abs(d)>90;
-  let sx=behind?(d>0?1.06:-0.06)*cw:cw*(0.5+d/110);sx=Math.max(-0.08*cw,Math.min(1.08*cw,sx));
-  const sy=ch*(0.30-Math.min(e,70)/70*0.38);
-  const lerp=(a,b,k)=>a+(b-a)*Math.max(0,Math.min(1,k));const kk=e<6?0:(e-6)/16;
-  const cr=Math.round(lerp(255,255,kk)),cg=Math.round(lerp(150,236,kk)),cb=Math.round(lerp(80,205,kk));const C=cr+","+cg+","+cb;
-  let I=(cond==="sunny"?1:0.72)*(behind?0.55:1)*(e<3?0.6+e/7.5:1);
-  let occ=0;for(const c of W.clouds){const dx=sx-c.x,dy=sy-c.y,r=c.w*0.5;const q=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/r);occ=Math.max(occ,q)}I*=1-0.75*occ;
+  const er=Math.max(0,el)*Math.PI/180;let hx=Math.sin(d*Math.PI/180),vy=0.35+0.65*Math.sin(er);const nn=Math.hypot(hx,vy)||1;hx/=nn;vy/=nn;
+  const L=Math.hypot(cw,ch),R=0.5*L+0.12*Math.max(cw,ch);const sx=cw/2+hx*R,sy=ch*0.45-vy*R;
+  const mix=(p,q,k)=>{k=Math.max(0,Math.min(1,k));return p.map((v,i)=>Math.round(v+(q[i]-v)*k))};
+  const DAWN=[130,170,255],MORN=[255,238,200],NOON=[255,220,110],EVE=[255,150,65],SET=[255,62,45];
+  const col=rising?(el<2?mix(DAWN,DAWN,0):(el<14?mix(DAWN,MORN,(el-2)/12):mix(MORN,NOON,(el-14)/20))):(el<2?SET:(el<14?mix(SET,EVE,(el-2)/12):mix(EVE,NOON,(el-14)/22)));
+  const C=col.join(",");
+  let I=el<0?0.45*(1+el/6):Math.min(1,0.6+el/25);I*={sunny:1,"clear-night":0.85,partlycloudy:0.7,windy:0.9,"windy-variant":0.85}[cond]||0.6;
+  let occ=0;for(const c of W.clouds){const q=Math.max(0,1-Math.hypot(c.x-(cw/2+hx*cw*0.45),c.y-(ch*0.45-vy*ch*0.45))/(c.w*0.7));occ=Math.max(occ,q)}I*=1-0.5*occ;
   if(I<=0.01)return;
-  const L=Math.max(cw,ch),flick=0.94+0.06*Math.sin(t*7.3)*Math.sin(t*2.1);
   ctx.save();ctx.globalCompositeOperation="lighter";
-  let g=ctx.createRadialGradient(sx,sy,0,sx,sy,L*1.15);g.addColorStop(0,"rgba("+C+","+(0.16*I).toFixed(3)+")");g.addColorStop(0.35,"rgba("+C+","+(0.05*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.fillRect(0,0,cw,ch);
-  const hr=ch*0.30;g=ctx.createRadialGradient(sx,sy,0,sx,sy,hr);g.addColorStop(0,"rgba("+C+","+(0.55*I).toFixed(3)+")");g.addColorStop(0.25,"rgba("+C+","+(0.22*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,hr,0,6.283);ctx.fill();
-  const rr=ch*0.11;g=ctx.createRadialGradient(sx,sy,rr*0.82,sx,sy,rr);g.addColorStop(0,"rgba(255,120,120,0)");g.addColorStop(0.35,"rgba(255,170,90,"+(0.05*I).toFixed(3)+")");g.addColorStop(0.6,"rgba(140,255,170,"+(0.04*I).toFixed(3)+")");g.addColorStop(0.85,"rgba(120,170,255,"+(0.05*I).toFixed(3)+")");g.addColorStop(1,"rgba(120,170,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,rr,0,6.283);ctx.fill();
-  const spikes=[[0,1],[Math.PI/3,0.8],[2*Math.PI/3,0.85],[Math.PI,1],[4*Math.PI/3,0.8],[5*Math.PI/3,0.85],[Math.PI/6,0.45],[Math.PI/2,0.5],[5*Math.PI/6,0.4],[7*Math.PI/6,0.45],[3*Math.PI/2,0.5],[11*Math.PI/6,0.4]];
-  for(let i=0;i<spikes.length;i++){const a0=spikes[i][0]+0.12,len=ch*0.42*spikes[i][1]*(0.92+0.08*Math.sin(t*3.1+i*1.7))*flick,w=ch*(i<6?0.006:0.004);
-    const ex=sx+Math.cos(a0)*len,ey=sy+Math.sin(a0)*len,nx=-Math.sin(a0)*w,ny=Math.cos(a0)*w;g=ctx.createLinearGradient(sx,sy,ex,ey);g.addColorStop(0,"rgba(255,250,235,"+(0.55*I).toFixed(3)+")");g.addColorStop(0.3,"rgba("+C+","+(0.18*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");
-    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(sx+nx,sy+ny);ctx.lineTo(ex,ey);ctx.lineTo(sx-nx,sy-ny);ctx.closePath();ctx.fill()}
-  g=ctx.createLinearGradient(sx-cw*0.55,sy,sx+cw*0.55,sy);g.addColorStop(0,"rgba(170,200,255,0)");g.addColorStop(0.5,"rgba(220,235,255,"+(0.30*I).toFixed(3)+")");g.addColorStop(1,"rgba(170,200,255,0)");ctx.fillStyle=g;ctx.fillRect(sx-cw*0.55,sy-ch*0.0035,cw*1.1,ch*0.007);
-  const cor=ch*0.045;g=ctx.createRadialGradient(sx,sy,0,sx,sy,cor);g.addColorStop(0,"rgba(255,255,255,"+(1*Math.min(1,I*1.2)).toFixed(3)+")");g.addColorStop(0.45,"rgba(255,252,240,"+(0.9*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,cor,0,6.283);ctx.fill();
-  const cx=cw*0.5,cy=ch*0.55,vx=cx-sx,vy=cy-sy;
-  const ghosts=[[0.32,0.020,"255,220,150",0.10,0],[0.55,0.060,"120,255,180",0.045,1],[0.78,0.030,"255,140,220",0.07,0],[1.05,0.095,"140,180,255",0.035,1],[1.30,0.042,"255,200,120",0.06,2],[1.62,0.140,"180,140,255",0.028,1],[1.85,0.026,"150,255,240",0.08,0]];
-  for(const [k,r0,col,al,shape] of ghosts){const gx=sx+vx*k,gy=sy+vy*k,r=ch*r0,A=al*I;if(shape===1){ctx.beginPath();for(let j=0;j<6;j++){const an=j*Math.PI/3+0.2;const px=gx+Math.cos(an)*r,py=gy+Math.sin(an)*r;j?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();g=ctx.createRadialGradient(gx,gy,0,gx,gy,r);g.addColorStop(0,"rgba("+col+","+(A*0.5).toFixed(3)+")");g.addColorStop(0.85,"rgba("+col+","+A.toFixed(3)+")");g.addColorStop(1,"rgba("+col+","+(A*0.3).toFixed(3)+")");ctx.fillStyle=g;ctx.fill()}
-    else if(shape===2){ctx.strokeStyle="rgba("+col+","+(A*1.6).toFixed(3)+")";ctx.lineWidth=Math.max(1,r*0.12);ctx.beginPath();ctx.arc(gx,gy,r,0,6.283);ctx.stroke()}
-    else{g=ctx.createRadialGradient(gx,gy,0,gx,gy,r);g.addColorStop(0,"rgba("+col+","+(A*1.4).toFixed(3)+")");g.addColorStop(1,"rgba("+col+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(gx,gy,r,0,6.283);ctx.fill()}}
+  let g=ctx.createRadialGradient(sx,sy,0,sx,sy,R+L*0.55);g.addColorStop(0,"rgba("+C+","+(0.50*I).toFixed(3)+")");g.addColorStop(0.32,"rgba("+C+","+(0.24*I).toFixed(3)+")");g.addColorStop(0.62,"rgba("+C+","+(0.07*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.fillRect(0,0,cw,ch);
+  const base=Math.atan2(ch*0.5-sy,cw*0.5-sx),len=R+L*0.75;
+  for(let i=0;i<6;i++){const off=(i-2.5)*0.085+0.02*Math.sin(t*0.13+i*2.1),half=0.018+0.012*((i*7)%3),A=(0.045+0.02*Math.sin(t*0.4+i*1.3))*I;
+    const a1=base+off-half,a2=base+off+half;g=ctx.createRadialGradient(sx,sy,R*0.6,sx,sy,len);g.addColorStop(0,"rgba("+C+","+A.toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(a1)*len,sy+Math.sin(a1)*len);ctx.lineTo(sx+Math.cos(a2)*len,sy+Math.sin(a2)*len);ctx.closePath();ctx.fill()}
   ctx.restore()}
 _rtWeatherFrame(W,dt,ts){
   const cv=W.cv,ctx=W.ctx,box=this._content;const cw=box.clientWidth,ch=box.clientHeight;if(!cw||!ch)return;
@@ -72,7 +65,7 @@ _rtWeatherFrame(W,dt,ts){
     W.streaks=[];if(cond==="windy"||cond==="windy-variant")for(let i=0;i<R(26);i++)W.streaks.push({x:rnd()*cw,y:rnd()*ch,l:40+rnd()*90,v:(380+rnd()*320)*dir})}
   const t=ts/1000;
   if(W.stars.length){for(const s of W.stars){const al=0.35+0.45*(0.5+0.5*Math.sin(t*s.f+s.ph));ctx.fillStyle="rgba(235,240,255,"+al.toFixed(3)+")";ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.283);ctx.fill()}}
-  if(!night&&(cond==="sunny"||cond==="partlycloudy"||cond==="windy"||cond==="windy-variant"))this._rtSun(ctx,cw,ch,t,cond,sun,W);
+  if(cond==="sunny"||cond==="partlycloudy"||cond==="windy"||cond==="windy-variant"||cond==="clear-night")this._rtSun(ctx,cw,ch,t,cond,sun,W);
   for(const c of W.clouds){c.x+=c.v*dt;if(c.v>0&&c.x-c.w>cw)c.x=-c.w;if(c.v<0&&c.x+c.w<0)c.x=cw+c.w;
     for(let j=0;j<5;j++){const bx=c.x+(j-2)*c.w*0.22,by=c.y+((j%2)?-0.06:0.04)*c.w,br=c.w*(j===2?0.36:0.26);const g=ctx.createRadialGradient(bx,by,0,bx,by,br);g.addColorStop(0,"rgba("+cloudCol+","+cloudA+")");g.addColorStop(1,"rgba("+cloudCol+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,br,0,6.283);ctx.fill()}}
   for(const f of W.fog){f.x+=f.v*dt;if(f.x>cw)f.x-=cw;if(f.x<0)f.x+=cw;for(const off of [f.x-cw,f.x]){const g=ctx.createLinearGradient(0,f.y-ch*0.12,0,f.y+ch*0.12);g.addColorStop(0,"rgba(210,215,220,0)");g.addColorStop(0.5,"rgba(210,215,220,0.16)");g.addColorStop(1,"rgba(210,215,220,0)");ctx.fillStyle=g;ctx.fillRect(off,f.y-ch*0.12,cw,ch*0.24)}}
