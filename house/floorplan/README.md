@@ -225,10 +225,11 @@ Home Assistant caches `/local` files, so always load the model with a version qu
    ```
    node card/build_card.js floor3dpro-card.js floor3dpro-axo-card.js
    ```
-   It applies two patches, both written against the minified file with patterns rather than line numbers:
+   It applies three patches, all written against the minified file with patterns rather than line numbers:
    - `axo_patch.js`: swaps in an `OrthographicCamera` whose frustum follows the canvas aspect, with a new option `ortho_half_height` (half the visible height, cm); stacks the level buttons highest first (3, 2, 1, 0, then "all"); renames every `floor3dpro-*` custom element to `floor3dpro-axo-*` so the copy runs beside the HACS card (renaming only the card is not enough, its form fields collide too); and makes the card's model cache copy mesh geometry when it clones the model. Without that, the room-label code moves the shared geometry in place, and every rebuild after the first (switching dashboard tabs, mostly in the phone app) drops all labels and room planes into one corner.
    - `ui_patch.js`: labels drawn at four times the resolution, semibold, on a rounded box whose width follows the text (the stock card stretches every label to a fixed box, so long labels were squashed and blurry); labels not tone-mapped, so white text stays white under the card's 0.6 exposure; old label textures disposed on update; floor buttons 40 px with hidden floors dimmed to 30 %.
-3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=5`, type JavaScript module.
+   - `fx_patch.js`: a floor filter and the weather. Cards in the same grid as the 3D card that carry `variables: { rt_floor: N }` hide while level N is hidden, so turning a floor off also removes its tiles underneath (`custom:button-card` keeps unknown variables, and the card reads them from each grid item's config). The weather entity (`weather_entity`, default `weather.forecast_home`; `weather: "no"` turns it off) is drawn over the model on a 2D canvas at 30 fps: rain, downpour, snow, hail, storms with lightning, clouds, fog, wind streaks, the sun by day and stars by night, with the rain slanted by the wind.
+3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=6`, type JavaScript module.
 4. Reload the browser fully. A new resource is only picked up on a full page load, not by navigating inside the app; on a phone, pull down to refresh.
 5. When HACS updates the original card, build again and bump `?v=`.
 
@@ -378,14 +379,15 @@ house/floorplan/
   card/
     axo_patch.js                orthographic camera, level order, renamed elements, cache fix
     ui_patch.js                 sharper labels, bigger floor buttons
-    build_card.js               applies both to the HACS card file
+    fx_patch.js                 floor filter for the tiles, animated weather
+    build_card.js               applies all three to the HACS card file
     card_config.json            the card configuration used at Red Tower
   preview/                      headless card renderer
 docs/house/                     the screenshots in this guide
 
 Home Assistant:
   /config/www/3d/redtower.glb
-  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=5)
+  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=6)
   dashboard red-tower, views "home" (Polestar row) and "model" (the 3D card)
 ```
 
