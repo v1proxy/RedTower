@@ -334,5 +334,7 @@
             ]
         }
     ],
-    "weather_entity": "weather.forecast_home"
+    "weather_entity": "weather.forecast_home",
+    "level_names": ["Ground", "Second", "Third", "Roof"],
+    "level_icons": ["mdi:home-floor-g", "mdi:home-floor-2", "mdi:home-floor-3", "mdi:home-roof"]
 }
