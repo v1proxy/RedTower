@@ -1,7 +1,7 @@
 // Red Tower UI patch for floor3dpro-axo-card (applied after axo_patch.js; regex-based so it survives rebuilds of the card).
 // - labels drawn at 4x resolution, semibold, rounded background; the box width follows the text so it is never squashed
 // - label textures use anisotropic filtering, are not tone mapped (true white text), old textures are disposed on update
-// - floor buttons 40 px, brighter, hidden floors clearly dimmed
+// - floor buttons 40 px, red (#E81123, the dashboard's accent), hidden floors clearly dimmed
 function uiPatch(src) {
   const n0 = src.length;
   const reT = /_updateTextCanvas\(([\w$]+),([\w$]+),([\w$]+)\)\{const ([\w$]+)=\2\.getContext\("2d"\);[\s\S]*?\}(?=_applyTextCanvas\()/;
@@ -26,6 +26,7 @@ function uiPatch(src) {
   let li = src.slice(a, b);
   li = li.split('<div class="row" style="background-color:black;">').join('<div class="row" style="background-color:black; padding: 2px 2px 4px 2px; cursor: pointer;">');
   li = li.split('"opacity: 60%;"').join('"opacity: 30%;"');
+  li = li.split('<font color="white">').join('<font color="#E81123">');
   src = src.slice(0, a) + li + src.slice(b);
   return { src, grew: src.length - n0 };
 }
