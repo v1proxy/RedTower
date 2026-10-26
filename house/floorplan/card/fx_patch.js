@@ -41,7 +41,7 @@ _rtSun(ctx,cw,ch,t,cond,sun,W){
   let vaz=315;try{const cp=this._camera.position,tg=this._controls&&this._controls.target;if(cp&&tg){const dx=tg.x-cp.x,dn=-(tg.z-cp.z);if(Math.abs(dx)+Math.abs(dn)>1e-6)vaz=Math.atan2(dx,dn)*180/Math.PI}}catch(e){}
   let d=isNaN(az)?40:az-vaz;d=((d+540)%360)-180;
   let hx=Math.sin(d*Math.PI/180),vy=0.1+0.9*Math.sin(Math.max(0,el)*Math.PI/180);const nn=Math.hypot(hx,vy)||1;hx/=nn;vy/=nn;
-  const cx=cw/2,cy=ch*0.40,m=0.035*Math.min(cw,ch);const tx=hx>1e-6?(cw+m-cx)/hx:(hx<-1e-6?(-m-cx)/hx:1e9),ty=vy>1e-6?(cy+m)/vy:1e9,tt=Math.min(tx,ty);
+  const cx=cw/2,cy=ch*0.40,m=0.07*Math.min(cw,ch);const tx=hx>1e-6?(cw+m-cx)/hx:(hx<-1e-6?(-m-cx)/hx:1e9),ty=vy>1e-6?(cy+m)/vy:1e9,tt=Math.min(tx,ty);
   const sx=cx+hx*tt,sy=cy-vy*tt;
   const mix=(p,q,k)=>{k=Math.max(0,Math.min(1,k));return p.map((v,i)=>Math.round(v+(q[i]-v)*k))};
   const NOON=[255,244,226],DAWN=[222,232,255],DUSK=[255,212,190];
@@ -49,21 +49,11 @@ _rtSun(ctx,cw,ch,t,cond,sun,W){
   let I=0.55*({sunny:1,"clear-night":0.8,partlycloudy:0.75,windy:0.9,"windy-variant":0.85}[cond]||0.6)*(el<0?Math.max(0,1+el/4):1);
   let occ=0;for(const c of W.clouds){const q=Math.max(0,1-Math.hypot(sx-c.x,sy-c.y)/(c.w*0.6));occ=Math.max(occ,q)}I*=1-0.6*occ;
   if(I<=0.01)return;
-  const L=Math.max(cw,ch),flick=0.95+0.05*Math.sin(t*5.3)*Math.sin(t*1.7);
+  const L=Math.max(cw,ch);
   ctx.save();ctx.globalCompositeOperation="lighter";
   let g=ctx.createRadialGradient(sx,sy,0,sx,sy,L*1.15);g.addColorStop(0,"rgba("+C+","+(0.16*I).toFixed(3)+")");g.addColorStop(0.35,"rgba("+C+","+(0.05*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.fillRect(0,0,cw,ch);
-  const hr=ch*0.30;g=ctx.createRadialGradient(sx,sy,0,sx,sy,hr);g.addColorStop(0,"rgba("+C+","+(0.55*I).toFixed(3)+")");g.addColorStop(0.25,"rgba("+C+","+(0.22*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,hr,0,6.283);ctx.fill();
-  const rr=ch*0.11;g=ctx.createRadialGradient(sx,sy,rr*0.82,sx,sy,rr);g.addColorStop(0,"rgba(255,200,190,0)");g.addColorStop(0.4,"rgba(255,215,190,"+(0.035*I).toFixed(3)+")");g.addColorStop(0.7,"rgba(200,235,215,"+(0.03*I).toFixed(3)+")");g.addColorStop(1,"rgba(190,210,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,rr,0,6.283);ctx.fill();
-  const spikes=[[0,1],[Math.PI/3,0.8],[2*Math.PI/3,0.85],[Math.PI,1],[4*Math.PI/3,0.8],[5*Math.PI/3,0.85],[Math.PI/6,0.45],[Math.PI/2,0.5],[5*Math.PI/6,0.4],[7*Math.PI/6,0.45],[3*Math.PI/2,0.5],[11*Math.PI/6,0.4]];
-  for(let i=0;i<spikes.length;i++){const a0=spikes[i][0]+0.12,len=ch*0.42*spikes[i][1]*(0.94+0.06*Math.sin(t*2.3+i*1.7))*flick,w=ch*(i<6?0.006:0.004);
-    const ex=sx+Math.cos(a0)*len,ey=sy+Math.sin(a0)*len,nx=-Math.sin(a0)*w,ny=Math.cos(a0)*w;g=ctx.createLinearGradient(sx,sy,ex,ey);g.addColorStop(0,"rgba(255,250,240,"+(0.5*I).toFixed(3)+")");g.addColorStop(0.3,"rgba("+C+","+(0.16*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");
-    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(sx+nx,sy+ny);ctx.lineTo(ex,ey);ctx.lineTo(sx-nx,sy-ny);ctx.closePath();ctx.fill()}
+  const hr=ch*0.36;g=ctx.createRadialGradient(sx,sy,0,sx,sy,hr);g.addColorStop(0,"rgba("+C+","+(0.65*I).toFixed(3)+")");g.addColorStop(0.3,"rgba("+C+","+(0.24*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,hr,0,6.283);ctx.fill();
   const cor=ch*0.045;g=ctx.createRadialGradient(sx,sy,0,sx,sy,cor);g.addColorStop(0,"rgba(255,255,255,"+Math.min(1,I*1.2).toFixed(3)+")");g.addColorStop(0.45,"rgba(255,252,244,"+(0.9*I).toFixed(3)+")");g.addColorStop(1,"rgba("+C+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,cor,0,6.283);ctx.fill();
-  const vx=cx-sx,vy2=ch*0.55-sy;
-  const ghosts=[[0.32,0.020,"240,225,195",0.10,0],[0.55,0.060,"160,215,185",0.045,1],[0.78,0.030,"225,180,210",0.07,0],[1.05,0.095,"165,185,230",0.035,1],[1.30,0.042,"235,210,170",0.06,2],[1.62,0.140,"180,165,225",0.028,1],[1.85,0.026,"175,225,220",0.08,0]];
-  for(const [k,r0,gc,al,shape] of ghosts){const gx=sx+vx*k,gy=sy+vy2*k,r=ch*r0,A=al*I;if(shape===1){ctx.beginPath();for(let j=0;j<6;j++){const an=j*Math.PI/3+0.2;const px=gx+Math.cos(an)*r,py=gy+Math.sin(an)*r;j?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();g=ctx.createRadialGradient(gx,gy,0,gx,gy,r);g.addColorStop(0,"rgba("+gc+","+(A*0.5).toFixed(3)+")");g.addColorStop(0.85,"rgba("+gc+","+A.toFixed(3)+")");g.addColorStop(1,"rgba("+gc+","+(A*0.3).toFixed(3)+")");ctx.fillStyle=g;ctx.fill()}
-    else if(shape===2){ctx.strokeStyle="rgba("+gc+","+(A*1.6).toFixed(3)+")";ctx.lineWidth=Math.max(1,r*0.12);ctx.beginPath();ctx.arc(gx,gy,r,0,6.283);ctx.stroke()}
-    else{g=ctx.createRadialGradient(gx,gy,0,gx,gy,r);g.addColorStop(0,"rgba("+gc+","+(A*1.4).toFixed(3)+")");g.addColorStop(1,"rgba("+gc+",0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(gx,gy,r,0,6.283);ctx.fill()}}
   ctx.restore()}
 _rtWeatherFrame(W,dt,ts){
   const cv=W.cv,ctx=W.ctx,bv=W.bv,bx=W.bctx,box=this._content;const cw=box.clientWidth,ch=box.clientHeight;if(!cw||!ch)return;
