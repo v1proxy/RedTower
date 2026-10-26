@@ -233,6 +233,10 @@ Home Assistant caches `/local` files, so always load the model with a version qu
 4. Reload the browser fully. A new resource is only picked up on a full page load, not by navigating inside the app; on a phone, pull down to refresh.
 5. When HACS updates the original card, build again and bump `?v=`.
 
+[![The floor buttons as dashboard tiles: Roof and Third hidden in grey, Second and Ground shown in red, rain falling between them](../../docs/house/floor-tiles.png)](../../docs/house/floor-tiles.png)
+
+*The floor buttons in the dashboard's own tile style, with Roof and Third hidden. The strip behind them is transparent, so the weather carries on between them.*
+
 [![Night with someone home: windows lit, stars behind the house. Sunset: only the light of the sun comes in from the left edge](../../docs/house/3d-sky.png)](../../docs/house/3d-sky.png)
 
 *Left: night, someone home, the windows lit and the stars behind the house. Right: sunset, the sun just outside the frame and only its light coming in. Both rendered by the headless preview in `preview/`.*

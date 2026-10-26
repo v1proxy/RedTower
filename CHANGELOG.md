@@ -14,6 +14,26 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.10.1 – 2026-10-26
+
+**The floor buttons in the dashboard's own style.** A refinement of the 3D card from 0.10.0;
+nothing on a built unit changes.
+
+### Changed
+
+- `house/floorplan/card/ui_patch.js`: the floor buttons are tiles like the rest of the
+  dashboard: square dark tiles with a 1 px border, an icon over an uppercase caption, a red
+  border and icon while the floor is shown, grey while it is hidden, and icons only when the
+  card is small or narrow. The black strip behind them is gone, so the weather carries on
+  between the buttons. The new `levelsPatch` also upgrades a card that is already patched.
+  New card options: `level_names` and `level_icons` (by level), `level_all_name`,
+  `level_all_icon`.
+- `card_config.json`: Ground, Second, Third and Roof, with the matching floor icons.
+- `house/floorplan/README.md`: the new buttons, their options and a figure
+  (`docs/house/floor-tiles.png`); the resource query is `?v=11`.
+- `VERSION`, the panel card's `CARD_VERSION` and its resource query are 0.10.1. The greenhouse
+  card itself is unchanged.
+
 ## 0.10.0 – 2026-10-26
 
 **The house in its weather.** The 3D floor plan now lives in the real sky: the weather outside

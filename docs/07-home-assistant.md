@@ -304,7 +304,7 @@ For a look, you need none of that.
 
 1. Copy `greenhouse-panel.js` into `config/www/greenhouse/` (create the folder).
 2. Settings, Dashboards, the three dots, **Resources**, **Add resource**:
-   `/local/greenhouse/greenhouse-panel.js?v=0.10.0`, type **JavaScript module**.
+   `/local/greenhouse/greenhouse-panel.js?v=0.10.1`, type **JavaScript module**.
 3. Open any dashboard, **Edit**, the three dots, **Raw configuration editor**, and paste
    [`dashboard_view.yaml`](../greenhouse/ha/dashboard_view.yaml) under `views:`. Save.
 
