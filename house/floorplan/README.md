@@ -18,6 +18,7 @@ Red Tower is the worked example throughout. The method applies to any building m
 - Rooms that are clickable floor surfaces, floating labels with live values (temperature, power, vacuum state), coloured status strips for doors and windows, robot vacuum markers, and light anchors ready for smart lights.
 - The car: a Polestar 2 that appears in the garage while it is plugged in, and its charge level on the garage label, on the 3D tab and on the Home tab.
 - The house's sensors on the model: a smoke, CO, gas or heat alarm lights its room as a pulsing red volume, an open door or window rises as a red pane, motion glows amber across the room floor, a water leak shows blue, and every active event is listed in the top right corner.
+- Alarms that come to you: during a fire, CO or intrusion alarm, opening Home Assistant goes straight to the 3D view, with the floors above the alarm turned off, the camera on its room and the rest of the house dimmed.
 
 ## 2. Tools
 
@@ -231,7 +232,7 @@ Home Assistant caches `/local` files, so always load the model with a version qu
    - `ui_patch.js`: labels drawn at four times the resolution, semibold, on a rounded box whose width follows the text (the stock card stretches every label to a fixed box, so long labels were squashed and blurry); labels not tone-mapped, so white text stays white under the card's 0.6 exposure; old label textures disposed on update; floor buttons as tiles in the dashboard's own style, on a transparent strip so the weather shows between them: square dark tiles with a 1 px border, an icon over an uppercase caption, red border and icon while the floor is shown, grey while it is hidden, and icons only on a small or narrow card. Options: `level_names` and `level_icons` (by level), `level_all_name`, `level_all_icon`.
    - `fx_patch.js`: a floor filter and the weather. Cards in the same grid as the 3D card that carry `variables: { rt_floor: N }` hide while level N is hidden, so turning a floor off also removes its tiles underneath (`custom:button-card` keeps unknown variables, and the card reads them from each grid item's config). The weather entity (`weather_entity`, default `weather.forecast_home`; `weather: "no"` turns it off) is drawn over the model on a 2D canvas at 30 fps: rain, downpour, snow, hail, storms with lightning, clouds, fog, wind streaks and stars by night, with the rain slanted by the wind. The sky sits on its own canvas behind the model (the scene background is cleared and painted there instead), so stars, clouds and lightning bolts stay behind the house while rain, snow, hail, fog and the lightning flash fall in front of it. Sunlight: the sun always stays just outside the frame and moves around its edge through the day, placed from the `sun.sun` azimuth and elevation relative to the camera; only its light comes in, as a soft wash and a glow from that edge, with no rays, streaks or flares. Its colour shifts only slightly: cool white at dawn, warm white at midday, a light peach at sunset. A cloud in front of it dims it. Lit windows: after sunset, while someone is home, every window glows warm as if the lights were on (`presence_entity`, default `zone.home`, counts the people home; any entity that reads `home` or `on` works too; `window_lights: "no"` turns it off).
    - `sec_patch.js`: the house's sensors drawn over the model on their own canvas, described in 11.5.
-3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=12`, type JavaScript module.
+3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=13`, type JavaScript module.
 4. Reload the browser fully. A new resource is only picked up on a full page load, not by navigating inside the app; on a phone, pull down to refresh.
 5. When HACS updates the original card, build again and bump `?v=`.
 
@@ -388,12 +389,34 @@ The layer only draws while something is active, at 30 frames per second, and sto
 PAGE=index_axo.html node shot.js card_config.json states_security.json out.png 3,2
 ```
 
+### 11.6 Alarms: the model comes to you
+
+[![A smoke alarm in the kitchen: the roof and the third floor turned off, the camera on the kitchen, the rest of the house dimmed](../../docs/house/3d-alarm-focus.png)](../../docs/house/3d-alarm-focus.png)
+
+*A smoke alarm in the kitchen, as the 3D view opens by itself. Rendered by the headless preview from `preview/states_alarm.json`.*
+
+One Home Assistant sensor says whether the house is in alarm and what is in alarm: `binary_sensor.red_tower_alarm`, a template sensor with the alarm entities in its `entities` attribute and the dashboard path of the 3D view in `focus_path`. Two files, in `ha/`:
+
+- `custom_templates/red_tower_alarm.jinja`: the rules, as a macro. An alarm is a smoke, CO, gas, heat or water leak sensor that is on; a door, window or opening that is open while the house is armed (Red shield on, or RedAlert armed); a CO2 sensor at or above 1500 ppm; an alarm panel in `triggered`; or anything carrying the label **Alarm** that is on, open, triggered, detected or problem. The label is how anything else is declared an alarm: add it to an entity in Settings > Entities, nothing else changes.
+- `packages/red_tower_alarm.yaml`: the sensor itself.
+
+To install, copy them into `/config/custom_templates/` and `/config/packages/` (packages loaded with `homeassistant: packages: !include_dir_named packages`), create the label Alarm, then in Developer tools > Actions run `homeassistant.reload_custom_templates` and `template.reload`. No restart.
+
+What the card does with it:
+
+1. **Opens the 3D view.** Code at the end of the card file watches the sensor on every page of Home Assistant. When Home Assistant is opened or brought back to the front during an alarm, or a new alarm starts, it opens `focus_path`. Leave the 3D view during the same alarm and it lets you be until Home Assistant is opened again. When the alarm clears it goes back to the page it came from, unless someone has moved on since.
+2. **Focuses on the alarm.** The floors above the alarm are turned off (the floor buttons follow), the camera glides to fit the alarm's rooms, and the rest of the house is dimmed. Other events (motion, say) stay in the list but are not drawn. An open window counts as an alarm only while the house is armed; then its room lights up like a smoke alarm, with the pane on its strip.
+3. **Puts everything back** when the alarms clear: the floors you had on, and the camera where it was.
+
+An alarm whose room is unknown changes neither the floors nor the camera; the edge of the card glows red and it heads the list. The card works without the sensor as well: smoke, CO, gas and heat sensors are alarms on their own, and `security_alarm_entity` names a different sensor.
+
 ## 12. Using it
 
 - Level buttons at the top left, highest first. Click 3 to hide the roof, 2 for the third floor, 1 for the second floor; a hidden floor's button dims. The list icon at the bottom shows everything again.
 - Drag to rotate, scroll or pinch to zoom, right-drag to pan. The default view looks from the street, so furniture against the street-side walls only shows once you rotate.
 - Double-click a room, door strip or vacuum to open its Home Assistant details.
 - Anything a sensor reports, an alarm, an open door or window, motion, shows on the model and in the list at the top right.
+- During an alarm the 3D view opens by itself, focused on the alarm; turn floors back on or move the camera as you like, and it all comes back when the alarm clears.
 
 ## 13. Rebuilding after changes
 
@@ -451,15 +474,19 @@ house/floorplan/
     axo_patch.js                orthographic camera, level order, renamed elements, cache fix
     ui_patch.js                 sharper labels, floor buttons as dashboard tiles
     fx_patch.js                 floor filter, weather, sky, sunlight, lit windows
-    sec_patch.js                smoke, CO, leaks, motion and open doors and windows on the model
+    sec_patch.js                smoke, CO, leaks, motion and open doors and windows on the model; alarm focus
     build_card.js               applies all four to the HACS card file
     card_config.json            the card configuration used at Red Tower
-  preview/                      headless card renderer
+  ha/
+    custom_templates/red_tower_alarm.jinja   what counts as an alarm
+    packages/red_tower_alarm.yaml            binary_sensor.red_tower_alarm
+  preview/                      headless card renderer (states_security.json, states_alarm.json)
 docs/house/                     the screenshots in this guide
 
 Home Assistant:
   /config/www/3d/redtower.glb
-  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=12)
+  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=13)
+  /config/custom_templates/red_tower_alarm.jinja, /config/packages/red_tower_alarm.yaml   (binary_sensor.red_tower_alarm, label Alarm)
   dashboard red-tower, views "home" (Polestar row), "security" (RedSec: alarm, cameras, doors and windows, fire and CO, motion) and "model" (the 3D card)
 ```
 

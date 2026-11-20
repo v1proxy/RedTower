@@ -1,0 +1,32 @@
+{#- Red Tower alarm: the entities in alarm right now, as a JSON list of entity ids.
+    An alarm is:
+    - a smoke, carbon monoxide, gas, heat or water leak (moisture) binary sensor that is on
+    - a door, window or opening that is open while the house is armed (Red shield on, or RedAlert armed)
+    - a CO2 sensor at or above co2_ppm
+    - an alarm panel in triggered
+    - anything labelled "Alarm" that is on, open, triggered, detected or problem
+    Used by binary_sensor.red_tower_alarm (packages/red_tower_alarm.yaml), which the 3D card reads. -#}
+{%- macro red_tower_alarm_entities(co2_ppm=1500, exclude=['binary_sensor.third_reality_inc_3rsp02064z_opening']) -%}
+{%- set armed = is_state('input_boolean.red_shield', 'on') or states('alarm_control_panel.redalert') in ['armed_away', 'armed_home', 'armed_night', 'armed_vacation', 'armed_custom_bypass', 'pending', 'triggered'] -%}
+{%- set ns = namespace(ids=[]) -%}
+{%- for s in states.binary_sensor | selectattr('state', 'eq', 'on') -%}
+{%- set dc = s.attributes.device_class | default('') -%}
+{%- if s.entity_id not in exclude and (dc in ['smoke', 'carbon_monoxide', 'gas', 'heat', 'moisture'] or (armed and dc in ['door', 'window', 'opening', 'garage_door'])) -%}
+{%- set ns.ids = ns.ids + [s.entity_id] -%}
+{%- endif -%}
+{%- endfor -%}
+{%- for s in states.sensor | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'eq', 'carbon_dioxide') -%}
+{%- if s.entity_id not in exclude and s.state | float(0) >= co2_ppm -%}
+{%- set ns.ids = ns.ids + [s.entity_id] -%}
+{%- endif -%}
+{%- endfor -%}
+{%- for s in states.alarm_control_panel | selectattr('state', 'eq', 'triggered') -%}
+{%- set ns.ids = ns.ids + [s.entity_id] -%}
+{%- endfor -%}
+{%- for e in label_entities('alarm') -%}
+{%- if e not in ns.ids and e not in exclude and states(e) in ['on', 'open', 'triggered', 'detected', 'problem'] -%}
+{%- set ns.ids = ns.ids + [e] -%}
+{%- endif -%}
+{%- endfor -%}
+{{- ns.ids | to_json -}}
+{%- endmacro -%}

@@ -1,0 +1,20 @@
+# Red Tower alarm: on while anything in the house is in alarm, with the entities in alarm as an attribute.
+# The rules are in custom_templates/red_tower_alarm.jinja: smoke, CO, gas, heat and water leaks always; open doors
+# and windows while the house is armed (Red shield on, or RedAlert armed); CO2 at or above 1500 ppm; a triggered
+# alarm panel; and anything with the label "Alarm".
+# The 3D card (house/floorplan/card/sec_patch.js in v1proxy/RedTower) reads `entities` to focus the model on the
+# alarm, and opens `focus_path` when Home Assistant is opened, or a new alarm starts, while this is on.
+template:
+  - binary_sensor:
+      - name: Red Tower alarm
+        unique_id: red_tower_alarm
+        device_class: safety
+        icon: mdi:alarm-light
+        state: >-
+          {% from 'red_tower_alarm.jinja' import red_tower_alarm_entities %}
+          {{ red_tower_alarm_entities() | from_json | count > 0 }}
+        attributes:
+          entities: >-
+            {% from 'red_tower_alarm.jinja' import red_tower_alarm_entities %}
+            {{ red_tower_alarm_entities() | from_json }}
+          focus_path: /red-tower/model
