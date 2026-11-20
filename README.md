@@ -6,7 +6,7 @@ An indoor greenhouse that an AI agent tends, written down so anyone can build
 one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
 space allows, with only the modules you want.
 
-![design version](https://img.shields.io/badge/design-0.10.1-1d4ed8)
+![design version](https://img.shields.io/badge/design-0.11.0-1d4ed8)
 [![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 [![Maag, the reference m build, rendered from the design's own 3D model](docs/booklets/cover.jpg)](docs/booklets/README.md)
@@ -229,7 +229,9 @@ of Red Tower, built from its Revit model in Blender, where each floor can be pee
 rooms carry live labels (temperatures, power, the robot vacuums). The car appears in the garage
 while it is plugged in, with its charge level on the label, and the exterior is coloured as
 built. The sky behind it follows the real weather and the sun's real position, and after dark
-the windows light up while someone is home.
+the windows light up while someone is home. The house's sensors show on the model as well: a smoke
+or CO alarm lights its room red, an open door or window rises as a red pane, and motion glows
+across the room floor.
 [`house/floorplan/README.md`](house/floorplan/README.md) is the whole method, from a
 33,976-object Revit export to a 2.7 MB GLB, with every script and the patches the card needs.
 

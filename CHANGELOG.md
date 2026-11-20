@@ -14,6 +14,50 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.11.0 – 2026-11-20
+
+**The house's sensors in 3D.** Smoke, CO, gas and heat alarms, water leaks, motion and open doors
+and windows now show on the 3D model of the house. A new capability on the house dashboard;
+nothing on a built unit changes.
+
+### Added
+
+- `house/floorplan/card/sec_patch.js`, a fourth patch for the card, applied by `build_card.js`
+  after the other three. It draws the house's security sensors over the model on a 2D canvas of
+  its own, x-ray style, so a room shows even behind walls and the roof:
+  - **Alarms** (`smoke`, `carbon_monoxide`, `gas`, `heat`): the room as a red volume pulsing at an
+    alarm cadence, a tag over it, and the edge of the card glowing red. An alarm with no known room,
+    or an alarm panel in `triggered`, lights the whole edge of the card.
+  - **Water leaks** (`moisture` binary sensors): a shallow blue volume. **CO2** over `security_co2` ppm:
+    an orange volume.
+  - **Motion** (`motion`, `occupancy`, `presence`): the room floor glows amber with a ripple and fades
+    out after the sensor clears.
+  - **Open doors and windows**: a red pane rising from the opening's status strip, or a dashed red
+    outline of the room.
+  - Every active event is listed in the top right corner, alarms first.
+  - Sensors are found by device class, so a new detector shows up without touching the card. Where
+    each one is drawn comes from `security_objects`, then the entity's or its device's area, then a
+    room word in its name; an ambiguous name is listed without a room rather than guessed. Motion,
+    leaks and openings on a floor that is turned off are not drawn; alarms always are.
+  - Options: `security`, `security_objects`, `security_areas`, `security_keywords`,
+    `security_exclude`, `security_kinds`, `security_aggregates`, `security_height`,
+    `security_open_height`, `security_motion_fade`, `security_co2`, `security_list`.
+- `house/floorplan/preview/states_security.json`: simulated alarms, an open door and motion for the
+  headless preview, and `docs/house/3d-security.png`, rendered from it.
+
+### Changed
+
+- `house/floorplan/card/card_config.json`: the two contact sensors drawn on their status strips, the
+  repeater plug's own `opening` sensor left out, and the aosu "any camera" motion sensor giving way to
+  the per-camera ones.
+- `house/floorplan/preview/index_axo.html`: the stub `hass` carries entity, device and area registries
+  (`__entities`, `__devices`, `__areas` in the states file), and turning a floor off redraws its button.
+- `house/floorplan/README.md`: section 11.5 on the sensors, the fourth patch, the resource query is
+  `?v=12`, and the dashboard's new `security` view (RedSec, moved from its own dashboard into a tab of
+  Red Tower).
+- `VERSION`, the panel card's `CARD_VERSION` and its resource query are 0.11.0. The greenhouse card
+  itself is unchanged.
+
 ## 0.10.1 – 2026-10-26
 
 **The floor buttons in the dashboard's own style.** A refinement of the 3D card from 0.10.0;
