@@ -1,0 +1,139 @@
+{
+"sensor.ground_floor_thermostat_air_temperature": {
+"state": "77.0",
+"attributes": {
+"unit_of_measurement": "°F",
+"friendly_name": "Ground Floor Thermostat Air temperature"
+}
+},
+"sensor.studio_power_minute_average": {
+"state": "47.7",
+"attributes": {
+"unit_of_measurement": "W"
+}
+},
+"sensor.car_power_minute_average": {
+"state": "0.0",
+"attributes": {
+"unit_of_measurement": "W"
+}
+},
+"binary_sensor.backyard_window": {
+"state": "off",
+"attributes": {
+"device_class": "door",
+"friendly_name": "Backyard Window"
+},
+"last_changed": "2026-11-20T15:00:00+00:00"
+},
+"sensor.kitchen_thermostat_air_temperature": {
+"state": "79.0",
+"attributes": {
+"unit_of_measurement": "°F"
+}
+},
+"sensor.living_power_minute_average": {
+"state": "186.2",
+"attributes": {
+"unit_of_measurement": "W"
+}
+},
+"binary_sensor.third_reality_inc_3rds17bz": {
+"state": "on",
+"attributes": {
+"device_class": "door",
+"friendly_name": "Balcony Window"
+},
+"last_changed": "2026-11-20T15:00:00+00:00"
+},
+"vacuum.sagan": {
+"state": "docked",
+"attributes": {}
+},
+"vacuum.asimov": {
+"state": "cleaning",
+"attributes": {}
+},
+"sensor.polestar_8882_battery_charge_level": {
+"state": "55",
+"attributes": {
+"unit_of_measurement": "%"
+}
+},
+"sensor.polestar_8882_charger_connection_status": {
+"state": "Disconnected",
+"attributes": {}
+},
+"sensor.polestar_8882_charging_status": {
+"state": "Idle",
+"attributes": {}
+},
+"sensor.polestar_8882_charging_power": {
+"state": "0",
+"attributes": {}
+},
+"media_player.tv1_2": {
+"state": "off",
+"attributes": {}
+},
+"sun.sun": {
+"state": "below_horizon",
+"attributes": {
+"azimuth": 300,
+"elevation": -20,
+"rising": false
+}
+},
+"weather.forecast_home": {
+"state": "clear-night",
+"attributes": {
+"wind_speed": 4,
+"wind_speed_unit": "mph",
+"wind_bearing": 180
+}
+},
+"zone.home": {
+"state": "1",
+"attributes": {}
+},
+"binary_sensor.kitchen_smoke": {
+"state": "on",
+"attributes": {
+"device_class": "smoke",
+"friendly_name": "Kitchen smoke alarm"
+},
+"last_changed": "2026-11-20T15:00:00+00:00"
+},
+"binary_sensor.living_motion": {
+"state": "on",
+"attributes": {
+"device_class": "motion",
+"friendly_name": "Living room motion"
+},
+"last_changed": "2026-11-20T15:00:00+00:00"
+},
+"__entities": {
+"binary_sensor.kitchen_smoke": {
+"entity_id": "binary_sensor.kitchen_smoke",
+"area_id": "kitchen"
+},
+"binary_sensor.living_motion": {
+"entity_id": "binary_sensor.living_motion",
+"area_id": "living_room"
+},
+"binary_sensor.third_reality_inc_3rds17bz": {
+"entity_id": "binary_sensor.third_reality_inc_3rds17bz",
+"area_id": "kitchen"
+}
+},
+"__areas": {
+"kitchen": {
+"area_id": "kitchen",
+"name": "Kitchen"
+},
+"living_room": {
+"area_id": "living_room",
+"name": "Living Room"
+}
+}
+}

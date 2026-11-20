@@ -17,6 +17,7 @@ Red Tower is the worked example throughout. The method applies to any building m
 - Four levels you can hide one by one (roof, third, second, ground). Walls are cut 4 ft above each floor, the standard floor plan cut, so rooms and furniture show when the level above is hidden.
 - Rooms that are clickable floor surfaces, floating labels with live values (temperature, power, vacuum state), coloured status strips for doors and windows, robot vacuum markers, and light anchors ready for smart lights.
 - The car: a Polestar 2 that appears in the garage while it is plugged in, and its charge level on the garage label, on the 3D tab and on the Home tab.
+- The house's sensors on the model: a smoke, CO, gas or heat alarm lights its room as a pulsing red volume, an open door or window rises as a red pane, motion glows amber across the room floor, a water leak shows blue, and every active event is listed in the top right corner.
 
 ## 2. Tools
 
@@ -225,11 +226,12 @@ Home Assistant caches `/local` files, so always load the model with a version qu
    ```
    node card/build_card.js floor3dpro-card.js floor3dpro-axo-card.js
    ```
-   It applies three patches, all written against the minified file with patterns rather than line numbers:
+   It applies four patches, all written against the minified file with patterns rather than line numbers:
    - `axo_patch.js`: swaps in an `OrthographicCamera` whose frustum follows the canvas aspect, with a new option `ortho_half_height` (half the visible height, cm); stacks the level buttons highest first (3, 2, 1, 0, then "all"); renames every `floor3dpro-*` custom element to `floor3dpro-axo-*` so the copy runs beside the HACS card (renaming only the card is not enough, its form fields collide too); and makes the card's model cache copy mesh geometry when it clones the model. Without that, the room-label code moves the shared geometry in place, and every rebuild after the first (switching dashboard tabs, mostly in the phone app) drops all labels and room planes into one corner.
    - `ui_patch.js`: labels drawn at four times the resolution, semibold, on a rounded box whose width follows the text (the stock card stretches every label to a fixed box, so long labels were squashed and blurry); labels not tone-mapped, so white text stays white under the card's 0.6 exposure; old label textures disposed on update; floor buttons as tiles in the dashboard's own style, on a transparent strip so the weather shows between them: square dark tiles with a 1 px border, an icon over an uppercase caption, red border and icon while the floor is shown, grey while it is hidden, and icons only on a small or narrow card. Options: `level_names` and `level_icons` (by level), `level_all_name`, `level_all_icon`.
    - `fx_patch.js`: a floor filter and the weather. Cards in the same grid as the 3D card that carry `variables: { rt_floor: N }` hide while level N is hidden, so turning a floor off also removes its tiles underneath (`custom:button-card` keeps unknown variables, and the card reads them from each grid item's config). The weather entity (`weather_entity`, default `weather.forecast_home`; `weather: "no"` turns it off) is drawn over the model on a 2D canvas at 30 fps: rain, downpour, snow, hail, storms with lightning, clouds, fog, wind streaks and stars by night, with the rain slanted by the wind. The sky sits on its own canvas behind the model (the scene background is cleared and painted there instead), so stars, clouds and lightning bolts stay behind the house while rain, snow, hail, fog and the lightning flash fall in front of it. Sunlight: the sun always stays just outside the frame and moves around its edge through the day, placed from the `sun.sun` azimuth and elevation relative to the camera; only its light comes in, as a soft wash and a glow from that edge, with no rays, streaks or flares. Its colour shifts only slightly: cool white at dawn, warm white at midday, a light peach at sunset. A cloud in front of it dims it. Lit windows: after sunset, while someone is home, every window glows warm as if the lights were on (`presence_entity`, default `zone.home`, counts the people home; any entity that reads `home` or `on` works too; `window_lights: "no"` turns it off).
-3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=11`, type JavaScript module.
+   - `sec_patch.js`: the house's sensors drawn over the model on their own canvas, described in 11.5.
+3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=12`, type JavaScript module.
 4. Reload the browser fully. A new resource is only picked up on a full page load, not by navigating inside the app; on a phone, pull down to refresh.
 5. When HACS updates the original card, build again and bump `?v=`.
 
@@ -326,11 +328,72 @@ A label template can read other entities through `document.querySelector('home-a
 
 [![The Polestar row on the Home tab](../../docs/house/polestar-row.png)](../../docs/house/polestar-row.png)
 
+### 11.5 Sensors in 3D (`sec_patch.js`)
+
+[![Smoke in the kitchen, the balcony door open and motion in the living room, with the roof and the third floor hidden](../../docs/house/3d-security.png)](../../docs/house/3d-security.png)
+
+*A smoke alarm in the kitchen, the balcony door open and motion in the living room, with the roof and the third floor turned off. Rendered by the headless preview in `preview/` with simulated states.*
+
+The fourth patch draws the house's security sensors over the model, on a 2D canvas of their own, so they never need a new GLB. They are drawn x-ray style: a room shows even when walls, floors above or the roof are in front of it.
+
+| Sensor | Device class | In the model |
+|---|---|---|
+| Smoke, CO, gas, heat | `smoke`, `carbon_monoxide`, `gas`, `heat` | The room as a red volume pulsing at an alarm cadence, a tag over it, the edge of the card glowing red |
+| Water leak | `moisture` (binary sensors only) | A shallow blue volume on the room floor |
+| CO2 | sensor with `carbon_dioxide`, at or above `security_co2` ppm | An orange volume |
+| Motion | `motion`, `occupancy`, `presence` | The room floor glows amber with a ripple, then fades out after the sensor clears |
+| Door or window | `door`, `window`, `opening`, `garage_door` | A red pane rising from the opening's status strip, or a dashed red outline of the room |
+| Alarm panel | `alarm_control_panel` in `triggered` | The whole edge of the card glows red |
+
+Every active event is also listed in the top right corner, alarms first. An alarm with no known room, or a triggered alarm panel, lights the whole edge of the card. Motion, leaks and openings on a floor that is turned off are not drawn; alarms always are.
+
+Nothing has to be listed in the card configuration: sensors are found by their device class, so a new detector shows up the moment Home Assistant has it. Where each one is drawn comes from, in order:
+
+1. `security_objects`: an entity mapped to model objects, for doors and windows that have a status strip.
+2. The entity's area, or its device's area: area `kitchen` lights `room_kitchen` (or whatever `security_areas` maps it to).
+3. A room word in the entity's or its device's name: `kitchen`, `living`, `bedroom`, `guest`, `studio`, `garage`, `entry`, `hall`, `stair`, `closet`, `office` (`security_keywords` replaces the list). A name that matches two rooms, like "bath" in a house with two bathrooms, is not guessed: the event is listed without a room.
+
+Options:
+
+| Option | Default | |
+|---|---|---|
+| `security` | on | `"no"` turns the layer off |
+| `security_objects` | none | entity: model object, or a list of them |
+| `security_areas` | `room_<area_id>` | area id: room object, or a list of them |
+| `security_keywords` | the list above | word in a name: room object |
+| `security_exclude` | none | entities to leave out |
+| `security_kinds` | from the device class | entity: `smoke`, `co`, `gas`, `heat`, `leak`, `co2`, `motion`, `open` or `alarm` |
+| `security_aggregates` | none | entity: entity id prefix. An "any camera" sensor is left out while one of its own per-camera sensors is on |
+| `security_height` | 240 | room volume height, cm |
+| `security_open_height` | 200 | height of an open door or window pane, cm |
+| `security_motion_fade` | 20 | seconds the floor keeps fading after motion clears |
+| `security_co2` | 1500 | ppm |
+| `security_list` | on | `"no"` hides the list of events |
+
+Red Tower uses three of them: the two contact sensors are drawn on their status strips, the Zigbee plug that repeats for the backyard window (it reports an `opening` sensor of its own) is left out, and the aosu "any camera" motion sensor gives way to the per-camera ones once they exist:
+
+```yaml
+security_objects:
+  binary_sensor.backyard_window: window_guest_room
+  binary_sensor.third_reality_inc_3rds17bz: door_balcony
+security_exclude:
+  - binary_sensor.third_reality_inc_3rsp02064z_opening
+security_aggregates:
+  binary_sensor.aosu_motion: binary_sensor.aosu_
+```
+
+The layer only draws while something is active, at 30 frames per second, and stops when the house is quiet. To check it before uploading, `preview/states_security.json` holds simulated alarms, an open door and motion, with the areas the live registry would give them:
+
+```
+PAGE=index_axo.html node shot.js card_config.json states_security.json out.png 3,2
+```
+
 ## 12. Using it
 
 - Level buttons at the top left, highest first. Click 3 to hide the roof, 2 for the third floor, 1 for the second floor; a hidden floor's button dims. The list icon at the bottom shows everything again.
 - Drag to rotate, scroll or pinch to zoom, right-drag to pan. The default view looks from the street, so furniture against the street-side walls only shows once you rotate.
 - Double-click a room, door strip or vacuum to open its Home Assistant details.
+- Anything a sensor reports, an alarm, an open door or window, motion, shows on the model and in the list at the top right.
 
 ## 13. Rebuilding after changes
 
@@ -388,15 +451,16 @@ house/floorplan/
     axo_patch.js                orthographic camera, level order, renamed elements, cache fix
     ui_patch.js                 sharper labels, floor buttons as dashboard tiles
     fx_patch.js                 floor filter, weather, sky, sunlight, lit windows
-    build_card.js               applies all three to the HACS card file
+    sec_patch.js                smoke, CO, leaks, motion and open doors and windows on the model
+    build_card.js               applies all four to the HACS card file
     card_config.json            the card configuration used at Red Tower
   preview/                      headless card renderer
 docs/house/                     the screenshots in this guide
 
 Home Assistant:
   /config/www/3d/redtower.glb
-  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=11)
-  dashboard red-tower, views "home" (Polestar row) and "model" (the 3D card)
+  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=12)
+  dashboard red-tower, views "home" (Polestar row), "security" (RedSec: alarm, cameras, doors and windows, fire and CO, motion) and "model" (the 3D card)
 ```
 
 ## 16. Credits and sources

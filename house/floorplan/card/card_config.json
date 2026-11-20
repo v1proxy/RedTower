@@ -336,5 +336,11 @@
     ],
     "weather_entity": "weather.forecast_home",
     "level_names": ["Ground", "Second", "Third", "Roof"],
-    "level_icons": ["mdi:home-floor-g", "mdi:home-floor-2", "mdi:home-floor-3", "mdi:home-roof"]
+    "level_icons": ["mdi:home-floor-g", "mdi:home-floor-2", "mdi:home-floor-3", "mdi:home-roof"],
+    "security_objects": {
+        "binary_sensor.backyard_window": "window_guest_room",
+        "binary_sensor.third_reality_inc_3rds17bz": "door_balcony"
+    },
+    "security_exclude": ["binary_sensor.third_reality_inc_3rsp02064z_opening"],
+    "security_aggregates": {"binary_sensor.aosu_motion": "binary_sensor.aosu_"}
 }

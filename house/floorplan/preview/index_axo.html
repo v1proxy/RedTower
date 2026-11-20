@@ -10,12 +10,13 @@ await import('./floor3dpro-axo-card.js');
 const params = new URLSearchParams(location.search);
 const cfg = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(params.get('cfg')),c=>c.charCodeAt(0))));
 const states = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(params.get('st')),c=>c.charCodeAt(0))));
-const hass = { states, themes:{darkMode:true}, language:'en', locale:{language:'en'}, localize:(k)=>k, callService:()=>{}, callWS: async()=>({}), user:{is_admin:true}, config:{unit_system:{temperature:'°F'}}, connection:{subscribeEvents:()=>()=>{}} };
+const ents = states.__entities||{}, devs = states.__devices||{}, areas = states.__areas||{}; delete states.__entities; delete states.__devices; delete states.__areas;
+const hass = { states, entities: ents, devices: devs, areas, themes:{darkMode:true}, language:'en', locale:{language:'en'}, localize:(k)=>k, callService:()=>{}, callWS: async()=>({}), user:{is_admin:true}, config:{unit_system:{temperature:'°F'}}, connection:{subscribeEvents:()=>()=>{}} };
 await customElements.whenDefined('floor3dpro-axo-card');
 const card = document.createElement('floor3dpro-axo-card');
 card.setConfig(cfg);
 card.hass = hass;
 document.getElementById('host').appendChild(card);
 window.__card = card;
-window.__toggle = (lv) => { const c = card; c._toggleVisibleLevel(lv); c._requestRender && c._requestRender('t'); };
+window.__toggle = (lv) => { card._handleLevelClick({stopPropagation(){}, target:{index:lv}}); };
 </script></body></html>
