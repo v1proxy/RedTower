@@ -14,6 +14,38 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.12.0 – 2026-11-20
+
+**Alarms that come to you.** During a fire, CO or intrusion alarm, opening Home Assistant goes
+straight to the 3D view of the house, focused on where the alarm is. A new capability on the house
+dashboard; nothing on a built unit changes.
+
+### Added
+
+- `house/floorplan/ha/`: one sensor that says whether the house is in alarm and what is in alarm,
+  `binary_sensor.red_tower_alarm`, with the alarm entities in its `entities` attribute and the 3D view's
+  path in `focus_path`. The rules are a macro in `custom_templates/red_tower_alarm.jinja`: smoke, CO,
+  gas, heat and water leaks; doors, windows and openings that open while the house is armed (Red shield
+  on, or RedAlert armed); CO2 at or above 1500 ppm; a triggered alarm panel; and anything carrying the
+  label **Alarm**, which is how anything else is declared an alarm. The sensor is in
+  `packages/red_tower_alarm.yaml`.
+- `sec_patch.js`, alarm focus: while an alarm is on, the floors above it are turned off (the floor
+  buttons follow), the camera glides to fit its rooms, the rest of the house is dimmed and other events
+  are only listed. An open window that counts as an alarm lights its room like a smoke alarm. When the
+  alarms clear, the floors and the camera come back. New option `security_alarm_entity`.
+- `sec_patch.js`, opening the 3D view: code at the end of the card file watches the alarm sensor on
+  every page. When Home Assistant is opened or brought back to the front during an alarm, or a new alarm
+  starts, it opens `focus_path`; it does not pull you back if you leave during the same alarm, and when
+  the alarm clears it returns to the page it came from unless someone has moved on.
+- `house/floorplan/preview/states_alarm.json` and `docs/house/3d-alarm-focus.png`, rendered from it.
+
+### Changed
+
+- The card's dashboard resource is `?v=13`.
+- `house/floorplan/README.md`: section 11.6 on alarms, the new files in the file map.
+- `VERSION`, the panel card's `CARD_VERSION` and its resource query are 0.12.0. The greenhouse card
+  itself is unchanged.
+
 ## 0.11.0 – 2026-11-20
 
 **The house's sensors in 3D.** Smoke, CO, gas and heat alarms, water leaks, motion and open doors
