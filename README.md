@@ -6,7 +6,7 @@ An indoor greenhouse that an AI agent tends, written down so anyone can build
 one. It scales from a 600 mm closet bay to a 3 m room wall: build the size your
 space allows, with only the modules you want.
 
-![design version](https://img.shields.io/badge/design-0.12.0-1d4ed8)
+![design version](https://img.shields.io/badge/design-0.13.0-1d4ed8)
 [![license](https://img.shields.io/badge/license-MIT-5b6770)](LICENSE)
 
 [![Maag, the reference m build, rendered from the design's own 3D model](docs/booklets/cover.jpg)](docs/booklets/README.md)
@@ -236,6 +236,19 @@ focused on where it is happening.
 [`house/floorplan/README.md`](house/floorplan/README.md) is the whole method, from a
 33,976-object Revit export to a 2.7 MB GLB, with every script and the patches the card needs.
 
+## The Red Tower dashboard
+
+The whole dashboard is redrawn in one graphic language: a black ground, IBM Plex, 1 px lines,
+square corners, and red only for security and emergencies. Home opens with the house drawn in
+lines from the same 3D model, in eight views that turn with a drag; a floor where a device has
+gone quiet turns red, and when everything is nominal only the house's outline shows, in green.
+RedSec opens with the same drawing, the room of an alarm as a red box and the window or door that
+went off in solid red, and every alarm reaches both phones as a picture of that spot with a line
+on what is happening. The siren tells the alarms apart by sound: a fire's smoke alarm and a CO2
+alarm ring until the house is disarmed or silenced from the notification, a break-in sounds for
+five seconds. [`house/dashboard/README.md`](house/dashboard/README.md) has the cards, the
+generator that draws the house, and the automations.
+
 ---
 
 ## Layout
@@ -253,6 +266,8 @@ dist/                the panel card where HACS looks for it, copied by greenhous
 house/
   floorplan/         the house as a live 3D floor plan in Home Assistant: Blender scripts,
                      the card patches, the card configuration, and the guide
+  dashboard/         the Red Tower dashboard: its look and cards, the house in lines and the
+                     generator that draws it, RedSec's alarm notification and siren
 greenhouse/
   esphome/           node firmware: tier nodes + utility node
   ha/                the interface: the Greenhouse panel card, the Jetson package, the view,

@@ -228,11 +228,11 @@ Home Assistant caches `/local` files, so always load the model with a version qu
    node card/build_card.js floor3dpro-card.js floor3dpro-axo-card.js
    ```
    It applies four patches, all written against the minified file with patterns rather than line numbers:
-   - `axo_patch.js`: swaps in an `OrthographicCamera` whose frustum follows the canvas aspect, with a new option `ortho_half_height` (half the visible height, cm); stacks the level buttons highest first (3, 2, 1, 0, then "all"); renames every `floor3dpro-*` custom element to `floor3dpro-axo-*` so the copy runs beside the HACS card (renaming only the card is not enough, its form fields collide too); and makes the card's model cache copy mesh geometry when it clones the model. Without that, the room-label code moves the shared geometry in place, and every rebuild after the first (switching dashboard tabs, mostly in the phone app) drops all labels and room planes into one corner.
+   - `axo_patch.js`: swaps in an `OrthographicCamera` whose frustum follows the canvas aspect, with a new option `ortho_half_height` (half the visible height, cm) and, from 0.13.0, `ortho_half_width` (cm): on a card narrower than that ratio the half height grows to `ortho_half_width` divided by the card's aspect, so the whole width still fits (on a phone the house no longer runs off the sides); stacks the level buttons highest first (3, 2, 1, 0, then "all"); renames every `floor3dpro-*` custom element to `floor3dpro-axo-*` so the copy runs beside the HACS card (renaming only the card is not enough, its form fields collide too); and makes the card's model cache copy mesh geometry when it clones the model. Without that, the room-label code moves the shared geometry in place, and every rebuild after the first (switching dashboard tabs, mostly in the phone app) drops all labels and room planes into one corner.
    - `ui_patch.js`: labels drawn at four times the resolution, semibold, on a rounded box whose width follows the text (the stock card stretches every label to a fixed box, so long labels were squashed and blurry); labels not tone-mapped, so white text stays white under the card's 0.6 exposure; old label textures disposed on update; floor buttons as tiles in the dashboard's own style, on a transparent strip so the weather shows between them: square dark tiles with a 1 px border, an icon over an uppercase caption, red border and icon while the floor is shown, grey while it is hidden, and icons only on a small or narrow card. Options: `level_names` and `level_icons` (by level), `level_all_name`, `level_all_icon`.
    - `fx_patch.js`: a floor filter and the weather. Cards in the same grid as the 3D card that carry `variables: { rt_floor: N }` hide while level N is hidden, so turning a floor off also removes its tiles underneath (`custom:button-card` keeps unknown variables, and the card reads them from each grid item's config). The weather entity (`weather_entity`, default `weather.forecast_home`; `weather: "no"` turns it off) is drawn over the model on a 2D canvas at 30 fps: rain, downpour, snow, hail, storms with lightning, clouds, fog, wind streaks and stars by night, with the rain slanted by the wind. The sky sits on its own canvas behind the model (the scene background is cleared and painted there instead), so stars, clouds and lightning bolts stay behind the house while rain, snow, hail, fog and the lightning flash fall in front of it. Sunlight: the sun always stays just outside the frame and moves around its edge through the day, placed from the `sun.sun` azimuth and elevation relative to the camera; only its light comes in, as a soft wash and a glow from that edge, with no rays, streaks or flares. Its colour shifts only slightly: cool white at dawn, warm white at midday, a light peach at sunset. A cloud in front of it dims it. Lit windows: after sunset, while someone is home, every window glows warm as if the lights were on (`presence_entity`, default `zone.home`, counts the people home; any entity that reads `home` or `on` works too; `window_lights: "no"` turns it off).
    - `sec_patch.js`: the house's sensors drawn over the model on their own canvas, described in 11.5.
-3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=13`, type JavaScript module.
+3. Put the result in `/config/www/floor3d/` and add it as a dashboard resource: Settings > Dashboards > Resources > `/local/floor3d/floor3dpro-axo-card.js?v=14`, type JavaScript module.
 4. Reload the browser fully. A new resource is only picked up on a full page load, not by navigating inside the app; on a phone, pull down to refresh.
 5. When HACS updates the original card, build again and bump `?v=`.
 
@@ -258,6 +258,7 @@ shadow: "no"
 click: "yes"
 hideLevelsMenu: "no"
 ortho_half_height: 860
+ortho_half_width: 760          # optional: the half width that must always fit (narrow cards)
 camera_target:   { x: 191,  y: 545,  z: -107 }
 camera_position: { x: 1346, y: 1700, z: 1048 }   # target + (1155, 1155, 1155): isometric
 entities:
@@ -290,7 +291,7 @@ entities:
 ```
 
 Notes on the options:
-- **Isometric camera.** Point the camera from the target along (1, 1, 1); with an orthographic camera the distance doesn't matter, only the direction. `ortho_half_height` sets the zoom: the whole building projects to about 1,680 cm tall, so 860 fits it with a small margin.
+- **Isometric camera.** Point the camera from the target along (1, 1, 1); with an orthographic camera the distance doesn't matter, only the direction. `ortho_half_height` sets the zoom: the whole building projects to about 1,680 cm tall, so 860 fits it with a small margin. On a narrow card (a phone) the width runs out first; `ortho_half_width` keeps that much half width in view by zooming out only there. Red Tower's Digital Twin tab uses 940 and 760.
 - **Labels** use the `room` type with `transparency: 100`, so the highlight box is invisible and only the label shows. `label_text: template` shows the template's output and drops the unit, so the template adds it. `elevation` (cm) sets the label height above the floor and `height` (cm) its size; with the UI patch the width follows the text and `width` is ignored.
 - **Templates** must contain `$entity`. The card swaps in the state string and `eval`s the rest, so guard against `unavailable` with `isNaN(parseFloat(...))`.
 - **Colour conditions** match state strings exactly. For ranges, derive a bucket in `entity_template` (e.g. `cold`/`ok`/`warm`) and match that. I removed the temperature floor tint in the end because a tinted floor reads as a different floor material.
@@ -485,9 +486,10 @@ docs/house/                     the screenshots in this guide
 
 Home Assistant:
   /config/www/3d/redtower.glb
-  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=13)
+  /config/www/floor3d/floor3dpro-axo-card.js   (resource /local/floor3d/floor3dpro-axo-card.js?v=14)
   /config/custom_templates/red_tower_alarm.jinja, /config/packages/red_tower_alarm.yaml   (binary_sensor.red_tower_alarm, label Alarm)
-  dashboard red-tower, views "home" (Polestar row), "security" (RedSec: alarm, cameras, doors and windows, fire and CO, motion) and "model" (the 3D card)
+  dashboard red-tower-new ("Red Tower"), view "model" (Digital Twin: the 3D card edge to edge, then the floors' tiles); the rest of
+  the dashboard is in ../dashboard/README.md. The old dashboard red-tower ("Red Tower old") is retired: hidden, kept for rollback.
 ```
 
 ## 16. Credits and sources

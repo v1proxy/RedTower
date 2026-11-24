@@ -1,0 +1,115 @@
+# RedSec: the alarm notification and the siren (Home Assistant automations, as they run at Red Tower).
+# Paste each into Settings > Automations > (new) > Edit in YAML, or put the whole list under `automation:` in a package.
+# Needs: binary_sensor.red_tower_alarm (../floorplan/ha), an Aeotec Indoor Siren 6 on Z-Wave JS (one siren entity per
+# endpoint: 2 Tamper plays once for 5 s, 6 Environment and 8 Emergency repeat until turned off), and the notification
+# script script.redsec_alarm_notify, described in README.md (not in the repository yet).
+- id: redsec_alarm_notification
+  alias: RedSec - alarm notification
+  description: "Every Red Tower alarm sends a picture notification to both phones and sounds the siren by kind. Fire or smoke (smoke and heat sensors): 09 Smoke Alarm 1 on the siren's Emergency channel. CO2 and every other non-security alarm (CO, gas, water, anything labelled Alarm): 12 CO Alarm on its Environment channel. Both repeat until disarmed (Red Shield off or RedAlert disarmed) or until Silence siren is pressed on the notification. A break-in (doors, windows and openings while armed, a triggered panel): 17 Alarm on the Tamper channel for 5 seconds, as the old window intrusion automation. A new alarm while another is on notifies too and sounds only if it is more urgent than what is playing; a break-in during a repeating alarm leaves it ringing (restored after 7 s if the old window automation cut it)."
+  mode: queued
+  max: 10
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.red_tower_alarm
+    from: 'off'
+    to: 'on'
+    id: start
+  - trigger: state
+    entity_id: binary_sensor.red_tower_alarm
+    attribute: entities
+    id: more
+  variables:
+    now_ids: "{{ trigger.to_state.attributes.get('entities', []) or [] }}"
+    old_ids: "{{ (trigger.from_state.attributes.get('entities', []) or []) if trigger.id == 'more' and trigger.from_state is not none and trigger.from_state.state == 'on' else [] }}"
+    new_ids: "{{ now_ids | reject('in', old_ids) | list }}"
+    rank: "{% set ns = namespace(r=0) %}{% for e in new_ids %}{% set dc = state_attr(e, 'device_class') %}{% if dc in ['smoke', 'heat'] %}{% set r = 3 %}{% elif e.startswith('alarm_control_panel.') or dc in ['door', 'window', 'opening', 'garage_door', 'motion', 'occupancy', 'presence', 'tamper', 'vibration'] %}{% set r = 1 %}{% else %}{% set r = 2 %}{% endif %}{% if r > ns.r %}{% set ns.r = r %}{% endif %}{% endfor %}{{ ns.r }}"
+    playing: "{{ 3 if is_state('siren.indoor_siren_6_play_tone_8', 'on') else 2 if is_state('siren.indoor_siren_6_play_tone_6', 'on') else 0 }}"
+    source: "{% set ns = namespace(r=0, e='binary_sensor.red_tower_alarm') %}{% for e in new_ids %}{% set dc = state_attr(e, 'device_class') %}{% if dc in ['smoke', 'heat'] %}{% set r = 3 %}{% elif e.startswith('alarm_control_panel.') or dc in ['door', 'window', 'opening', 'garage_door', 'motion', 'occupancy', 'presence', 'tamper', 'vibration'] %}{% set r = 1 %}{% else %}{% set r = 2 %}{% endif %}{% if r > ns.r %}{% set ns.r = r %}{% set ns.e = e %}{% endif %}{% endfor %}{{ ns.e }}"
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.id == 'start' or (trigger.from_state is not none and trigger.from_state.state == 'on' and trigger.to_state.state == 'on' and new_ids | count > 0) }}"
+  actions:
+  - parallel:
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: "{{ rank | int == 3 and playing | int < 3 }}"
+        sequence:
+        - action: siren.turn_on
+          target:
+            entity_id: siren.indoor_siren_6_play_tone_8
+          data:
+            tone: 9
+            volume_level: 1
+          continue_on_error: true
+      - conditions:
+        - condition: template
+          value_template: "{{ rank | int == 2 and playing | int < 2 }}"
+        sequence:
+        - action: siren.turn_on
+          target:
+            entity_id: siren.indoor_siren_6_play_tone_6
+          data:
+            tone: 12
+            volume_level: 1
+          continue_on_error: true
+      - conditions:
+        - condition: template
+          value_template: "{{ rank | int == 1 and playing | int == 0 }}"
+        sequence:
+        - action: siren.turn_on
+          target:
+            entity_id: siren.indoor_siren_6_play_tone_2
+          data:
+            tone: 17
+            volume_level: 1
+          continue_on_error: true
+      - conditions:
+        - condition: template
+          value_template: "{{ rank | int == 1 and playing | int >= 2 }}"
+        sequence:
+        - delay:
+            seconds: 7
+        - condition: template
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('automation.redsec_silence_the_siren_when_disarmed', 'last_triggered'), 0)) > 15 }}"
+        - action: siren.turn_on
+          target:
+            entity_id: "{{ 'siren.indoor_siren_6_play_tone_8' if playing | int == 3 else 'siren.indoor_siren_6_play_tone_6' }}"
+          data:
+            tone: "{{ 9 if playing | int == 3 else 12 }}"
+            volume_level: 1
+          continue_on_error: true
+    - action: script.redsec_alarm_notify
+      data:
+        entity: "{{ source }}"
+        silence: "{{ rank | int >= 2 or playing | int >= 2 }}"
+      continue_on_error: true
+- id: redsec_siren_silence
+  alias: RedSec - silence the siren when disarmed
+  description: Turns every siren endpoint off when the house is disarmed (Red Shield off or RedAlert disarmed) or when Silence siren is pressed on an alarm notification. The fire and CO2 sounds repeat until then.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.red_shield
+    to: 'off'
+  - trigger: state
+    entity_id: alarm_control_panel.redalert
+    to: disarmed
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: REDSEC_SILENCE
+  conditions: []
+  actions:
+  - action: siren.turn_off
+    target:
+      entity_id:
+      - siren.indoor_siren_6_play_tone
+      - siren.indoor_siren_6_play_tone_2
+      - siren.indoor_siren_6_play_tone_3
+      - siren.indoor_siren_6_play_tone_4
+      - siren.indoor_siren_6_play_tone_5
+      - siren.indoor_siren_6_play_tone_6
+      - siren.indoor_siren_6_play_tone_7
+      - siren.indoor_siren_6_play_tone_8
+    continue_on_error: true
+  mode: single

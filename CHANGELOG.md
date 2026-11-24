@@ -14,6 +14,53 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.13.0 – 2026-11-24
+
+**The Red Tower dashboard.** The house's dashboard redrawn in one graphic language, the house in lines
+on Home and RedSec, alarms that reach both phones as a picture, and a siren that tells fire from a
+break-in. A new module on the house; nothing on a built unit changes.
+
+### Added
+
+- `house/dashboard/`: the dashboard **Red Tower** (`red-tower-new`), now the house's default. One module,
+  `redtower-ui.js` 2.1.2, built by `build.py` from two parts:
+  - `src/redtower-ui.js`: the look, only on that dashboard (black ground, IBM Plex, 1 px lines, square
+    corners, red only for security and emergencies; the top bar's icons as words on wide screens; the
+    greenhouse panel in the dashboard's ground and type); `custom:rt-house-card`, the house in lines in
+    eight views that turn with a drag, in a health mode for Home (a floor with a device that can't be
+    reached turns red; everything nominal is the outline in green; tap a label for its note, hold it to
+    start a Claude chat) and an alarm mode for RedSec (the room of each alarm as a red box, the window
+    or door that went off in solid red); and the helpers the button-card templates share (`window.rt`).
+    On a phone, a small down arrow under the 3D model of the Digital Twin tab scrolls the page past it,
+    since the model takes every touch.
+  - `src/rt-cards.js`: the thermostat dial, the history chart, weather, electricity, In and out (what
+    comes into the house and what goes out, as treemaps), Claude by room, the camera, the logbook and the
+    TV remote.
+- `house/dashboard/generator/`: the house in lines from `redtower.glb`. Each visible pixel takes a surface,
+  and a line runs only where two surfaces meet or the depth jumps, drawn once and straightened, so the
+  drawing stays lean (2 to 7 KB a view). Also the plain views and the pictures for the alarm notification.
+- `house/dashboard/ha/redsec_automations.yaml`: **RedSec - alarm notification**, a picture notification to
+  both phones for every new alarm, also when it joins one already on, and the siren by kind of alarm: fire
+  or smoke plays 09 Smoke Alarm 1 and CO2 or any other non-security alarm 12 CO Alarm, both until the
+  house is disarmed or **Silence siren** is pressed on the notification; a break-in plays 17 Alarm for
+  5 seconds. **RedSec - silence the siren when disarmed** turns the siren off.
+
+### Changed
+
+- `house/floorplan/card/axo_patch.js`: a new card option, `ortho_half_width` (cm). On a card narrower than
+  `ortho_half_width` / `ortho_half_height` the camera zooms out just enough for that half width to fit, so
+  the house no longer runs off the sides of a phone. The card's resource is `?v=14`.
+- `house/floorplan/README.md`: the new option, the resource version, and the dashboard in the file map.
+- `README.md`: a paragraph on the dashboard and `house/dashboard/` in the layout.
+- `VERSION`, the greenhouse panel's `CARD_VERSION` and its resource query are 0.13.0. The greenhouse panel
+  itself is unchanged.
+
+### Not included
+
+- The drawings and notification pictures of Red Tower, which come from the house's own model like
+  `redtower.glb`; the generator makes them from yours. The dashboard's own configuration and the
+  notification script stay in Home Assistant for now.
+
 ## 0.12.0 – 2026-11-20
 
 **Alarms that come to you.** During a fire, CO or intrusion alarm, opening Home Assistant goes

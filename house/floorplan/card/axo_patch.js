@@ -1,5 +1,6 @@
 // Patches floor3dpro-card (levonisyas, MIT) for Red Tower.
-// - swaps the 45deg PerspectiveCamera for an OrthographicCamera (card option `ortho_half_height`, cm)
+// - swaps the 45deg PerspectiveCamera for an OrthographicCamera (card option `ortho_half_height`, cm); with
+//   `ortho_half_width` (cm) the half height grows on narrow cards so that much width always fits (a phone)
 // - level buttons stacked like the building: highest level on top, ground at the bottom, "all" last
 // - renames every floor3dpro-* custom element to floor3dpro-axo-* so it runs beside the HACS card
 // - model cache clones also copy mesh geometry; the original shares it, and the room-label code shifts room
@@ -10,7 +11,7 @@ function axoPatch(src) {
   const O = m[1];
   const re = /this\._camera=new ([\w$]+)\(45,1,\.1,1e4\)/;
   if (!re.test(src)) throw new Error('camera constructor not found');
-  src = src.replace(re, 'this._camera=((h)=>{const c=new ' + O + '(-1,1,1,-1,-1e5,1e5);Object.defineProperty(c,"aspect",{configurable:!0,get(){return this.__a||1},set(v){this.__a=v;this.left=-h*v;this.right=h*v;this.top=h;this.bottom=-h}});c.aspect=1;c.updateProjectionMatrix();return c})(Number(this._config&&this._config.ortho_half_height)||900)');
+  src = src.replace(re, 'this._camera=((h,w)=>{const c=new ' + O + '(-1,1,1,-1,-1e5,1e5);Object.defineProperty(c,"aspect",{configurable:!0,get(){return this.__a||1},set(v){this.__a=v;const k=Math.max(h,w/(v||1));this.left=-k*v;this.right=k*v;this.top=k;this.bottom=-k}});c.aspect=1;c.updateProjectionMatrix();return c})(Number(this._config&&this._config.ortho_half_height)||900,Number(this._config&&this._config.ortho_half_width)||0)');
   const lv = src.match(/_getLevelIcons\(\)\{const ([\w$]+)=\[\];return/);
   if (!lv) throw new Error('_getLevelIcons not found');
   const v = lv[1];
