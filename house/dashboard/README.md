@@ -2,7 +2,8 @@
 
 Red Tower's Home Assistant dashboard, redrawn in Vittorio's graphic style: a black ground, IBM Plex, 1 px lines,
 square corners, and red only for security and emergencies. It is the house's default dashboard, **Red Tower**
-(`red-tower-new`), with six tabs: Home, Digital Twin, RedSec, Consumption, Greenhouse and Remote.
+(`red-tower-new`), with six tabs: Home, Digital Twin, RedSec, IN/OUT (the house's inputs and outputs, called Consumption until
+Nov 24, 2026), Greenhouse and Remote.
 
 Everything here is one JavaScript module (`redtower-ui.js`, 2.1.2 in RedTower 0.13.0), a generator that draws
 the house in lines from the same 3D model the Digital Twin tab shows, and the two automations that turn an alarm
