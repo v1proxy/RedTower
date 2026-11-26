@@ -17,9 +17,12 @@
  * 2.1.2 (Nov 24): the house on Home sits on the page's black, no outline (the other cards keep the grey); Digital
  *    Twin, on phones only: a small down arrow at the bottom centre of the 3D model scrolls the page to the rest,
  *    since the model takes every touch there.
+ * 2.2.0 (Nov 26): In and out measures Heat (the AC circuit's watts, and whether the thermostats are heating, cooling
+ *    or idle) and Light (the ground floor lights' watts, and the level of each dimmable lamp, the Vega pendant);
+ *    new options heat, climates, light and lamps.
  */
 (() => {
-  const VERSION = "2.1.2";
+  const VERSION = "2.2.0";
   const DASH = "/red-tower-new";
   const BASE = "/local/redtower-ui/";
   const C = { ground: "#000000", raised: "#111113", rule: "#2A2C30", line: "#45474D", strong: "#C9CBCF", ink: "#F3F1EC",
@@ -1192,13 +1195,13 @@
   const MW = 1687, MH = 2029;
   class RtIO extends RtCard {
     defaults() { return { electricity: "sensor.redmonitor_power_minute_average", data: ["sensor.cgm4331com_download_speed", "sensor.cgm4331com_upload_speed"],
-      compute: ["sensor.greenhouse_llm_status", "sensor.greenhouse_supervisor_status"],
+      compute: ["sensor.greenhouse_llm_status", "sensor.greenhouse_supervisor_status"], heat: "sensor.ac_power_minute_average", climates: ["climate.kitchen_thermostat", "climate.ground_floor_thermostat"], light: ["sensor.1st_floor_light_power_minute_average"], lamps: ["light.vega"],
       // Electricity split by circuit (Emporia), inside its square; "Other" is what no circuit meters
       circuits: [["sensor.ac_power_minute_average", "AC"], ["sensor.living_power_minute_average", "Living"], ["sensor.kitchen_power_minute_average", "Kitchen"],
         ["sensor.studio_power_minute_average", "Studio"], ["sensor.1st_floor_light_power_minute_average", "Ground floor light"], ["sensor.car_power_minute_average", "Polestar"],
         ["sensor.w_d_power_minute_average", "Washer and dryer"], ["sensor.dishwasher_power_minute_average", "Dishwasher"], ["sensor.plants_power_minute_average", "Plants"],
         ["sensor.balance_power_minute_average", "Other"]] }; }
-    watch() { return [this._c.electricity, ...this._c.data, ...this._c.compute, ...this._c.circuits.map(c => c[0])]; }
+    watch() { return [this._c.electricity, ...this._c.data, ...this._c.compute, ...this._c.circuits.map(c => c[0]), this._c.heat, ...this._c.climates, ...this._c.light, ...this._c.lamps]; }
     css() { return `
       .tree { position: absolute; top: 0; }
       .tree > div { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; }
@@ -1214,7 +1217,7 @@
         dl != null ? { name: "Data", value: fix((dl + (ul || 0)) * 8 / 1000, 1), unit: "Mbit/s", src: "Gateway, down and up" } : { name: "Data", src: "No meter yet (the gateway is a bridge)" },
         { name: "Water", src: "No meter yet" }, { name: "Gas", src: "No meter yet" }];
       const OUT = [{ name: "Compute", src: compOn ? "Maag's agents, running" : "Maag's agents, offline", state: compOn ? "Running" : "Offline" },
-        { name: "Heat", src: "No sensor yet" }, { name: "Light", src: "No sensor yet" }];
+        (() => { const w = num(h.states[c.heat]); const a = c.climates.map(e => h.states[e] && h.states[e].attributes.hvac_action).filter(Boolean); const t = a.includes("cooling") ? "cooling" : a.includes("heating") ? "heating" : "thermostats idle"; return w == null ? { name: "Heat", src: "No sensor yet" } : { name: "Heat", value: Math.round(w), unit: "W", src: "AC circuit, " + t }; })(), (() => { const ws = c.light.map(e => num(h.states[e])).filter(x => x != null); const l = c.lamps.map(e => h.states[e]).filter(Boolean).map(s => (s.attributes.friendly_name || s.entity_id) + " " + (s.state === "on" ? (s.attributes.brightness != null ? Math.round(s.attributes.brightness / 2.55) + "%" : "on") : "off")); return ws.length ? { name: "Light", value: Math.round(ws.reduce((p, q) => p + q, 0)), unit: "W", src: "Ground floor lights" + (l.length ? ", " + l.join(", ") : "") } : { name: "Light", src: "No sensor yet" }; })()];
       const [tw, th, hw, gap] = wide ? [Math.min(470, (W - 26 - 120 - 120) / 2), 250, 120, 60] : [Math.max(96, (W - 26 - 58 - 30) / 2), 176, 58, 15];
       const inner = 2 * tw + hw + 2 * gap, left = Math.max(0, (W - 26 - inner) / 2), hx = left + tw + gap, cy = th / 2, hh = hw * MH / MW;
       const tree = (items, x0, aria) => {

@@ -5,7 +5,7 @@ square corners, and red only for security and emergencies. It is the house's def
 (`red-tower-new`), with six tabs: Home, Digital Twin, RedSec, IN/OUT (the house's inputs and outputs, called Consumption until
 Nov 24, 2026), Greenhouse and Remote.
 
-Everything here is one JavaScript module (`redtower-ui.js`, 2.1.2 in RedTower 0.13.0), a generator that draws
+Everything here is one JavaScript module (`redtower-ui.js`, 2.2.0 in RedTower 0.14.0), a generator that draws
 the house in lines from the same 3D model the Digital Twin tab shows, and the two automations that turn an alarm
 into a picture on the phone and the right sound on the siren.
 
@@ -40,7 +40,7 @@ house/dashboard/
    (`axo-v0..7.svg`, `axo-layout.json`) beside `redtower-ui.js`.
 3. Fonts: IBM Plex (SIL Open Font License) in `/config/www/redtower-ui/fonts/`, as `IBMPlexSans-Light`,
    `-Regular`, `-Medium`, `-SemiBold` and `IBMPlexMono-Regular`, `-Medium`, all `.woff2`.
-4. Settings > Dashboards > Resources: `/local/redtower-ui/redtower-ui.js?v=2.1.2`, JavaScript module. Bump `?v=`
+4. Settings > Dashboards > Resources: `/local/redtower-ui/redtower-ui.js?v=2.2.0`, JavaScript module. Bump `?v=`
    on every change; a phone picks up a new resource on a full reload (pull down to refresh).
 5. Build the views with layout-card grids (four columns, two at 1000 px or less) and button-card templates; the
    templates call `window.rt` (`kind`, `dim`, `value`, `sub`, `actionSub`, `arrow`) for the dot, the dimming and
@@ -94,6 +94,33 @@ it, and a vertical swipe still scrolls the page.
 On a phone the Digital Twin tab is all 3D model, and the model takes every touch, so there is no room left to
 scroll: a small down arrow at the bottom centre of the model (phones only, 600 px wide or less, or a phone on its
 side) scrolls the page so the floors' tiles sit under the header.
+
+### In and out (`rt-io-card`)
+
+What comes into the house on the left, what goes out on the right, each a treemap. A square with no reading is
+hatched and says why. Every source is an option, so the card works with other entities:
+
+| Square | What it reads | Options (Red Tower's defaults) |
+|---|---|---|
+| Electricity | the whole home's draw, split by circuit inside its square | `electricity`, `circuits` (Emporia) |
+| Data | download plus upload, in Mbit/s, from the router (below) | `data`: the download and upload speed sensors |
+| Water, Gas | nothing yet: no meters | |
+| Compute | whether Maag's agents are running | `compute` |
+| Heat | the AC circuit's watts, and whether the thermostats are heating, cooling or idle (`hvac_action`) | `heat` (`sensor.ac_power_minute_average`), `climates` (the two thermostats) |
+| Light | the ground floor lights' watts, and the level of each dimmable lamp | `light` (`sensor.1st_floor_light_power_minute_average`), `lamps` (`light.vega`, the kitchen's pendant) |
+
+Data comes from the router through Home Assistant's UPnP/IGD integration, which reads its traffic counters. Red
+Tower's router is pfSense, and its card sets `data: [sensor.redwall_download_speed, sensor.redwall_upload_speed]`
+(the default names the cable gateway's sensors). To do the same without letting UPnP open any port:
+
+1. pfSense, Services, UPnP: enable UPnP IGD on the network Home Assistant is on and no other, leave NAT-PMP (PCP)
+   off, and turn on **Default deny** with nothing in the access list. pfSense then reports its status and counters
+   but never opens a port for anyone.
+2. If that network blocks traffic to the firewall, allow Home Assistant's address and nothing else: UDP 1900 to
+   239.255.255.250 (discovery) and TCP 2189 to the interface's own address (the router's description and counters).
+3. If Home Assistant already looked for the router before those rules, restart it once: it keeps a description it
+   could not fetch until it restarts. Then add the router under Settings > Devices & services (UPnP/IGD) and point
+   `data` at its two speed sensors.
 
 ## 6. Drawing the house
 

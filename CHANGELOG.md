@@ -14,6 +14,42 @@ is stamped with it.
 Anyone who built against an older version should be able to read down to their
 version and see exactly what would have to change.
 
+## 0.14.0 – 2026-11-26
+
+**In and out, measured.** The IN/OUT tab's Heat and Light squares now read the house's own meters, and Data reads
+the router. A new capability on the house dashboard; nothing on a built unit changes.
+
+### Added
+
+- `house/dashboard/src/rt-cards.js`, In and out (`rt-io-card`): **Heat** shows the AC circuit's watts and whether the
+  thermostats are heating, cooling or idle; **Light** shows the ground floor lights' watts and the level of each
+  dimmable lamp (on Red Tower, the kitchen's Vega pendant, now on a Zooz ZEN30 dimmer). New options `heat`,
+  `climates`, `light` and `lamps`. A square whose sensors have no reading stays hatched, "No sensor yet".
+- `house/dashboard/README.md`: what each square of In and out reads and its options, and how Data reads a pfSense
+  router through Home Assistant's UPnP/IGD integration without letting UPnP open any port: UPnP IGD only on Home
+  Assistant's network, default deny with an empty access list, two firewall rules for Home Assistant alone (UDP 1900
+  to 239.255.255.250, TCP 2189 to the firewall), and one restart if Home Assistant had already looked for the router.
+
+### Changed
+
+- `redtower-ui.js` is 2.2.0, rebuilt with `build.py`; its resource is `?v=2.2.0`.
+- `VERSION`, the greenhouse panel's `CARD_VERSION` and its resource query are 0.14.0. The greenhouse panel itself is
+  unchanged.
+
+### On Red Tower, outside the repository
+
+- pfSense runs UPnP IGD on the IoT network only, set as above, and the IoT rules let only Home Assistant reach it. The
+  card's `data` points at the router's speed sensors in the dashboard's configuration.
+- The Digital Twin tab has two new tiles for the kitchen's ZEN30 double switch: the Vega on its dimmer and the iPad's
+  plug on its relay. Like the rest of the dashboard's configuration, they live in Home Assistant.
+
+### Not included
+
+- Red Tower runs `redtower-ui.js` 2.1.3 with this release's In and out. 2.1.3 was patched in Home Assistant on
+  Nov 24 (label boxes sized from their rendered text; RedSec's alarm times from `binary_sensor.red_tower_alarm`'s
+  `started`, which holds an alarm until it is turned off) and is not in the repository yet, nor is the alarm sensor
+  change it relies on. The 2.2.0 here is 2.1.2 plus In and out.
+
 ## 0.13.0 – 2026-11-24
 
 **The Red Tower dashboard.** The house's dashboard redrawn in one graphic language, the house in lines

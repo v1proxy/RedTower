@@ -17,9 +17,12 @@
  * 2.1.2 (Nov 24): the house on Home sits on the page's black, no outline (the other cards keep the grey); Digital
  *    Twin, on phones only: a small down arrow at the bottom centre of the 3D model scrolls the page to the rest,
  *    since the model takes every touch there.
+ * 2.2.0 (Nov 26): In and out measures Heat (the AC circuit's watts, and whether the thermostats are heating, cooling
+ *    or idle) and Light (the ground floor lights' watts, and the level of each dimmable lamp, the Vega pendant);
+ *    new options heat, climates, light and lamps.
  */
 (() => {
-  const VERSION = "2.1.2";
+  const VERSION = "2.2.0";
   const DASH = "/red-tower-new";
   const BASE = "/local/redtower-ui/";
   const C = { ground: "#000000", raised: "#111113", rule: "#2A2C30", line: "#45474D", strong: "#C9CBCF", ink: "#F3F1EC",
